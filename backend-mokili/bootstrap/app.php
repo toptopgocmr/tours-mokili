@@ -13,6 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Must run before anything else (including Ziggy/Inertia's own
+        // middleware) reads the request's scheme - see ForceHttpsScheme
+        // for why trustProxies alone wasn't enough.
+        $middleware->prepend(\App\Http\Middleware\ForceHttpsScheme::class);
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
         ]);
