@@ -31,32 +31,35 @@ const features = [
 
     <!-- Hero visual: bounded height so the background never has to
          stretch across an unpredictable amount of content (that's what
-         caused the earlier cropping bug). Service tiles live in their
-         own section below, on plain background, and just overlap the
-         bottom edge for the "photo -> icons" look from the mockup. -->
+         caused the earlier cropping bug). Text sits left, over open
+         sea/sky; service tiles float on top of the image near the
+         bottom, matching the mockup instead of living below it. -->
     <section class="relative h-[420px] overflow-hidden sm:h-[480px] md:h-[560px]">
         <div class="absolute inset-0">
             <img
                 v-if="!heroPhotoFailed"
                 src="/images/hero.jpg"
                 alt="MOKILI TOUR"
-                class="h-full w-full object-cover"
+                class="h-full w-full object-cover object-[center_20%]"
                 @error="heroPhotoFailed = true"
             />
             <CoastalScene v-else class="h-full w-full" />
             <div class="absolute inset-0 bg-gradient-to-b from-navy-900/70 via-navy-900/30 to-navy-900/10" />
         </div>
 
-        <div class="relative flex h-full flex-col items-center justify-center px-6 text-center">
+        <!-- Text sits high, over the open sea/sky (left side of the photo),
+             stacked tightly like the mockup so it reads as one compact
+             block instead of floating in a big empty middle. -->
+        <div class="relative flex h-full max-w-2xl flex-col justify-start px-6 pt-16 text-left sm:px-10 sm:pt-20 md:px-16 md:pt-24">
             <p class="text-sm font-semibold uppercase tracking-widest text-gold-600">MOKILI TOUR</p>
-            <h1 class="mt-3 max-w-4xl text-4xl font-extrabold text-white drop-shadow md:text-5xl">
+            <h1 class="mt-2 text-3xl font-extrabold text-white drop-shadow sm:text-4xl md:text-5xl">
                 LE MONDE À <span class="text-gold-600">PORTÉE</span> DE MAIN
             </h1>
-            <p class="mt-4 max-w-2xl text-lg text-white/90 drop-shadow">
+            <p class="mt-2 max-w-lg text-base text-white/90 drop-shadow sm:text-lg">
                 Votre compagnon de confiance pour tous vos besoins, partout dans le monde.
             </p>
 
-            <form class="mx-auto mt-8 flex w-full max-w-xl overflow-hidden rounded-full bg-white shadow-lg">
+            <form class="mt-6 flex w-full max-w-xl overflow-hidden rounded-full bg-white shadow-lg">
                 <input
                     type="text"
                     placeholder="Rechercher une destination, un service..."
@@ -65,21 +68,21 @@ const features = [
                 <button type="submit" class="btn-gold rounded-none px-8">Rechercher</button>
             </form>
         </div>
-    </section>
 
-    <section id="services" class="scroll-mt-24 bg-white px-6 pb-4">
-        <div class="mx-auto -mt-10 grid max-w-5xl grid-cols-3 gap-4 rounded-2xl sm:grid-cols-6">
-            <Link
-                v-for="c in categories"
-                :key="c.slug"
-                :href="`/${c.slug}`"
-                class="service-tile"
-            >
-                <span class="service-tile-badge" :style="{ backgroundColor: c.color + '1f' }">
+        <!-- Service tiles float directly on the photo/illustration, like
+             the mockup, instead of living in a separate section below. -->
+        <div id="services" class="scroll-mt-24 absolute inset-x-0 bottom-6 z-10 px-6 sm:bottom-8">
+            <div class="mx-auto grid max-w-5xl grid-cols-3 gap-3 sm:grid-cols-6 sm:gap-4">
+                <Link
+                    v-for="c in categories"
+                    :key="c.slug"
+                    :href="`/${c.slug}`"
+                    class="service-tile"
+                >
                     <ServiceIcon :slug="c.slug" class="h-7 w-7" :style="{ color: c.color }" />
-                </span>
-                <span class="text-xs font-semibold uppercase text-navy-900">{{ c.name }}</span>
-            </Link>
+                    <span class="text-xs font-semibold uppercase text-navy-900">{{ c.name }}</span>
+                </Link>
+            </div>
         </div>
     </section>
 
