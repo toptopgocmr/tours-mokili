@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\TravelOfferController as AdminTravelOfferControll
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Divertissement\EventController;
 use App\Http\Controllers\Fret\BookingController as FretBookingController;
@@ -208,6 +209,16 @@ Route::middleware('guest')->group(function () {
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    // "Continuer avec Google / Facebook / Instagram" - session login,
+    // see SocialLoginController docblock (web counterpart of
+    // Api\SocialAuthController, which the mobile app uses instead).
+    Route::get('/auth/{provider}/redirect', [SocialLoginController::class, 'redirect'])
+        ->whereIn('provider', ['google', 'facebook', 'instagram'])
+        ->name('social.redirect');
+    Route::get('/auth/{provider}/callback', [SocialLoginController::class, 'callback'])
+        ->whereIn('provider', ['google', 'facebook', 'instagram'])
+        ->name('social.callback');
 });
 
 Route::middleware('auth')->post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');

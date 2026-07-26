@@ -69,16 +69,20 @@ const props = defineProps({
         <circle cx="16.5" cy="16.3" r="1.6" :fill="accent" stroke="currentColor" stroke-width="1" />
     </svg>
 
-    <!-- Divertissement: flat horizontal ticket, matching Material's "confirmation_number" -->
+    <!-- Divertissement: ticket tilted like a boarding pass (matches the
+         diagonal "billet" look in the reference mockup), same shape as
+         Material's "confirmation_number" underneath the rotation. -->
     <svg v-else-if="slug === 'divertissement'" :class="props.class" viewBox="0 0 24 24">
-        <path
-            fill="currentColor"
-            d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-3a2 2 0 0 0 0-4Z"
-        />
-        <g :fill="accent">
-            <rect x="11.2" y="7" width="1.6" height="1.8" />
-            <rect x="11.2" y="10.6" width="1.6" height="1.8" />
-            <rect x="11.2" y="14.2" width="1.6" height="1.8" />
+        <g transform="rotate(45 12 12)">
+            <path
+                fill="currentColor"
+                d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-3a2 2 0 0 0 0-4Z"
+            />
+            <g :fill="accent">
+                <rect x="11.2" y="7" width="1.6" height="1.8" />
+                <rect x="11.2" y="10.6" width="1.6" height="1.8" />
+                <rect x="11.2" y="14.2" width="1.6" height="1.8" />
+            </g>
         </g>
     </svg>
 
