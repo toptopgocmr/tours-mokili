@@ -12,20 +12,27 @@
 // `logo` is left null until real operator/brand logo files are provided by
 // MOKILI TOUR - until then <OperatorBadge> falls back to a colored text
 // badge using `color`/`bg`.
+const LOGO_MTN = '/images/payments/mtn.png';
+const LOGO_AIRTEL = '/images/payments/airtel.png';
+const LOGO_ORANGE = '/images/payments/orange-money.png';
+const LOGO_VISA = '/images/payments/visa.png';
+const LOGO_MASTERCARD = '/images/payments/mastercard.png';
+// No Moov Money logo file provided yet - falls back to a colored text badge.
+
 export const cemacCountries = [
     {
         code: 'CM',
         name: 'Cameroun',
         operators: [
-            { key: 'mtn', name: 'MTN Mobile Money', color: '#FFCC00', text: '#111111', logo: null },
-            { key: 'orange', name: 'Orange Money', color: '#FF6600', text: '#FFFFFF', logo: null },
+            { key: 'mtn', name: 'MTN Mobile Money', color: '#FFCC00', text: '#111111', logo: LOGO_MTN },
+            { key: 'orange', name: 'Orange Money', color: '#FF6600', text: '#FFFFFF', logo: LOGO_ORANGE },
         ],
     },
     {
         code: 'GA',
         name: 'Gabon',
         operators: [
-            { key: 'airtel', name: 'Airtel Money', color: '#E4002B', text: '#FFFFFF', logo: null },
+            { key: 'airtel', name: 'Airtel Money', color: '#E4002B', text: '#FFFFFF', logo: LOGO_AIRTEL },
             { key: 'moov', name: 'Moov Money', color: '#0072CE', text: '#FFFFFF', logo: null },
         ],
     },
@@ -33,15 +40,15 @@ export const cemacCountries = [
         code: 'CG',
         name: 'Congo-Brazzaville',
         operators: [
-            { key: 'mtn', name: 'MTN Mobile Money', color: '#FFCC00', text: '#111111', logo: null },
-            { key: 'airtel', name: 'Airtel Money', color: '#E4002B', text: '#FFFFFF', logo: null },
+            { key: 'mtn', name: 'MTN Mobile Money', color: '#FFCC00', text: '#111111', logo: LOGO_MTN },
+            { key: 'airtel', name: 'Airtel Money', color: '#E4002B', text: '#FFFFFF', logo: LOGO_AIRTEL },
         ],
     },
     {
         code: 'TD',
         name: 'Tchad',
         operators: [
-            { key: 'airtel', name: 'Airtel Money', color: '#E4002B', text: '#FFFFFF', logo: null },
+            { key: 'airtel', name: 'Airtel Money', color: '#E4002B', text: '#FFFFFF', logo: LOGO_AIRTEL },
             { key: 'moov', name: 'Moov Money', color: '#0072CE', text: '#FFFFFF', logo: null },
         ],
     },
@@ -49,7 +56,7 @@ export const cemacCountries = [
         code: 'CF',
         name: 'Centrafrique',
         operators: [
-            { key: 'orange', name: 'Orange Money', color: '#FF6600', text: '#FFFFFF', logo: null },
+            { key: 'orange', name: 'Orange Money', color: '#FF6600', text: '#FFFFFF', logo: LOGO_ORANGE },
             { key: 'moov', name: 'Moov Money', color: '#0072CE', text: '#FFFFFF', logo: null },
         ],
     },
@@ -57,14 +64,14 @@ export const cemacCountries = [
         code: 'GQ',
         name: 'Guinee Equatoriale',
         operators: [
-            { key: 'orange', name: 'Orange Money', color: '#FF6600', text: '#FFFFFF', logo: null },
+            { key: 'orange', name: 'Orange Money', color: '#FF6600', text: '#FFFFFF', logo: LOGO_ORANGE },
         ],
     },
 ];
 
 export const bankCards = [
-    { key: 'visa', name: 'Visa', color: '#1A1F71', text: '#FFFFFF', logo: null },
-    { key: 'mastercard', name: 'Mastercard', color: '#EB001B', text: '#FFFFFF', logo: null },
+    { key: 'visa', name: 'Visa', color: '#1A1F71', text: '#FFFFFF', logo: LOGO_VISA },
+    { key: 'mastercard', name: 'Mastercard', color: '#EB001B', text: '#FFFFFF', logo: LOGO_MASTERCARD },
 ];
 
 export const operatorsForCountry = (code) => cemacCountries.find((c) => c.code === code)?.operators ?? [];
