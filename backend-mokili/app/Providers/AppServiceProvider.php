@@ -24,14 +24,26 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
-        // Ziggy's route() list and Vite's asset tags (script/link/prefetch)
-        // are generated server-side from Laravel's URL generator, which by
-        // default mirrors the current request's detected scheme. Railway's
-        // proxy wasn't reliably surfacing that as https even with proxies
-        // trusted, so every asset/route URL rendered as http:// and got
-        // blocked as mixed content on the https:// page. Forcing the
-        // scheme here is unconditional and doesn't depend on proxy headers.
+        // Ziggy's route() list (via the global url()/route() helpers) and
+        // Vite's asset tags (script/link/prefetch) are generated server-side
+        // from Laravel's URL generator. By default that generator derives
+        // BOTH the host and the scheme from the current Request object at
+        // runtime - and on Railway/FrankenPHP that request-level scheme
+        // detection kept resolving to http:// no matter what we did further
+        // down the stack (trusted proxies, middleware mutating $_SERVER
+        // before Laravel even boots, etc.), so every asset/route URL kept
+        // rendering as http:// and got blocked as mixed content on the
+        // https:// page.
+        //
+        // forceRootUrl() replaces the *entire* root (scheme + host) with a
+        // fixed string taken straight from config('app.url') - it doesn't
+        // ask the Request anything, so it can't be defeated by however
+        // FrankenPHP/Railway's proxy is (mis)reporting the scheme per
+        // request. forceScheme() is kept alongside it as a second guarantee
+        // for any URL helper call that only consults the scheme in
+        // isolation.
         if (str_starts_with(config('app.url'), 'https://')) {
+            URL::forceRootUrl(config('app.url'));
             URL::forceScheme('https');
         }
 
