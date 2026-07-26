@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 // Supports "Continuer avec Google / Facebook / Instagram" (provider +
@@ -33,6 +34,20 @@ return new class extends Migration
                 $table->timestamp('phone_verified_at')->nullable()->after('provider_id');
             }
         });
+
+        // A deploy before this fix already created provider/provider_id
+        // as the (too-wide) default VARCHAR(191) - the hasColumn() guards
+        // above skip re-adding them, so they'd stay wide forever and the
+        // unique index below would keep failing with the same "1071
+        // Specified key was too long" error. MODIFY unconditionally
+        // (safe to re-run) instead of Schema::table()->change(), which
+        // needs doctrine/dbal - not installed, and not addable here (see
+        // SocialOAuthService docblock on why composer.lock can't be
+        // regenerated in this environment).
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE users MODIFY provider VARCHAR(20) NULL');
+            DB::statement('ALTER TABLE users MODIFY provider_id VARCHAR(100) NULL');
+        }
 
         if (! $this->hasUniqueIndex()) {
             Schema::table('users', function (Blueprint $table) {
