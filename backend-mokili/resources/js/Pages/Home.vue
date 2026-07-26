@@ -13,6 +13,19 @@ defineProps({
     featuredOffers: { type: Array, default: () => [] },
 });
 
+// Per-service brand colors, matching the mobile app's AppColors
+// (mobile-mokili/lib/core/theme/app_theme.dart) so the floating
+// service cards below look identical on web and mobile.
+const SERVICE_COLORS = {
+    voyage: '#0B2A5B',
+    logement: '#1E8A3E',
+    voiture: '#E06A1D',
+    divertissement: '#7A2FBF',
+    marketplace: '#D6216B',
+    fret: '#0FA3A3',
+};
+const serviceColor = (slug) => SERVICE_COLORS[slug] ?? '#0B2A5B';
+
 // Same real-photo-first pattern as DestinationImage.vue, for the
 // single hero banner: drop public/images/hero.jpg to replace the
 // illustration, no code change needed.
@@ -32,10 +45,10 @@ const features = [
     <!-- Hero visual: bounded height so the background never has to
          stretch across an unpredictable amount of content (that's what
          caused the earlier cropping bug). Text sits left, over open
-         sea/sky. Service tiles no longer float on top of the photo here
-         (they used to straddle the bottom edge, which put them over an
-         unpredictable mix of photo/gradient) - they now live in their
-         own solid navy band right below, matching the client's mockup. -->
+         sea/sky. The service cards below intentionally straddle this
+         hero's bottom edge (negative margin-top on the next section) -
+         matching the reference mockup's floating white tiles instead
+         of a flat navy band. -->
     <section class="relative h-[360px] overflow-hidden sm:h-[420px] md:h-[480px]">
         <div class="absolute inset-0">
             <img
@@ -72,22 +85,22 @@ const features = [
         </div>
     </section>
 
-    <!-- Service strip: solid navy band under the hero photo, matching
-         the mockup's "fond" (background) instead of tiles floating over
-         a busy photo. Icons render in white here (rather than each
-         category's own brand color) since Voyage's brand color is the
-         same navy as this background - white keeps every icon legible
-         and consistent, brand colors stay intact everywhere else. -->
-    <section id="services" class="scroll-mt-24 bg-navy-900 py-10">
-        <div class="mx-auto grid max-w-5xl grid-cols-3 gap-3 px-6 sm:grid-cols-6 sm:gap-4">
+    <!-- Service grid: white floating cards straddling the hero's bottom
+         edge, matching the mobile app's ServiceGrid (see
+         mobile-mokili/lib/core/widgets/service_grid.dart) and the
+         reference mockup - each card is a white rounded square with a
+         big colored icon (that service's own brand color) and a bold
+         uppercase label in the same color underneath. -->
+    <section id="services" class="relative z-10 -mt-14 px-6 pb-2 sm:-mt-16">
+        <div class="mx-auto grid max-w-5xl grid-cols-3 gap-3 sm:grid-cols-6 sm:gap-4">
             <Link
                 v-for="c in categories"
                 :key="c.slug"
                 :href="`/${c.slug}`"
-                class="flex flex-col items-center gap-2 rounded-2xl p-3 text-center transition hover:bg-white/10"
+                class="flex flex-col items-center justify-center gap-2 rounded-2xl bg-white p-4 text-center shadow-[0_4px_10px_rgba(0,0,0,0.12)] transition hover:-translate-y-1 hover:shadow-[0_8px_18px_rgba(0,0,0,0.16)]"
             >
-                <ServiceIcon :slug="c.slug" class="h-12 w-12 text-white" accent="#050F21" />
-                <span class="text-xs font-semibold uppercase text-white">{{ c.name }}</span>
+                <ServiceIcon :slug="c.slug" class="h-11 w-11" :style="{ color: serviceColor(c.slug) }" />
+                <span class="text-[11px] font-bold uppercase tracking-wide" :style="{ color: serviceColor(c.slug) }">{{ c.name }}</span>
             </Link>
         </div>
     </section>
