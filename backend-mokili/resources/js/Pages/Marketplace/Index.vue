@@ -1,6 +1,7 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
 import ListingImage from '@/Components/ListingImage.vue';
+import ServiceIcon from '@/Components/ServiceIcon.vue';
 import { Head, Link } from '@inertiajs/vue3';
 defineOptions({ layout: MainLayout });
 defineProps({ products: { type: Object, required: true } });
@@ -12,7 +13,12 @@ defineProps({ products: { type: Object, required: true } });
         <p class="mt-1 text-navy-700">Achetez et vendez entre particuliers et professionnels.</p>
         <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <Link v-for="p in products.data" :key="p.id" :href="`/marketplace/${p.slug}`" class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg">
-                <ListingImage :src="p.image_url" fallback-class="bg-pink-700 text-sm" class="h-28">{{ p.category ?? 'Produit' }}</ListingImage>
+                <ListingImage :src="p.image_url" fallback-class="bg-pink-700 text-sm" class="h-28">
+                    <div class="flex flex-col items-center gap-1">
+                        <ServiceIcon slug="marketplace" class="h-8 w-8 text-white" />
+                        <span>{{ p.category ?? 'Produit' }}</span>
+                    </div>
+                </ListingImage>
                 <div class="p-3">
                     <p class="text-sm font-semibold text-navy-900">{{ p.title }}</p>
                     <p class="mt-1 text-sm font-semibold text-gold-600">{{ Number(p.price).toLocaleString('fr-FR') }} {{ p.currency }}</p>
