@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\Sms\LogSmsGateway;
+use App\Services\Sms\SmsGateway;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
@@ -14,7 +16,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // SMS_GATEWAY=log (default) until a real provider is wired up -
+        // see app/Services/Sms/LogSmsGateway.php and config/services.php.
+        $this->app->bind(SmsGateway::class, match (config('services.sms.gateway')) {
+            default => LogSmsGateway::class,
+        });
     }
 
     /**

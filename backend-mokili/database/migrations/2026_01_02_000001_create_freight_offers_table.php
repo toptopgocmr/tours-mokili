@@ -11,6 +11,17 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Guarded with hasTable(): a prior deploy could have been killed
+        // (e.g. by the platform's health-check timeout) after the CREATE
+        // TABLE succeeded but before Laravel recorded this migration as
+        // run, which made every subsequent boot re-attempt the create and
+        // crash with SQLSTATE[42S01] "table already exists", looping the
+        // deploy forever. This makes the migration idempotent/safe to
+        // re-run in that scenario.
+        if (Schema::hasTable('freight_offers')) {
+            return;
+        }
+
         Schema::create('freight_offers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('carrier_id')->nullable()->constrained('users')->nullOnDelete();
