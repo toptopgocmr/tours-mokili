@@ -49,6 +49,14 @@ class Vehicle extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? Storage::disk('public')->url($this->image) : null;
+        if (! $this->image) {
+            return null;
+        }
+
+        // Demo listings store a full external photo URL directly; real
+        // partner uploads store a Storage-disk-relative path.
+        return str_starts_with($this->image, 'http')
+            ? $this->image
+            : Storage::disk('public')->url($this->image);
     }
 }
