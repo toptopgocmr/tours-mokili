@@ -15,11 +15,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
+            // Explicit (short) lengths here: the default VARCHAR(191) from
+            // Schema::defaultStringLength(191) in AppServiceProvider is
+            // fine for a single indexed column, but this table also puts
+            // a COMPOSITE unique index across provider+provider_id below,
+            // and 191+191 chars (utf8mb4, 4 bytes/char) blows past MySQL's
+            // key-length limit ("1071 Specified key was too long"). These
+            // values are never more than a few dozen characters in
+            // practice (e.g. 'google', a numeric provider id).
             if (! Schema::hasColumn('users', 'provider')) {
-                $table->string('provider')->nullable()->after('role');
+                $table->string('provider', 20)->nullable()->after('role');
             }
             if (! Schema::hasColumn('users', 'provider_id')) {
-                $table->string('provider_id')->nullable()->after('provider');
+                $table->string('provider_id', 100)->nullable()->after('provider');
             }
             if (! Schema::hasColumn('users', 'phone_verified_at')) {
                 $table->timestamp('phone_verified_at')->nullable()->after('provider_id');
