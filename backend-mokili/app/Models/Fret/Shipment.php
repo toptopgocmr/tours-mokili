@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 // classique: le cycle de vie est piloté par le champ status.
 class Shipment extends Model
 {
+    protected $table = 'freight_shipments';
+
     protected $fillable = [
         'user_id', 'tracking_code', 'origin_city', 'origin_country',
         'destination_city', 'destination_country', 'weight_kg', 'dimensions',
