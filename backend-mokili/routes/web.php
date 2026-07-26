@@ -35,6 +35,23 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 
+// TEMPORARY debug route - remove once the Mixed Content issue is diagnosed.
+Route::get('/__debug-scheme', function () {
+    return response()->json([
+        'config_app_url' => config('app.url'),
+        'request_getScheme' => request()->getScheme(),
+        'request_isSecure' => request()->isSecure(),
+        'request_root' => request()->root(),
+        'url_to_slash' => url('/'),
+        'asset_test' => asset('build/test.js'),
+        'route_home' => route('home'),
+        'server_HTTPS' => $_SERVER['HTTPS'] ?? null,
+        'server_X_Forwarded_Proto' => $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? null,
+        'server_APP_URL' => $_SERVER['APP_URL'] ?? null,
+        'getenv_APP_URL' => getenv('APP_URL'),
+    ]);
+});
+
 // --- VOYAGE (pilot module - full CRUD + booking + checkout) ---
 Route::prefix('voyage')->name('voyage.')->group(function () {
     Route::get('/', [TravelOfferController::class, 'index'])->name('index');
