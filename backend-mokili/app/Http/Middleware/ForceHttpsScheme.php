@@ -23,6 +23,12 @@ class ForceHttpsScheme
     public function handle(Request $request, Closure $next): Response
     {
         if (str_starts_with((string) config('app.url'), 'https://')) {
+            // With proxies trusted, Symfony's isSecure() prioritizes the
+            // X-Forwarded-Proto header over the raw HTTPS server var -
+            // and Railway's edge sends that header as "http", which
+            // silently overrides the server var above. Rewriting the
+            // header itself closes that loophole too.
+            $request->headers->set('X-Forwarded-Proto', 'https');
             $request->server->set('HTTPS', 'on');
         }
 
