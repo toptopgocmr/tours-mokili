@@ -32,9 +32,11 @@ const features = [
     <!-- Hero visual: bounded height so the background never has to
          stretch across an unpredictable amount of content (that's what
          caused the earlier cropping bug). Text sits left, over open
-         sea/sky; service tiles float on top of the image near the
-         bottom, matching the mockup instead of living below it. -->
-    <section class="relative h-[420px] overflow-hidden sm:h-[480px] md:h-[560px]">
+         sea/sky. Service tiles no longer float on top of the photo here
+         (they used to straddle the bottom edge, which put them over an
+         unpredictable mix of photo/gradient) - they now live in their
+         own solid navy band right below, matching the client's mockup. -->
+    <section class="relative h-[360px] overflow-hidden sm:h-[420px] md:h-[480px]">
         <div class="absolute inset-0">
             <img
                 v-if="!heroPhotoFailed"
@@ -68,21 +70,25 @@ const features = [
                 <button type="submit" class="btn-gold rounded-none px-8">Rechercher</button>
             </form>
         </div>
+    </section>
 
-        <!-- Service tiles float directly on the photo/illustration, like
-             the mockup, instead of living in a separate section below. -->
-        <div id="services" class="scroll-mt-24 absolute inset-x-0 bottom-6 z-10 px-6 sm:bottom-8">
-            <div class="mx-auto grid max-w-5xl grid-cols-3 gap-3 sm:grid-cols-6 sm:gap-4">
-                <Link
-                    v-for="c in categories"
-                    :key="c.slug"
-                    :href="`/${c.slug}`"
-                    class="service-tile"
-                >
-                    <ServiceIcon :slug="c.slug" class="h-7 w-7" :style="{ color: c.color }" />
-                    <span class="text-xs font-semibold uppercase text-navy-900">{{ c.name }}</span>
-                </Link>
-            </div>
+    <!-- Service strip: solid navy band under the hero photo, matching
+         the mockup's "fond" (background) instead of tiles floating over
+         a busy photo. Icons render in white here (rather than each
+         category's own brand color) since Voyage's brand color is the
+         same navy as this background - white keeps every icon legible
+         and consistent, brand colors stay intact everywhere else. -->
+    <section id="services" class="scroll-mt-24 bg-navy-900 py-10">
+        <div class="mx-auto grid max-w-5xl grid-cols-3 gap-3 px-6 sm:grid-cols-6 sm:gap-4">
+            <Link
+                v-for="c in categories"
+                :key="c.slug"
+                :href="`/${c.slug}`"
+                class="flex flex-col items-center gap-2 rounded-2xl p-3 text-center transition hover:bg-white/10"
+            >
+                <ServiceIcon :slug="c.slug" class="h-12 w-12 text-white" accent="#050F21" />
+                <span class="text-xs font-semibold uppercase text-white">{{ c.name }}</span>
+            </Link>
         </div>
     </section>
 

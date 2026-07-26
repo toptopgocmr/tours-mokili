@@ -3,6 +3,7 @@
 namespace App\Models\Voiture;
 
 use App\Models\Booking;
+use App\Models\Concerns\HasPublishingStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -11,10 +12,12 @@ use Illuminate\Support\Str;
 // VOITURE module (skeleton).
 class Vehicle extends Model
 {
+    use HasPublishingStatus;
+
     protected $fillable = [
         'owner_id', 'title', 'slug', 'brand', 'model', 'year', 'category',
         'transmission', 'seats', 'price_per_day', 'currency', 'city', 'country',
-        'image', 'is_active',
+        'image', 'is_active', 'status', 'rejection_reason',
     ];
 
     protected $appends = ['image_url'];
@@ -42,11 +45,6 @@ class Vehicle extends Model
     public function bookings()
     {
         return $this->morphMany(Booking::class, 'bookable');
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
     }
 
     public function getImageUrlAttribute(): ?string

@@ -7,6 +7,8 @@ import {
     PaperAirplaneIcon,
     CalendarDaysIcon,
     UsersIcon,
+    CreditCardIcon,
+    ClipboardDocumentCheckIcon,
     MagnifyingGlassIcon,
     BellIcon,
     ArrowRightOnRectangleIcon,
@@ -21,6 +23,8 @@ const links = [
     { href: '/admin', label: 'Tableau de bord', icon: HomeIcon },
     { href: '/admin/voyage', label: 'Offres Voyage', icon: PaperAirplaneIcon },
     { href: '/admin/reservations', label: 'Reservations', icon: CalendarDaysIcon },
+    { href: '/admin/paiements', label: 'Paiements', icon: CreditCardIcon },
+    { href: '/admin/moderation', label: 'Moderation annonces', icon: ClipboardDocumentCheckIcon },
     { href: '/admin/utilisateurs', label: 'Agents & Partenaires', icon: UsersIcon },
 ];
 

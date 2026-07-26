@@ -20,9 +20,13 @@ const form = useForm({
     bathrooms: props.listing?.bathrooms ?? 1,
     max_guests: props.listing?.max_guests ?? 2,
     is_active: props.listing?.is_active ?? true,
+    intent: 'draft',
     image: null,
     remove_image: false,
 });
+
+const statusLabels = { draft: 'Brouillon', pending: 'En attente de validation', published: 'Publie', rejected: 'Rejete' };
+const statusLabel = computed(() => statusLabels[props.listing?.status] ?? 'Brouillon');
 
 const imagePreview = ref(props.listing?.image_url ?? null);
 const onImageChange = (e) => {
@@ -33,7 +37,11 @@ const onImageChange = (e) => {
     imagePreview.value = URL.createObjectURL(file);
 };
 
-const submit = () => isEdit.value ? form.put(`/partner/logement/${props.listing.id}`) : form.post('/partner/logement');
+const submit = (intent) => {
+    form.intent = intent;
+    if (isEdit.value) form.put(`/partner/logement/${props.listing.id}`);
+    else form.post('/partner/logement');
+};
 </script>
 
 <template>
@@ -96,12 +104,18 @@ const submit = () => isEdit.value ? form.put(`/partner/logement/${props.listing.
             <label class="text-sm font-medium text-slate-700">Description</label>
             <textarea v-model="form.description" rows="4" class="mt-1 w-full rounded border-slate-300"></textarea>
         </div>
+        <div v-if="listing?.status === 'rejected'" class="sm:col-span-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            <p class="font-semibold">Annonce rejetee par un administrateur</p>
+            <p class="mt-1">{{ listing.rejection_reason }}</p>
+        </div>
         <div class="flex items-center gap-2">
             <input v-model="form.is_active" type="checkbox" id="active" />
-            <label for="active" class="text-sm text-slate-700">Publie (visible publiquement)</label>
+            <label for="active" class="text-sm text-slate-700">Actif (visible une fois publie)</label>
         </div>
-        <div class="sm:col-span-2">
-            <button type="submit" class="btn-console-primary w-full" :disabled="form.processing">{{ isEdit ? 'Enregistrer' : 'Publier' }}</button>
+        <p class="text-sm text-slate-500">Statut actuel : <span class="font-semibold text-slate-700">{{ statusLabel }}</span></p>
+        <div class="sm:col-span-2 flex gap-3">
+            <button type="button" class="btn-console-secondary flex-1" :disabled="form.processing" @click="submit('draft')">Enregistrer comme brouillon</button>
+            <button type="button" class="btn-console-primary flex-1" :disabled="form.processing" @click="submit('submit')">Soumettre pour validation</button>
         </div>
     </form>
 </template>

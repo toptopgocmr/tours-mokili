@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Concerns\HandlesImageUploads;
+use App\Http\Controllers\Concerns\HandlesPublishingIntent;
 use App\Http\Controllers\Controller;
 use App\Models\Voiture\Vehicle;
 use Illuminate\Http\RedirectResponse;
@@ -13,6 +14,7 @@ use Inertia\Response;
 class VehicleController extends Controller
 {
     use HandlesImageUploads;
+    use HandlesPublishingIntent;
 
     public function index(Request $request): Response
     {
@@ -30,10 +32,15 @@ class VehicleController extends Controller
     {
         $data = $this->validated($request);
         $data['image'] = $this->resolveImagePath($request, null, 'voiture');
+        $data['status'] = $this->resolveStatus($request);
 
         $request->user()->vehicles()->create($data);
 
-        return redirect()->route('partner.voiture.index')->with('success', 'Vehicule publie.');
+        $message = $data['status'] === 'pending'
+            ? 'Vehicule soumis pour validation par un administrateur.'
+            : 'Vehicule enregistre comme brouillon.';
+
+        return redirect()->route('partner.voiture.index')->with('success', $message);
     }
 
     public function edit(Vehicle $vehicle): Response
@@ -49,6 +56,8 @@ class VehicleController extends Controller
 
         $data = $this->validated($request);
         $data['image'] = $this->resolveImagePath($request, $vehicle->image, 'voiture');
+        $data['status'] = $this->resolveStatus($request, $vehicle->status);
+        $data['rejection_reason'] = $data['status'] === 'pending' ? null : $vehicle->rejection_reason;
 
         $vehicle->update($data);
 

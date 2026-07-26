@@ -19,6 +19,8 @@ class ProductController extends Controller
 
     public function show(Product $product): Response
     {
+        abort_unless($product->is_active && $product->status === 'published', 404);
+
         return Inertia::render('Marketplace/Show', ['product' => $product]);
     }
 }

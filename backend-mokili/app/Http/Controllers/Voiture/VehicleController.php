@@ -19,6 +19,8 @@ class VehicleController extends Controller
 
     public function show(Vehicle $vehicle): Response
     {
+        abort_unless($vehicle->is_active && $vehicle->status === 'published', 404);
+
         return Inertia::render('Voiture/Show', ['vehicle' => $vehicle]);
     }
 }

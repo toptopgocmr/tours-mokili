@@ -3,6 +3,7 @@
 namespace App\Models\Fret;
 
 use App\Models\Booking;
+use App\Models\Concerns\HasPublishingStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -13,10 +14,13 @@ use Illuminate\Support\Str;
 // actual customer shipment once created.
 class FreightOffer extends Model
 {
+    use HasPublishingStatus;
+
     protected $fillable = [
         'carrier_id', 'title', 'slug', 'description', 'mode',
         'origin_city', 'origin_country', 'destination_city', 'destination_country',
         'price_per_kg', 'currency', 'capacity_kg', 'image', 'is_active',
+        'status', 'rejection_reason',
     ];
 
     protected $appends = ['image_url'];
@@ -44,11 +48,6 @@ class FreightOffer extends Model
     public function bookings()
     {
         return $this->morphMany(Booking::class, 'bookable');
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
     }
 
     public function getImageUrlAttribute(): ?string

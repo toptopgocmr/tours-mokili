@@ -1,18 +1,23 @@
 <script setup>
-// Real MOKILI TOUR logo (public/images/logo.jpg). The source file has
-// a plain white background (JPG, no alpha), which reads fine on light
-// surfaces (navbar, white cards) but needs a light chip behind it to
-// stay legible on dark surfaces (footer, admin login) - see "light"
-// variant below.
+// Real MOKILI TOUR logo. Two source files:
+// - public/images/logo.jpg: original, opaque white background - used on
+//   light surfaces (navbar, white cards).
+// - public/images/logo-transparent.png: same logo with the white
+//   background keyed out to transparency - used on dark surfaces
+//   (footer, navy hero) so it blends in directly instead of sitting in
+//   a visible white box/chip.
 defineProps({
-    variant: { type: String, default: 'dark' }, // 'dark' = light background (navbar, cards) | 'light' = dark background (footer)
+    variant: { type: String, default: 'dark' }, // 'dark' = light background (navbar, cards) | 'light' = dark background (footer, hero)
     size: { type: String, default: 'h-12' },
 });
 </script>
 
 <template>
-    <div v-if="variant === 'light'" class="inline-block rounded-xl bg-white px-3 py-2 shadow-sm">
-        <img src="/images/logo.jpg" alt="MOKILI TOUR" :class="[size, 'w-auto object-contain']" />
-    </div>
+    <img
+        v-if="variant === 'light'"
+        src="/images/logo-transparent.png"
+        alt="MOKILI TOUR"
+        :class="[size, 'w-auto object-contain']"
+    />
     <img v-else src="/images/logo.jpg" alt="MOKILI TOUR" :class="[size, 'w-auto object-contain']" />
 </template>

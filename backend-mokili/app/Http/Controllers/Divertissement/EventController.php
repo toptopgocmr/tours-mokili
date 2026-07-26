@@ -19,6 +19,8 @@ class EventController extends Controller
 
     public function show(Event $event): Response
     {
+        abort_unless($event->is_active && $event->status === 'published', 404);
+
         return Inertia::render('Divertissement/Show', ['event' => $event]);
     }
 }

@@ -9,6 +9,7 @@ class Payment extends Model
     protected $fillable = [
         'booking_id', 'user_id', 'provider', 'method', 'amount', 'currency',
         'status', 'peex_track_id', 'peex_request_id', 'peex_response', 'paid_at',
+        'refunded_at', 'refund_reason',
     ];
 
     protected function casts(): array
@@ -16,6 +17,7 @@ class Payment extends Model
         return [
             'peex_response' => 'array',
             'paid_at' => 'datetime',
+            'refunded_at' => 'datetime',
             'amount' => 'decimal:2',
         ];
     }

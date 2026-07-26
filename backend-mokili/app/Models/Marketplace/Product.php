@@ -3,6 +3,7 @@
 namespace App\Models\Marketplace;
 
 use App\Models\Booking;
+use App\Models\Concerns\HasPublishingStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -11,11 +12,14 @@ use Illuminate\Support\Str;
 // MARKETPLACE module (skeleton).
 class Product extends Model
 {
+    use HasPublishingStatus;
+
     protected $table = 'marketplace_products';
 
     protected $fillable = [
         'seller_id', 'title', 'slug', 'description', 'category', 'price',
         'currency', 'stock', 'condition', 'city', 'country', 'image', 'is_active',
+        'status', 'rejection_reason',
     ];
 
     protected $appends = ['image_url'];
@@ -43,11 +47,6 @@ class Product extends Model
     public function orders()
     {
         return $this->morphMany(Booking::class, 'bookable');
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
     }
 
     public function getImageUrlAttribute(): ?string

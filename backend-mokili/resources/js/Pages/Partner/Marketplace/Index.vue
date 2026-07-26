@@ -8,6 +8,17 @@ defineProps({ products: { type: Object, required: true } });
 const remove = (item) => {
     if (confirm(`Supprimer "${item.title}" ?`)) router.delete(`/partner/marketplace/${item.id}`);
 };
+
+const statusBadge = (status) => ({
+    draft: 'console-badge console-badge-neutral',
+    pending: 'console-badge console-badge-pending',
+    published: 'console-badge console-badge-success',
+    rejected: 'console-badge console-badge-error',
+}[status] ?? 'console-badge console-badge-neutral');
+
+const statusLabel = (status) => ({
+    draft: 'Brouillon', pending: 'En attente', published: 'Publie', rejected: 'Rejete',
+}[status] ?? 'Brouillon');
 </script>
 
 <template>
@@ -20,7 +31,7 @@ const remove = (item) => {
     <div class="console-table-wrap">
         <table class="console-table">
             <thead>
-                <tr><th>Titre</th><th>Categorie</th><th>Prix</th><th>Stock</th><th></th></tr>
+                <tr><th>Titre</th><th>Categorie</th><th>Prix</th><th>Stock</th><th>Statut</th><th></th></tr>
             </thead>
             <tbody>
                 <tr v-for="p in products.data" :key="p.id">
@@ -28,12 +39,13 @@ const remove = (item) => {
                     <td>{{ p.category }}</td>
                     <td>{{ Number(p.price).toLocaleString('fr-FR') }} {{ p.currency }}</td>
                     <td>{{ p.stock }}</td>
+                    <td><span :class="statusBadge(p.status)">{{ statusLabel(p.status) }}</span></td>
                     <td class="space-x-3 text-right">
                         <Link :href="`/partner/marketplace/${p.id}/editer`" class="font-semibold text-[#0972D3] hover:underline">Editer</Link>
                         <button class="font-semibold text-red-600 hover:underline" @click="remove(p)">Supprimer</button>
                     </td>
                 </tr>
-                <tr v-if="!products.data.length"><td colspan="5" class="py-6 text-center text-slate-400">Aucun produit publie.</td></tr>
+                <tr v-if="!products.data.length"><td colspan="6" class="py-6 text-center text-slate-400">Aucun produit publie.</td></tr>
             </tbody>
         </table>
     </div>

@@ -8,6 +8,17 @@ defineProps({ vehicles: { type: Object, required: true } });
 const remove = (item) => {
     if (confirm(`Supprimer "${item.title}" ?`)) router.delete(`/partner/voiture/${item.id}`);
 };
+
+const statusBadge = (status) => ({
+    draft: 'console-badge console-badge-neutral',
+    pending: 'console-badge console-badge-pending',
+    published: 'console-badge console-badge-success',
+    rejected: 'console-badge console-badge-error',
+}[status] ?? 'console-badge console-badge-neutral');
+
+const statusLabel = (status) => ({
+    draft: 'Brouillon', pending: 'En attente', published: 'Publie', rejected: 'Rejete',
+}[status] ?? 'Brouillon');
 </script>
 
 <template>
@@ -27,7 +38,7 @@ const remove = (item) => {
                     <td class="font-medium text-slate-900">{{ v.title }}</td>
                     <td>{{ v.brand }} {{ v.model }}</td>
                     <td>{{ Number(v.price_per_day).toLocaleString('fr-FR') }} {{ v.currency }}</td>
-                    <td><span :class="v.is_active ? 'console-badge console-badge-success' : 'console-badge console-badge-neutral'">{{ v.is_active ? 'Actif' : 'Inactif' }}</span></td>
+                    <td><span :class="statusBadge(v.status)">{{ statusLabel(v.status) }}</span></td>
                     <td class="space-x-3 text-right">
                         <Link :href="`/partner/voiture/${v.id}/editer`" class="font-semibold text-[#0972D3] hover:underline">Editer</Link>
                         <button class="font-semibold text-red-600 hover:underline" @click="remove(v)">Supprimer</button>

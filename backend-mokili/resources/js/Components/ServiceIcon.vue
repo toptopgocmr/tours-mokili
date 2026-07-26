@@ -4,9 +4,19 @@
 // shopping_bag, local_shipping) so both clients look consistent.
 // fill="currentColor" so each icon inherits its tile's brand color via
 // the parent's :style="{ color: c.color }".
+//
+// `accent` is the color used for the small cutout details (windows,
+// dashed lines, handle strokes, wheel rims) that give each icon its
+// shape. It defaults to white, which reads fine when the icon body is a
+// brand color (voyage blue, logement green, etc. on a white card). When
+// the icon itself is rendered white (e.g. on a solid navy background,
+// where Voyage's own brand color IS navy and would vanish), pass an
+// `accent` that contrasts with white instead - e.g. the same navy as
+// the background, so the cutouts read as "holes" revealing it.
 const props = defineProps({
     slug: { type: String, required: true },
     class: { type: String, default: 'h-7 w-7' },
+    accent: { type: String, default: '#ffffff' },
 });
 </script>
 
@@ -26,7 +36,7 @@ const props = defineProps({
             <rect x="9.5" y="5" width="5" height="16" />
             <rect x="16" y="12" width="5" height="9" />
         </g>
-        <g fill="#ffffff">
+        <g :fill="accent">
             <rect x="4.2" y="12" width="1.2" height="1.2" />
             <rect x="6.6" y="12" width="1.2" height="1.2" />
             <rect x="4.2" y="15" width="1.2" height="1.2" />
@@ -54,9 +64,9 @@ const props = defineProps({
             fill="currentColor"
             d="M4 17v-3.5a2 2 0 0 1 .13-.71L5.6 9.1A2 2 0 0 1 7.47 8h9.06a2 2 0 0 1 1.87 1.1l1.47 3.69a2 2 0 0 1 .13.71V17a1 1 0 0 1-1 1h-.5a1 1 0 0 1-1-1v-.5h-9V17a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"
         />
-        <path fill="#ffffff" d="M6.2 12.5 7.3 9.6a1 1 0 0 1 .93-.6h7.54a1 1 0 0 1 .93.6l1.1 2.9Z" opacity="0.9" />
-        <circle cx="7.5" cy="16.3" r="1.6" fill="#ffffff" stroke="currentColor" stroke-width="1" />
-        <circle cx="16.5" cy="16.3" r="1.6" fill="#ffffff" stroke="currentColor" stroke-width="1" />
+        <path :fill="accent" d="M6.2 12.5 7.3 9.6a1 1 0 0 1 .93-.6h7.54a1 1 0 0 1 .93.6l1.1 2.9Z" opacity="0.9" />
+        <circle cx="7.5" cy="16.3" r="1.6" :fill="accent" stroke="currentColor" stroke-width="1" />
+        <circle cx="16.5" cy="16.3" r="1.6" :fill="accent" stroke="currentColor" stroke-width="1" />
     </svg>
 
     <!-- Divertissement: flat horizontal ticket, matching Material's "confirmation_number" -->
@@ -65,7 +75,7 @@ const props = defineProps({
             fill="currentColor"
             d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-3a2 2 0 0 0 0-4Z"
         />
-        <g fill="#ffffff">
+        <g :fill="accent">
             <rect x="11.2" y="7" width="1.6" height="1.8" />
             <rect x="11.2" y="10.6" width="1.6" height="1.8" />
             <rect x="11.2" y="14.2" width="1.6" height="1.8" />
@@ -75,15 +85,15 @@ const props = defineProps({
     <!-- Marketplace: shopping bag, matching Material's "shopping_bag" -->
     <svg v-else-if="slug === 'marketplace'" :class="props.class" viewBox="0 0 24 24">
         <path fill="currentColor" d="M6 8h12l-1.2 12.3a1 1 0 0 1-1 .7H8.2a1 1 0 0 1-1-.7L6 8Z" />
-        <path fill="none" stroke="#ffffff" stroke-width="1.6" d="M9 8V6a3 3 0 0 1 6 0v2" />
+        <path fill="none" :stroke="accent" stroke-width="1.6" d="M9 8V6a3 3 0 0 1 6 0v2" />
     </svg>
 
     <!-- Fret: delivery truck, matching Material's "local_shipping" -->
     <svg v-else-if="slug === 'fret'" :class="props.class" viewBox="0 0 24 24">
         <path fill="currentColor" d="M2 7h11v9H2z" />
         <path fill="currentColor" d="M13 10h4.3a1 1 0 0 1 .8.4l2.2 2.9a1 1 0 0 1 .2.6V16h-7.5z" />
-        <circle cx="7" cy="18" r="1.7" fill="#ffffff" stroke="currentColor" stroke-width="1.1" />
-        <circle cx="17.5" cy="18" r="1.7" fill="#ffffff" stroke="currentColor" stroke-width="1.1" />
+        <circle cx="7" cy="18" r="1.7" :fill="accent" stroke="currentColor" stroke-width="1.1" />
+        <circle cx="17.5" cy="18" r="1.7" :fill="accent" stroke="currentColor" stroke-width="1.1" />
     </svg>
 
     <svg v-else :class="props.class" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">

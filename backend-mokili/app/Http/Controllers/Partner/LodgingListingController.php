@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Concerns\HandlesImageUploads;
+use App\Http\Controllers\Concerns\HandlesPublishingIntent;
 use App\Http\Controllers\Controller;
 use App\Models\Logement\LodgingListing;
 use Illuminate\Http\RedirectResponse;
@@ -13,6 +14,7 @@ use Inertia\Response;
 class LodgingListingController extends Controller
 {
     use HandlesImageUploads;
+    use HandlesPublishingIntent;
 
     public function index(Request $request): Response
     {
@@ -30,10 +32,15 @@ class LodgingListingController extends Controller
     {
         $data = $this->validated($request);
         $data['image'] = $this->resolveImagePath($request, null, 'logement');
+        $data['status'] = $this->resolveStatus($request);
 
         $request->user()->lodgingListings()->create($data);
 
-        return redirect()->route('partner.logement.index')->with('success', 'Logement publie.');
+        $message = $data['status'] === 'pending'
+            ? 'Logement soumis pour validation par un administrateur.'
+            : 'Logement enregistre comme brouillon.';
+
+        return redirect()->route('partner.logement.index')->with('success', $message);
     }
 
     public function edit(LodgingListing $listing): Response
@@ -49,6 +56,8 @@ class LodgingListingController extends Controller
 
         $data = $this->validated($request);
         $data['image'] = $this->resolveImagePath($request, $listing->image, 'logement');
+        $data['status'] = $this->resolveStatus($request, $listing->status);
+        $data['rejection_reason'] = $data['status'] === 'pending' ? null : $listing->rejection_reason;
 
         $listing->update($data);
 

@@ -21,6 +21,8 @@ class FreightOfferController extends Controller
 
     public function show(FreightOffer $freightOffer): Response
     {
+        abort_unless($freightOffer->is_active && $freightOffer->status === 'published', 404);
+
         return Inertia::render('Fret/Show', ['offer' => $freightOffer]);
     }
 }

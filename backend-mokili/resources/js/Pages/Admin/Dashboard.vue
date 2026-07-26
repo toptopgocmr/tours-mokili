@@ -9,6 +9,8 @@ import {
     CubeIcon,
     CalendarDaysIcon,
     CheckCircleIcon,
+    ArrowTrendingUpIcon,
+    ArrowTrendingDownIcon,
 } from '@heroicons/vue/24/outline';
 
 defineOptions({ layout: AdminLayout });
@@ -16,7 +18,10 @@ defineOptions({ layout: AdminLayout });
 const props = defineProps({
     stats: { type: Object, required: true },
     recentBookings: { type: Array, default: () => [] },
+    kpis: { type: Object, default: () => ({}) },
 });
+
+const money = (v) => `${Number(v ?? 0).toLocaleString('fr-FR')} XAF`;
 
 const cards = [
     { key: 'users', label: 'Clients', icon: UsersIcon, color: 'text-[#0972D3]', bg: 'bg-blue-50' },
@@ -51,6 +56,54 @@ const badgeClass = (status) => ({
             </div>
             <p class="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">{{ c.label }}</p>
             <p class="mt-1 text-2xl font-bold text-slate-900">{{ stats[c.key] }}</p>
+        </div>
+    </div>
+
+    <!-- Dynamic decision KPIs: revenue trend, bookings by module, top partners -->
+    <div class="mt-6 grid gap-6 lg:grid-cols-3">
+        <div class="console-panel">
+            <h2 class="font-semibold text-slate-900">Revenu ce mois-ci</h2>
+            <p class="mt-2 text-2xl font-bold text-slate-900">{{ money(kpis.revenueThisMonth) }}</p>
+            <div class="mt-2 flex items-center gap-1.5 text-sm">
+                <component
+                    :is="kpis.revenueChangePercent >= 0 ? ArrowTrendingUpIcon : ArrowTrendingDownIcon"
+                    :class="['h-4 w-4', kpis.revenueChangePercent >= 0 ? 'text-green-600' : 'text-red-600']"
+                />
+                <span :class="kpis.revenueChangePercent >= 0 ? 'text-green-600' : 'text-red-600'">
+                    {{ kpis.revenueChangePercent >= 0 ? '+' : '' }}{{ kpis.revenueChangePercent }}%
+                </span>
+                <span class="text-slate-400">vs mois dernier ({{ money(kpis.revenueLastMonth) }})</span>
+            </div>
+            <div class="mt-4 border-t border-slate-100 pt-3">
+                <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Taux de remboursement</p>
+                <p class="mt-1 text-xl font-bold text-slate-900">{{ kpis.refundRate }}%</p>
+            </div>
+        </div>
+
+        <div class="console-panel">
+            <h2 class="font-semibold text-slate-900">Reservations par module</h2>
+            <ul class="mt-4 space-y-3">
+                <li v-for="m in kpis.bookingsByModule" :key="m.label">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-slate-600">{{ m.label }}</span>
+                        <span class="font-semibold text-slate-900">{{ m.count }}</span>
+                    </div>
+                    <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div class="h-full rounded-full bg-[#0972D3]" :style="{ width: `${m.percent}%` }" />
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="console-panel">
+            <h2 class="font-semibold text-slate-900">Top partenaires (revenu confirme)</h2>
+            <ol class="mt-4 space-y-2 text-sm">
+                <li v-for="(p, i) in kpis.topPartners" :key="p.name" class="flex items-center justify-between">
+                    <span class="text-slate-600">{{ i + 1 }}. {{ p.name }}</span>
+                    <span class="font-semibold text-slate-900">{{ money(p.revenue) }}</span>
+                </li>
+                <li v-if="!kpis.topPartners?.length" class="text-slate-400">Pas encore de revenu confirme.</li>
+            </ol>
         </div>
     </div>
 

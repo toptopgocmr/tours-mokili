@@ -19,9 +19,13 @@ const form = useForm({
     city: props.product?.city ?? '',
     country: props.product?.country ?? '',
     is_active: props.product?.is_active ?? true,
+    intent: 'draft',
     image: null,
     remove_image: false,
 });
+
+const statusLabels = { draft: 'Brouillon', pending: 'En attente de validation', published: 'Publie', rejected: 'Rejete' };
+const statusLabel = computed(() => statusLabels[props.product?.status] ?? 'Brouillon');
 
 const imagePreview = ref(props.product?.image_url ?? null);
 const onImageChange = (e) => {
@@ -32,7 +36,11 @@ const onImageChange = (e) => {
     imagePreview.value = URL.createObjectURL(file);
 };
 
-const submit = () => isEdit.value ? form.put(`/partner/marketplace/${props.product.id}`) : form.post('/partner/marketplace');
+const submit = (intent) => {
+    form.intent = intent;
+    if (isEdit.value) form.put(`/partner/marketplace/${props.product.id}`);
+    else form.post('/partner/marketplace');
+};
 </script>
 
 <template>
@@ -94,12 +102,18 @@ const submit = () => isEdit.value ? form.put(`/partner/marketplace/${props.produ
             <label class="text-sm font-medium text-slate-700">Description</label>
             <textarea v-model="form.description" rows="4" class="mt-1 w-full rounded border-slate-300"></textarea>
         </div>
+        <div v-if="product?.status === 'rejected'" class="sm:col-span-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            <p class="font-semibold">Annonce rejetee par un administrateur</p>
+            <p class="mt-1">{{ product.rejection_reason }}</p>
+        </div>
         <div class="flex items-center gap-2 sm:col-span-2">
             <input v-model="form.is_active" type="checkbox" id="active" />
-            <label for="active" class="text-sm text-slate-700">Publie (visible publiquement)</label>
+            <label for="active" class="text-sm text-slate-700">Actif (visible une fois publie)</label>
         </div>
-        <div class="sm:col-span-2">
-            <button type="submit" class="btn-console-primary w-full" :disabled="form.processing">{{ isEdit ? 'Enregistrer' : 'Publier' }}</button>
+        <p class="text-sm text-slate-500 sm:col-span-2">Statut actuel : <span class="font-semibold text-slate-700">{{ statusLabel }}</span></p>
+        <div class="sm:col-span-2 flex gap-3">
+            <button type="button" class="btn-console-secondary flex-1" :disabled="form.processing" @click="submit('draft')">Enregistrer comme brouillon</button>
+            <button type="button" class="btn-console-primary flex-1" :disabled="form.processing" @click="submit('submit')">Soumettre pour validation</button>
         </div>
     </form>
 </template>

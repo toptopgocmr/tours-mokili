@@ -3,6 +3,7 @@
 namespace App\Models\Logement;
 
 use App\Models\Booking;
+use App\Models\Concerns\HasPublishingStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -12,10 +13,12 @@ use Illuminate\Support\Str;
 // Voyage\TravelOffer pattern).
 class LodgingListing extends Model
 {
+    use HasPublishingStatus;
+
     protected $fillable = [
         'owner_id', 'title', 'slug', 'description', 'city', 'country', 'address',
         'price_per_night', 'currency', 'bedrooms', 'bathrooms', 'max_guests',
-        'amenities', 'image', 'is_active',
+        'amenities', 'image', 'is_active', 'status', 'rejection_reason',
     ];
 
     protected $appends = ['image_url'];
@@ -44,11 +47,6 @@ class LodgingListing extends Model
     public function bookings()
     {
         return $this->morphMany(Booking::class, 'bookable');
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
     }
 
     public function getImageUrlAttribute(): ?string

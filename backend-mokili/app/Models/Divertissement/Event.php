@@ -3,6 +3,7 @@
 namespace App\Models\Divertissement;
 
 use App\Models\Booking;
+use App\Models\Concerns\HasPublishingStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -11,10 +12,12 @@ use Illuminate\Support\Str;
 // DIVERTISSEMENT module (skeleton) - billetterie evenements.
 class Event extends Model
 {
+    use HasPublishingStatus;
+
     protected $fillable = [
         'organizer_id', 'title', 'slug', 'category', 'description', 'venue',
         'city', 'country', 'starts_at', 'ends_at', 'price', 'currency',
-        'capacity', 'image', 'is_active',
+        'capacity', 'image', 'is_active', 'status', 'rejection_reason',
     ];
 
     protected $appends = ['image_url'];
@@ -44,11 +47,6 @@ class Event extends Model
     public function bookings()
     {
         return $this->morphMany(Booking::class, 'bookable');
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
     }
 
     public function getImageUrlAttribute(): ?string

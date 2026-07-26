@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Concerns\HandlesImageUploads;
+use App\Http\Controllers\Concerns\HandlesPublishingIntent;
 use App\Http\Controllers\Controller;
 use App\Models\Divertissement\Event;
 use Illuminate\Http\RedirectResponse;
@@ -13,6 +14,7 @@ use Inertia\Response;
 class EventController extends Controller
 {
     use HandlesImageUploads;
+    use HandlesPublishingIntent;
 
     public function index(Request $request): Response
     {
@@ -30,10 +32,15 @@ class EventController extends Controller
     {
         $data = $this->validated($request);
         $data['image'] = $this->resolveImagePath($request, null, 'divertissement');
+        $data['status'] = $this->resolveStatus($request);
 
         $request->user()->events()->create($data);
 
-        return redirect()->route('partner.divertissement.index')->with('success', 'Evenement publie.');
+        $message = $data['status'] === 'pending'
+            ? 'Evenement soumis pour validation par un administrateur.'
+            : 'Evenement enregistre comme brouillon.';
+
+        return redirect()->route('partner.divertissement.index')->with('success', $message);
     }
 
     public function edit(Event $event): Response
@@ -49,6 +56,8 @@ class EventController extends Controller
 
         $data = $this->validated($request);
         $data['image'] = $this->resolveImagePath($request, $event->image, 'divertissement');
+        $data['status'] = $this->resolveStatus($request, $event->status);
+        $data['rejection_reason'] = $data['status'] === 'pending' ? null : $event->rejection_reason;
 
         $event->update($data);
 

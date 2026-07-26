@@ -10,6 +10,17 @@ const modeLabel = { air: 'Aerien', mer: 'Maritime', route: 'Routier' };
 const remove = (item) => {
     if (confirm(`Supprimer "${item.title}" ?`)) router.delete(`/partner/fret/${item.id}`);
 };
+
+const statusBadge = (status) => ({
+    draft: 'console-badge console-badge-neutral',
+    pending: 'console-badge console-badge-pending',
+    published: 'console-badge console-badge-success',
+    rejected: 'console-badge console-badge-error',
+}[status] ?? 'console-badge console-badge-neutral');
+
+const statusLabel = (status) => ({
+    draft: 'Brouillon', pending: 'En attente', published: 'Publie', rejected: 'Rejete',
+}[status] ?? 'Brouillon');
 </script>
 
 <template>
@@ -30,7 +41,7 @@ const remove = (item) => {
                     <td>{{ o.origin_city }} &rarr; {{ o.destination_city }}</td>
                     <td class="uppercase">{{ modeLabel[o.mode] }}</td>
                     <td>{{ Number(o.price_per_kg).toLocaleString('fr-FR') }} {{ o.currency }}</td>
-                    <td><span :class="o.is_active ? 'console-badge console-badge-success' : 'console-badge console-badge-neutral'">{{ o.is_active ? 'Active' : 'Inactive' }}</span></td>
+                    <td><span :class="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
                     <td class="space-x-3 text-right">
                         <Link :href="`/partner/fret/${o.id}/editer`" class="font-semibold text-[#0972D3] hover:underline">Editer</Link>
                         <button class="font-semibold text-red-600 hover:underline" @click="remove(o)">Supprimer</button>

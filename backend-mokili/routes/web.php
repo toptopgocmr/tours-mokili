@@ -3,15 +3,19 @@
 use App\Http\Controllers\Admin\AuthenticatedSessionController as AdminAuthenticatedSessionController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\ModerationController as AdminModerationController;
+use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\TravelOfferController as AdminTravelOfferController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Divertissement\EventController;
+use App\Http\Controllers\Fret\BookingController as FretBookingController;
 use App\Http\Controllers\Fret\FreightOfferController;
 use App\Http\Controllers\Fret\ShipmentController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Logement\BookingController as LogementBookingController;
 use App\Http\Controllers\Logement\LodgingListingController;
 use App\Http\Controllers\Marketplace\ProductController;
 use App\Http\Controllers\Partner\AuthenticatedSessionController as PartnerAuthenticatedSessionController;
@@ -68,6 +72,10 @@ Route::prefix('voyage')->name('voyage.')->group(function () {
 Route::prefix('logement')->name('logement.')->group(function () {
     Route::get('/', [LodgingListingController::class, 'index'])->name('index');
     Route::get('/{lodgingListing:slug}', [LodgingListingController::class, 'show'])->name('show');
+
+    Route::middleware('auth')->group(function () {
+        Route::post('/{lodgingListing:slug}/reserver', [LogementBookingController::class, 'store'])->name('book');
+    });
 });
 
 Route::prefix('voiture')->name('voiture.')->group(function () {
@@ -88,6 +96,12 @@ Route::prefix('marketplace')->name('marketplace.')->group(function () {
 Route::prefix('fret')->name('fret.')->group(function () {
     Route::get('/', [FreightOfferController::class, 'index'])->name('index');
 
+    // Public, no-login tracking lookup by code (DHL-style) - must be
+    // registered before the {freightOffer:slug} wildcard below so "suivi"
+    // isn't parsed as a slug.
+    Route::get('/suivi', [ShipmentController::class, 'trackPublic'])->name('track');
+    Route::get('/suivi/{code}', [ShipmentController::class, 'trackPublic'])->name('track.show');
+
     // Customer's own shipment tracking - must be registered before the
     // {freightOffer:slug} wildcard below so "mes-envois" isn't parsed as a
     // slug.
@@ -97,6 +111,8 @@ Route::prefix('fret')->name('fret.')->group(function () {
     });
 
     Route::get('/{freightOffer:slug}', [FreightOfferController::class, 'show'])->name('show');
+
+    Route::middleware('auth')->post('/{freightOffer:slug}/demande', [FretBookingController::class, 'store'])->name('book');
 });
 
 // --- Shared checkout (Peex wallet verification -> payment), any module ---
@@ -130,6 +146,13 @@ Route::middleware(['auth', 'role:admin,agent'])->prefix('admin')->name('admin.')
     Route::delete('/voyage/{travelOffer}', [AdminTravelOfferController::class, 'destroy'])->name('voyage.destroy');
 
     Route::get('/reservations', [AdminBookingController::class, 'index'])->name('bookings.index');
+
+    Route::get('/paiements', [AdminPaymentController::class, 'index'])->name('payments.index');
+    Route::post('/paiements/{payment}/rembourser', [AdminPaymentController::class, 'refund'])->name('payments.refund');
+
+    Route::get('/moderation', [AdminModerationController::class, 'index'])->name('moderation.index');
+    Route::post('/moderation/{module}/{id}/approuver', [AdminModerationController::class, 'approve'])->name('moderation.approve');
+    Route::post('/moderation/{module}/{id}/rejeter', [AdminModerationController::class, 'reject'])->name('moderation.reject');
 
     // User/agent/partner account management - creating agent or admin
     // accounts is intentionally left possible only to existing admins.

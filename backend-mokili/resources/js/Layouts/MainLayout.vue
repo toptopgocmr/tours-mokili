@@ -84,7 +84,7 @@ const navLinks = [
                         <ul class="space-y-2 text-sm text-navy-50/80">
                             <li v-for="c in categories" :key="c.slug">
                                 <Link :href="`/${c.slug}`" class="flex items-center gap-2 hover:text-white">
-                                    <ServiceIcon :slug="c.slug" class="h-4 w-4" />
+                                    <ServiceIcon :slug="c.slug" class="h-4 w-4" accent="#050F21" />
                                     {{ c.name }}
                                 </Link>
                             </li>

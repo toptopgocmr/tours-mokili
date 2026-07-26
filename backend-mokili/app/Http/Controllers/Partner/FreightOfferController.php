@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Concerns\HandlesImageUploads;
+use App\Http\Controllers\Concerns\HandlesPublishingIntent;
 use App\Http\Controllers\Controller;
 use App\Models\Fret\FreightOffer;
 use Illuminate\Http\RedirectResponse;
@@ -13,6 +14,7 @@ use Inertia\Response;
 class FreightOfferController extends Controller
 {
     use HandlesImageUploads;
+    use HandlesPublishingIntent;
 
     public function index(Request $request): Response
     {
@@ -30,10 +32,15 @@ class FreightOfferController extends Controller
     {
         $data = $this->validated($request);
         $data['image'] = $this->resolveImagePath($request, null, 'fret');
+        $data['status'] = $this->resolveStatus($request);
 
         $request->user()->freightOffers()->create($data);
 
-        return redirect()->route('partner.fret.index')->with('success', 'Offre de fret publiee.');
+        $message = $data['status'] === 'pending'
+            ? 'Offre de fret soumise pour validation par un administrateur.'
+            : 'Offre de fret enregistree comme brouillon.';
+
+        return redirect()->route('partner.fret.index')->with('success', $message);
     }
 
     public function edit(FreightOffer $offer): Response
@@ -49,6 +56,8 @@ class FreightOfferController extends Controller
 
         $data = $this->validated($request);
         $data['image'] = $this->resolveImagePath($request, $offer->image, 'fret');
+        $data['status'] = $this->resolveStatus($request, $offer->status);
+        $data['rejection_reason'] = $data['status'] === 'pending' ? null : $offer->rejection_reason;
 
         $offer->update($data);
 
