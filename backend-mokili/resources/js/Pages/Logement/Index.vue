@@ -47,47 +47,57 @@ const bookingHref = (l) => {
 
 <template>
     <Head title="Logement" />
-    <div class="bg-navy-900 py-8">
-        <div class="mx-auto max-w-7xl px-6">
-            <h1 class="text-2xl font-bold text-white">Trouvez votre logement</h1>
-            <p class="mt-1 text-sm text-navy-200">Appartements, maisons et residences a louer partout au Congo.</p>
 
-            <form
-                class="mt-5 grid gap-3 rounded-2xl bg-white p-4 shadow-lg sm:grid-cols-2 lg:grid-cols-5"
-                @submit.prevent="submitSearch"
-            >
-                <div class="lg:col-span-2">
-                    <label class="text-xs font-semibold uppercase text-navy-500">Destination</label>
-                    <input
-                        v-model="search.city"
-                        type="text"
-                        placeholder="Ville (ex. Brazzaville)"
-                        class="mt-1 w-full rounded-lg border-gray-300 text-sm"
-                    />
-                </div>
-                <div>
-                    <label class="text-xs font-semibold uppercase text-navy-500">Arrivee</label>
-                    <input v-model="search.check_in" type="date" class="mt-1 w-full rounded-lg border-gray-300 text-sm" />
-                </div>
-                <div>
-                    <label class="text-xs font-semibold uppercase text-navy-500">Depart</label>
-                    <input v-model="search.check_out" type="date" class="mt-1 w-full rounded-lg border-gray-300 text-sm" />
-                </div>
-                <div>
-                    <label class="text-xs font-semibold uppercase text-navy-500">Voyageurs</label>
-                    <input
-                        v-model.number="search.guests"
-                        type="number"
-                        min="1"
-                        placeholder="2"
-                        class="mt-1 w-full rounded-lg border-gray-300 text-sm"
-                    />
-                </div>
-                <div class="flex items-end lg:col-span-5">
-                    <button type="submit" class="btn-gold w-full lg:w-auto lg:px-10">Rechercher</button>
-                </div>
-            </form>
+    <!-- Hero + search: style Booking.com (barre de recherche flottante
+         par-dessus la photo, a cheval sur le bord bas). -->
+    <section class="relative h-[260px] overflow-hidden sm:h-[300px]">
+        <img src="/images/hero.jpg" alt="Logement" class="h-full w-full object-cover object-[center_30%]" />
+        <div class="absolute inset-0 bg-gradient-to-b from-navy-900/70 via-navy-900/30 to-navy-900/10" />
+        <div class="relative flex h-full max-w-3xl flex-col justify-start px-6 pt-14 text-left sm:px-10 sm:pt-16">
+            <p class="text-sm font-semibold uppercase tracking-widest text-gold-600">Logement</p>
+            <h1 class="mt-2 text-2xl font-extrabold text-white drop-shadow sm:text-3xl">Trouvez votre logement</h1>
+            <p class="mt-1 max-w-lg text-sm text-white/90 drop-shadow">
+                Appartements, maisons et residences a louer partout au Congo.
+            </p>
         </div>
+    </section>
+
+    <div class="relative z-10 -mt-10 px-6 sm:-mt-12">
+        <form
+            class="mx-auto grid max-w-5xl gap-3 rounded-2xl bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.15)] sm:grid-cols-2 lg:grid-cols-5"
+            @submit.prevent="submitSearch"
+        >
+            <div class="lg:col-span-2">
+                <label class="text-xs font-semibold uppercase text-navy-500">Destination</label>
+                <input
+                    v-model="search.city"
+                    type="text"
+                    placeholder="Ville (ex. Brazzaville)"
+                    class="mt-1 w-full rounded-lg border-gray-300 text-sm"
+                />
+            </div>
+            <div>
+                <label class="text-xs font-semibold uppercase text-navy-500">Arrivee</label>
+                <input v-model="search.check_in" type="date" class="mt-1 w-full rounded-lg border-gray-300 text-sm" />
+            </div>
+            <div>
+                <label class="text-xs font-semibold uppercase text-navy-500">Depart</label>
+                <input v-model="search.check_out" type="date" class="mt-1 w-full rounded-lg border-gray-300 text-sm" />
+            </div>
+            <div>
+                <label class="text-xs font-semibold uppercase text-navy-500">Voyageurs</label>
+                <input
+                    v-model.number="search.guests"
+                    type="number"
+                    min="1"
+                    placeholder="2"
+                    class="mt-1 w-full rounded-lg border-gray-300 text-sm"
+                />
+            </div>
+            <div class="flex items-end lg:col-span-5">
+                <button type="submit" class="btn-gold w-full lg:w-auto lg:px-10">Rechercher</button>
+            </div>
+        </form>
     </div>
 
     <div class="mx-auto max-w-7xl px-6 py-10">
