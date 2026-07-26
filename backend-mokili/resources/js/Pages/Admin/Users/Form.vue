@@ -21,37 +21,39 @@ const submit = () => form.post('/admin/utilisateurs');
 <template>
     <Head title="Nouveau compte" />
 
-    <h1 class="text-2xl font-bold text-navy-900">Creer un compte agent ou partenaire</h1>
+    <div class="mb-5">
+        <h1 class="text-xl font-bold text-slate-900">Creer un compte agent ou partenaire</h1>
+    </div>
 
-    <form class="mt-6 max-w-lg space-y-4 rounded-2xl border bg-white p-6" @submit.prevent="submit">
+    <form class="console-panel max-w-lg space-y-4" @submit.prevent="submit">
         <div>
-            <label class="text-sm font-medium text-navy-900">Role</label>
-            <select v-model="form.role" class="mt-1 w-full rounded-lg border-gray-300">
+            <label class="text-sm font-medium text-slate-700">Role</label>
+            <select v-model="form.role" class="mt-1 w-full rounded border-slate-300">
                 <option value="agent">Agent (staff interne)</option>
                 <option value="partner">Partenaire</option>
                 <option value="admin">Admin</option>
             </select>
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Nom complet</label>
-            <input v-model="form.name" type="text" class="mt-1 w-full rounded-lg border-gray-300" required />
+            <label class="text-sm font-medium text-slate-700">Nom complet</label>
+            <input v-model="form.name" type="text" class="mt-1 w-full rounded border-slate-300" required />
             <p v-if="form.errors.name" class="mt-1 text-xs text-red-600">{{ form.errors.name }}</p>
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Email</label>
-            <input v-model="form.email" type="email" class="mt-1 w-full rounded-lg border-gray-300" required />
+            <label class="text-sm font-medium text-slate-700">Email</label>
+            <input v-model="form.email" type="email" class="mt-1 w-full rounded border-slate-300" required />
             <p v-if="form.errors.email" class="mt-1 text-xs text-red-600">{{ form.errors.email }}</p>
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Telephone</label>
-            <input v-model="form.phone" type="tel" class="mt-1 w-full rounded-lg border-gray-300" />
+            <label class="text-sm font-medium text-slate-700">Telephone</label>
+            <input v-model="form.phone" type="tel" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Mot de passe temporaire</label>
-            <input v-model="form.password" type="text" class="mt-1 w-full rounded-lg border-gray-300" required />
-            <p class="mt-1 text-xs text-navy-500">Communiquez-le a la personne concernee ; elle pourra le changer ensuite.</p>
+            <label class="text-sm font-medium text-slate-700">Mot de passe temporaire</label>
+            <input v-model="form.password" type="text" class="mt-1 w-full rounded border-slate-300" required />
+            <p class="mt-1 text-xs text-slate-500">Communiquez-le a la personne concernee ; elle pourra le changer ensuite.</p>
             <p v-if="form.errors.password" class="mt-1 text-xs text-red-600">{{ form.errors.password }}</p>
         </div>
-        <button type="submit" class="btn-gold w-full" :disabled="form.processing">Creer le compte</button>
+        <button type="submit" class="btn-console-primary w-full" :disabled="form.processing">Creer le compte</button>
     </form>
 </template>

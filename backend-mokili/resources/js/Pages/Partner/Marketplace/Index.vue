@@ -12,28 +12,28 @@ const remove = (item) => {
 
 <template>
     <Head title="Mes produits" />
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-navy-900">Mes produits</h1>
-        <Link href="/partner/marketplace/creer" class="btn-gold !py-2 text-sm">+ Ajouter un produit</Link>
+    <div class="mb-5 flex items-center justify-between">
+        <h1 class="text-xl font-bold text-slate-900">Mes produits</h1>
+        <Link href="/partner/marketplace/creer" class="btn-console-primary">+ Ajouter un produit</Link>
     </div>
 
-    <div class="mt-6 overflow-hidden rounded-2xl border bg-white">
-        <table class="w-full text-left text-sm">
-            <thead class="bg-navy-50 text-navy-500">
-                <tr><th class="px-4 py-3">Titre</th><th class="px-4 py-3">Categorie</th><th class="px-4 py-3">Prix</th><th class="px-4 py-3">Stock</th><th class="px-4 py-3"></th></tr>
+    <div class="console-table-wrap">
+        <table class="console-table">
+            <thead>
+                <tr><th>Titre</th><th>Categorie</th><th>Prix</th><th>Stock</th><th></th></tr>
             </thead>
             <tbody>
-                <tr v-for="p in products.data" :key="p.id" class="border-t">
-                    <td class="px-4 py-3 font-medium">{{ p.title }}</td>
-                    <td class="px-4 py-3">{{ p.category }}</td>
-                    <td class="px-4 py-3">{{ Number(p.price).toLocaleString('fr-FR') }} {{ p.currency }}</td>
-                    <td class="px-4 py-3">{{ p.stock }}</td>
-                    <td class="space-x-3 px-4 py-3 text-right">
-                        <Link :href="`/partner/marketplace/${p.id}/editer`" class="font-semibold text-gold-600">Editer</Link>
-                        <button class="font-semibold text-red-600" @click="remove(p)">Supprimer</button>
+                <tr v-for="p in products.data" :key="p.id">
+                    <td class="font-medium text-slate-900">{{ p.title }}</td>
+                    <td>{{ p.category }}</td>
+                    <td>{{ Number(p.price).toLocaleString('fr-FR') }} {{ p.currency }}</td>
+                    <td>{{ p.stock }}</td>
+                    <td class="space-x-3 text-right">
+                        <Link :href="`/partner/marketplace/${p.id}/editer`" class="font-semibold text-[#0972D3] hover:underline">Editer</Link>
+                        <button class="font-semibold text-red-600 hover:underline" @click="remove(p)">Supprimer</button>
                     </td>
                 </tr>
-                <tr v-if="!products.data.length"><td colspan="5" class="px-4 py-6 text-center text-navy-400">Aucun produit publie.</td></tr>
+                <tr v-if="!products.data.length"><td colspan="5" class="py-6 text-center text-slate-400">Aucun produit publie.</td></tr>
             </tbody>
         </table>
     </div>

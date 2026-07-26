@@ -17,42 +17,52 @@ const cards = [
     { key: 'bookings', label: 'Reservations' },
     { key: 'bookingsConfirmed', label: 'Confirmees' },
 ];
+
+const badgeClass = (status) => ({
+    confirmed: 'console-badge console-badge-success',
+    awaiting_payment: 'console-badge console-badge-pending',
+    pending: 'console-badge console-badge-pending',
+    cancelled: 'console-badge console-badge-error',
+}[status] ?? 'console-badge console-badge-neutral');
 </script>
 
 <template>
     <Head title="Tableau de bord" />
 
-    <h1 class="text-2xl font-bold text-navy-900">Tableau de bord</h1>
+    <div class="mb-5">
+        <h1 class="text-xl font-bold text-slate-900">Tableau de bord</h1>
+        <p class="text-sm text-slate-500">Vue d'ensemble de l'activite MOKILI TOUR.</p>
+    </div>
 
-    <div class="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <div v-for="c in cards" :key="c.key" class="rounded-2xl border bg-white p-4">
-            <p class="text-2xl font-bold text-navy-900">{{ stats[c.key] }}</p>
-            <p class="text-xs text-navy-500">{{ c.label }}</p>
+    <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+        <div v-for="c in cards" :key="c.key" class="console-stat">
+            <p class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ c.label }}</p>
+            <p class="mt-1 text-2xl font-bold text-slate-900">{{ stats[c.key] }}</p>
         </div>
     </div>
 
-    <div class="mt-8 rounded-2xl border bg-white p-6">
+    <div class="mt-6 console-panel">
         <div class="mb-4 flex items-center justify-between">
-            <h2 class="font-semibold text-navy-900">Dernieres reservations</h2>
-            <Link href="/admin/reservations" class="text-sm font-semibold text-gold-600">Voir tout →</Link>
+            <h2 class="font-semibold text-slate-900">Dernieres reservations</h2>
+            <Link href="/admin/reservations" class="text-sm font-semibold text-[#0972D3] hover:underline">Voir tout &rarr;</Link>
         </div>
-        <table class="w-full text-left text-sm">
-            <thead class="text-navy-500">
+        <table class="console-table">
+            <thead>
                 <tr>
-                    <th class="pb-2">Reference</th>
-                    <th class="pb-2">Client</th>
-                    <th class="pb-2">Montant</th>
-                    <th class="pb-2">Statut</th>
+                    <th>Reference</th>
+                    <th>Client</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="b in recentBookings" :key="b.id" class="border-t">
-                    <td class="py-2 font-medium">{{ b.reference }}</td>
-                    <td class="py-2">{{ b.user?.name }}</td>
-                    <td class="py-2">{{ Number(b.total_amount).toLocaleString('fr-FR') }} {{ b.currency }}</td>
-                    <td class="py-2 capitalize">{{ b.status }}</td>
+                <tr v-for="b in recentBookings" :key="b.id">
+                    <td class="font-medium text-slate-900">{{ b.reference }}</td>
+                    <td>{{ b.user?.name }}</td>
+                    <td>{{ Number(b.total_amount).toLocaleString('fr-FR') }} {{ b.currency }}</td>
+                    <td><span :class="badgeClass(b.status)">{{ b.status }}</span></td>
                 </tr>
-                <tr v-if="!recentBookings.length"><td colspan="4" class="py-4 text-center text-navy-400">Aucune reservation.</td></tr>
+                <tr v-if="!recentBookings.length"><td colspan="4" class="py-4 text-center text-slate-400">Aucune reservation.</td></tr>
             </tbody>
         </table>
     </div>

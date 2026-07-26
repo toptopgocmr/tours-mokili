@@ -14,46 +14,56 @@ const role = ref(props.filters.role ?? '');
 const search = ref(props.filters.search ?? '');
 
 const filter = () => router.get('/admin/utilisateurs', { role: role.value, search: search.value }, { preserveState: true });
+
+const roleBadgeClass = (r) => ({
+    admin: 'console-badge console-badge-error',
+    agent: 'console-badge console-badge-info',
+    partner: 'console-badge console-badge-pending',
+    client: 'console-badge console-badge-neutral',
+}[r] ?? 'console-badge console-badge-neutral');
 </script>
 
 <template>
     <Head title="Agents & Partenaires" />
 
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-navy-900">Agents & Partenaires</h1>
-        <Link href="/admin/utilisateurs/creer" class="btn-gold !py-2 text-sm">+ Nouveau compte</Link>
+    <div class="mb-5 flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900">Agents & Partenaires</h1>
+            <p class="text-sm text-slate-500">Gerer les comptes clients, agents, partenaires et administrateurs.</p>
+        </div>
+        <Link href="/admin/utilisateurs/creer" class="btn-console-primary">+ Nouveau compte</Link>
     </div>
 
-    <div class="mt-4 flex gap-2">
-        <select v-model="role" class="rounded-lg border-gray-300 text-sm" @change="filter">
+    <div class="mb-4 flex gap-2">
+        <select v-model="role" class="rounded border-slate-300 text-sm" @change="filter">
             <option value="">Tous les roles</option>
             <option value="client">Client</option>
             <option value="partner">Partenaire</option>
             <option value="agent">Agent</option>
             <option value="admin">Admin</option>
         </select>
-        <input v-model="search" type="text" placeholder="Rechercher un nom..." class="rounded-lg border-gray-300 text-sm" @keyup.enter="filter" />
-        <button class="btn-outline !py-2 text-sm" @click="filter">Filtrer</button>
+        <input v-model="search" type="text" placeholder="Rechercher un nom..." class="rounded border-slate-300 text-sm" @keyup.enter="filter" />
+        <button class="btn-console-secondary" @click="filter">Filtrer</button>
     </div>
 
-    <div class="mt-6 overflow-hidden rounded-2xl border bg-white">
-        <table class="w-full text-left text-sm">
-            <thead class="bg-navy-50 text-navy-500">
+    <div class="console-table-wrap">
+        <table class="console-table">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3">Nom</th>
-                    <th class="px-4 py-3">Email</th>
-                    <th class="px-4 py-3">Role</th>
-                    <th class="px-4 py-3">Inscrit le</th>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Inscrit le</th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="u in users.data" :key="u.id" class="border-t">
-                    <td class="px-4 py-3 font-medium">{{ u.name }}</td>
-                    <td class="px-4 py-3">{{ u.email }}</td>
-                    <td class="px-4 py-3 capitalize">{{ u.role }}</td>
-                    <td class="px-4 py-3">{{ new Date(u.created_at).toLocaleDateString('fr-FR') }}</td>
+                <tr v-for="u in users.data" :key="u.id">
+                    <td class="font-medium text-slate-900">{{ u.name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td><span :class="roleBadgeClass(u.role)">{{ u.role }}</span></td>
+                    <td>{{ new Date(u.created_at).toLocaleDateString('fr-FR') }}</td>
                 </tr>
-                <tr v-if="!users.data.length"><td colspan="4" class="px-4 py-6 text-center text-navy-400">Aucun compte.</td></tr>
+                <tr v-if="!users.data.length"><td colspan="4" class="py-6 text-center text-slate-400">Aucun compte.</td></tr>
             </tbody>
         </table>
     </div>

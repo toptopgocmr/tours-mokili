@@ -14,28 +14,28 @@ const remove = (item) => {
 <template>
     <Head title="Mes logements" />
 
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-navy-900">Mes logements</h1>
-        <Link href="/partner/logement/creer" class="btn-gold !py-2 text-sm">+ Ajouter un logement</Link>
+    <div class="mb-5 flex items-center justify-between">
+        <h1 class="text-xl font-bold text-slate-900">Mes logements</h1>
+        <Link href="/partner/logement/creer" class="btn-console-primary">+ Ajouter un logement</Link>
     </div>
 
-    <div class="mt-6 overflow-hidden rounded-2xl border bg-white">
-        <table class="w-full text-left text-sm">
-            <thead class="bg-navy-50 text-navy-500">
-                <tr><th class="px-4 py-3">Titre</th><th class="px-4 py-3">Ville</th><th class="px-4 py-3">Prix/nuit</th><th class="px-4 py-3">Statut</th><th class="px-4 py-3"></th></tr>
+    <div class="console-table-wrap">
+        <table class="console-table">
+            <thead>
+                <tr><th>Titre</th><th>Ville</th><th>Prix/nuit</th><th>Statut</th><th></th></tr>
             </thead>
             <tbody>
-                <tr v-for="l in listings.data" :key="l.id" class="border-t">
-                    <td class="px-4 py-3 font-medium">{{ l.title }}</td>
-                    <td class="px-4 py-3">{{ l.city }}</td>
-                    <td class="px-4 py-3">{{ Number(l.price_per_night).toLocaleString('fr-FR') }} {{ l.currency }}</td>
-                    <td class="px-4 py-3"><span :class="l.is_active ? 'text-green-700' : 'text-gray-400'">{{ l.is_active ? 'Actif' : 'Inactif' }}</span></td>
-                    <td class="space-x-3 px-4 py-3 text-right">
-                        <Link :href="`/partner/logement/${l.id}/editer`" class="font-semibold text-gold-600">Editer</Link>
-                        <button class="font-semibold text-red-600" @click="remove(l)">Supprimer</button>
+                <tr v-for="l in listings.data" :key="l.id">
+                    <td class="font-medium text-slate-900">{{ l.title }}</td>
+                    <td>{{ l.city }}</td>
+                    <td>{{ Number(l.price_per_night).toLocaleString('fr-FR') }} {{ l.currency }}</td>
+                    <td><span :class="l.is_active ? 'console-badge console-badge-success' : 'console-badge console-badge-neutral'">{{ l.is_active ? 'Actif' : 'Inactif' }}</span></td>
+                    <td class="space-x-3 text-right">
+                        <Link :href="`/partner/logement/${l.id}/editer`" class="font-semibold text-[#0972D3] hover:underline">Editer</Link>
+                        <button class="font-semibold text-red-600 hover:underline" @click="remove(l)">Supprimer</button>
                     </td>
                 </tr>
-                <tr v-if="!listings.data.length"><td colspan="5" class="px-4 py-6 text-center text-navy-400">Aucun logement publie.</td></tr>
+                <tr v-if="!listings.data.length"><td colspan="5" class="py-6 text-center text-slate-400">Aucun logement publie.</td></tr>
             </tbody>
         </table>
     </div>

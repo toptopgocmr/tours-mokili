@@ -42,80 +42,82 @@ const submit = () => {
 <template>
     <Head :title="isEdit ? 'Editer une offre' : 'Nouvelle offre'" />
 
-    <h1 class="text-2xl font-bold text-navy-900">{{ isEdit ? 'Editer' : 'Nouvelle' }} offre Voyage</h1>
+    <div class="mb-5">
+        <h1 class="text-xl font-bold text-slate-900">{{ isEdit ? 'Editer' : 'Nouvelle' }} offre Voyage</h1>
+    </div>
 
-    <form class="mt-6 grid max-w-3xl gap-4 rounded-2xl border bg-white p-6 sm:grid-cols-2" @submit.prevent="submit">
+    <form class="console-panel grid max-w-3xl gap-4 sm:grid-cols-2" @submit.prevent="submit">
         <div class="sm:col-span-2">
-            <label class="text-sm font-medium text-navy-900">Titre</label>
-            <input v-model="form.title" type="text" class="mt-1 w-full rounded-lg border-gray-300" required />
+            <label class="text-sm font-medium text-slate-700">Titre</label>
+            <input v-model="form.title" type="text" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Type</label>
-            <select v-model="form.type" class="mt-1 w-full rounded-lg border-gray-300">
+            <label class="text-sm font-medium text-slate-700">Type</label>
+            <select v-model="form.type" class="mt-1 w-full rounded border-slate-300">
                 <option value="vol">Vol</option>
                 <option value="sejour">Sejour</option>
                 <option value="circuit">Circuit</option>
             </select>
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Compagnie</label>
-            <input v-model="form.airline" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
+            <label class="text-sm font-medium text-slate-700">Compagnie</label>
+            <input v-model="form.airline" type="text" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Ville de depart</label>
-            <input v-model="form.origin_city" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
+            <label class="text-sm font-medium text-slate-700">Ville de depart</label>
+            <input v-model="form.origin_city" type="text" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Pays de depart (ISO2)</label>
-            <input v-model="form.origin_country" type="text" maxlength="2" class="mt-1 w-full rounded-lg border-gray-300" />
+            <label class="text-sm font-medium text-slate-700">Pays de depart (ISO2)</label>
+            <input v-model="form.origin_country" type="text" maxlength="2" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Ville de destination</label>
-            <input v-model="form.destination_city" type="text" class="mt-1 w-full rounded-lg border-gray-300" required />
+            <label class="text-sm font-medium text-slate-700">Ville de destination</label>
+            <input v-model="form.destination_city" type="text" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Pays de destination (ISO2)</label>
-            <input v-model="form.destination_country" type="text" maxlength="2" class="mt-1 w-full rounded-lg border-gray-300" required />
+            <label class="text-sm font-medium text-slate-700">Pays de destination (ISO2)</label>
+            <input v-model="form.destination_country" type="text" maxlength="2" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Depart le</label>
-            <input v-model="form.departure_at" type="datetime-local" class="mt-1 w-full rounded-lg border-gray-300" />
+            <label class="text-sm font-medium text-slate-700">Depart le</label>
+            <input v-model="form.departure_at" type="datetime-local" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Retour le</label>
-            <input v-model="form.return_at" type="datetime-local" class="mt-1 w-full rounded-lg border-gray-300" />
+            <label class="text-sm font-medium text-slate-700">Retour le</label>
+            <input v-model="form.return_at" type="datetime-local" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Prix</label>
-            <input v-model.number="form.price" type="number" min="0" step="0.01" class="mt-1 w-full rounded-lg border-gray-300" required />
+            <label class="text-sm font-medium text-slate-700">Prix</label>
+            <input v-model.number="form.price" type="number" min="0" step="0.01" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Devise</label>
-            <input v-model="form.currency" type="text" maxlength="3" class="mt-1 w-full rounded-lg border-gray-300" required />
+            <label class="text-sm font-medium text-slate-700">Devise</label>
+            <input v-model="form.currency" type="text" maxlength="3" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Reduction (%)</label>
-            <input v-model.number="form.discount_percent" type="number" min="0" max="90" class="mt-1 w-full rounded-lg border-gray-300" />
+            <label class="text-sm font-medium text-slate-700">Reduction (%)</label>
+            <input v-model.number="form.discount_percent" type="number" min="0" max="90" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div>
-            <label class="text-sm font-medium text-navy-900">Places disponibles</label>
-            <input v-model.number="form.seats_available" type="number" min="0" class="mt-1 w-full rounded-lg border-gray-300" />
+            <label class="text-sm font-medium text-slate-700">Places disponibles</label>
+            <input v-model.number="form.seats_available" type="number" min="0" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div class="sm:col-span-2">
-            <label class="text-sm font-medium text-navy-900">Description</label>
-            <textarea v-model="form.description" rows="4" class="mt-1 w-full rounded-lg border-gray-300"></textarea>
+            <label class="text-sm font-medium text-slate-700">Description</label>
+            <textarea v-model="form.description" rows="4" class="mt-1 w-full rounded border-slate-300"></textarea>
         </div>
         <div class="flex items-center gap-2">
             <input v-model="form.is_featured" type="checkbox" id="featured" />
-            <label for="featured" class="text-sm text-navy-900">Mise en avant (page d'accueil)</label>
+            <label for="featured" class="text-sm text-slate-700">Mise en avant (page d'accueil)</label>
         </div>
         <div class="flex items-center gap-2">
             <input v-model="form.is_active" type="checkbox" id="active" />
-            <label for="active" class="text-sm text-navy-900">Active (visible publiquement)</label>
+            <label for="active" class="text-sm text-slate-700">Active (visible publiquement)</label>
         </div>
 
         <div class="sm:col-span-2">
-            <button type="submit" class="btn-gold w-full" :disabled="form.processing">
+            <button type="submit" class="btn-console-primary w-full" :disabled="form.processing">
                 {{ isEdit ? 'Enregistrer les modifications' : 'Creer l\'offre' }}
             </button>
         </div>
