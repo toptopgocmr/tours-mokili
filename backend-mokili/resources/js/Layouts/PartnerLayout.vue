@@ -1,12 +1,14 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import LogoMark from '@/Components/LogoMark.vue';
 import {
     HomeIcon,
     BuildingOfficeIcon,
     TruckIcon,
     TicketIcon,
     ShoppingBagIcon,
+    CubeIcon,
     MagnifyingGlassIcon,
     BellIcon,
     ArrowRightOnRectangleIcon,
@@ -23,6 +25,7 @@ const links = [
     { href: '/partner/voiture', label: 'Voiture', icon: TruckIcon },
     { href: '/partner/divertissement', label: 'Divertissement', icon: TicketIcon },
     { href: '/partner/marketplace', label: 'Marketplace', icon: ShoppingBagIcon },
+    { href: '/partner/fret', label: 'Fret', icon: CubeIcon },
 ];
 
 const isActive = (href) => currentUrl.value === href || (href !== '/partner' && currentUrl.value.startsWith(href));
@@ -39,7 +42,7 @@ const breadcrumb = computed(() => {
         <header class="flex h-14 items-center justify-between bg-[#0F1B2A] px-4 text-white">
             <div class="flex items-center gap-3">
                 <Link href="/partner" class="flex items-center gap-2 font-bold">
-                    <span class="flex h-7 w-7 items-center justify-center rounded bg-[#0972D3] text-xs">MT</span>
+                    <LogoMark variant="light" size="h-7" />
                     <span class="hidden sm:inline">MOKILI TOUR <span class="font-normal text-white/50">| Espace partenaire</span></span>
                 </Link>
             </div>

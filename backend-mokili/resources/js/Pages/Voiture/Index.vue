@@ -1,5 +1,6 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
+import ListingImage from '@/Components/ListingImage.vue';
 import { Head, Link } from '@inertiajs/vue3';
 defineOptions({ layout: MainLayout });
 defineProps({ vehicles: { type: Object, required: true } });
@@ -11,7 +12,7 @@ defineProps({ vehicles: { type: Object, required: true } });
         <p class="mt-1 text-navy-700">Location de vehicules, toutes categories.</p>
         <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <Link v-for="v in vehicles.data" :key="v.id" :href="`/voiture/${v.slug}`" class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg">
-                <div class="flex h-36 items-center justify-center bg-orange-600 text-white">{{ v.brand }} {{ v.model }}</div>
+                <ListingImage :src="v.image_url" fallback-class="bg-orange-600">{{ v.brand }} {{ v.model }}</ListingImage>
                 <div class="p-4">
                     <p class="font-semibold text-navy-900">{{ v.title }}</p>
                     <p class="mt-1 text-sm font-semibold text-gold-600">{{ Number(v.price_per_day).toLocaleString('fr-FR') }} {{ v.currency }} / jour</p>

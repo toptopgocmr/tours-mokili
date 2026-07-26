@@ -1,7 +1,7 @@
 <script setup>
 import PartnerLayout from '@/Layouts/PartnerLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 defineOptions({ layout: PartnerLayout });
 
@@ -19,7 +19,18 @@ const form = useForm({
     city: props.product?.city ?? '',
     country: props.product?.country ?? '',
     is_active: props.product?.is_active ?? true,
+    image: null,
+    remove_image: false,
 });
+
+const imagePreview = ref(props.product?.image_url ?? null);
+const onImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    form.image = file;
+    form.remove_image = false;
+    imagePreview.value = URL.createObjectURL(file);
+};
 
 const submit = () => isEdit.value ? form.put(`/partner/marketplace/${props.product.id}`) : form.post('/partner/marketplace');
 </script>
@@ -31,6 +42,19 @@ const submit = () => isEdit.value ? form.put(`/partner/marketplace/${props.produ
     </div>
 
     <form class="console-panel grid max-w-3xl gap-4 sm:grid-cols-2" @submit.prevent="submit">
+        <div class="sm:col-span-2">
+            <label class="text-sm font-medium text-slate-700">Photo</label>
+            <div class="mt-1 flex items-center gap-4">
+                <img v-if="imagePreview" :src="imagePreview" class="h-20 w-28 rounded-lg border border-slate-200 object-cover" />
+                <div v-else class="flex h-20 w-28 items-center justify-center rounded-lg border border-dashed border-slate-300 text-xs text-slate-400">Aucune photo</div>
+                <div>
+                    <input type="file" accept="image/*" class="text-sm" @change="onImageChange" />
+                    <label v-if="imagePreview" class="mt-1 flex items-center gap-1.5 text-xs text-red-600">
+                        <input v-model="form.remove_image" type="checkbox" /> Supprimer la photo actuelle
+                    </label>
+                </div>
+            </div>
+        </div>
         <div class="sm:col-span-2">
             <label class="text-sm font-medium text-slate-700">Titre</label>
             <input v-model="form.title" type="text" class="mt-1 w-full rounded border-slate-300" required />

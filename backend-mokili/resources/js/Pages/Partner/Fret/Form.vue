@@ -5,27 +5,26 @@ import { computed, ref } from 'vue';
 
 defineOptions({ layout: PartnerLayout });
 
-const props = defineProps({ event: { type: Object, default: null } });
-const isEdit = computed(() => !!props.event);
+const props = defineProps({ offer: { type: Object, default: null } });
+const isEdit = computed(() => !!props.offer);
 
 const form = useForm({
-    title: props.event?.title ?? '',
-    category: props.event?.category ?? '',
-    description: props.event?.description ?? '',
-    venue: props.event?.venue ?? '',
-    city: props.event?.city ?? '',
-    country: props.event?.country ?? '',
-    starts_at: props.event?.starts_at?.slice(0, 16) ?? '',
-    ends_at: props.event?.ends_at?.slice(0, 16) ?? '',
-    price: props.event?.price ?? '',
-    currency: props.event?.currency ?? 'XAF',
-    capacity: props.event?.capacity ?? 0,
-    is_active: props.event?.is_active ?? true,
+    title: props.offer?.title ?? '',
+    description: props.offer?.description ?? '',
+    mode: props.offer?.mode ?? 'route',
+    origin_city: props.offer?.origin_city ?? '',
+    origin_country: props.offer?.origin_country ?? '',
+    destination_city: props.offer?.destination_city ?? '',
+    destination_country: props.offer?.destination_country ?? '',
+    price_per_kg: props.offer?.price_per_kg ?? '',
+    currency: props.offer?.currency ?? 'XAF',
+    capacity_kg: props.offer?.capacity_kg ?? '',
+    is_active: props.offer?.is_active ?? true,
     image: null,
     remove_image: false,
 });
 
-const imagePreview = ref(props.event?.image_url ?? null);
+const imagePreview = ref(props.offer?.image_url ?? null);
 const onImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -34,13 +33,14 @@ const onImageChange = (e) => {
     imagePreview.value = URL.createObjectURL(file);
 };
 
-const submit = () => isEdit.value ? form.put(`/partner/divertissement/${props.event.id}`) : form.post('/partner/divertissement');
+const submit = () => (isEdit.value ? form.put(`/partner/fret/${props.offer.id}`) : form.post('/partner/fret'));
 </script>
 
 <template>
-    <Head :title="isEdit ? 'Editer l\'evenement' : 'Nouvel evenement'" />
+    <Head :title="isEdit ? 'Editer une offre de fret' : 'Nouvelle offre de fret'" />
+
     <div class="mb-5">
-        <h1 class="text-xl font-bold text-slate-900">{{ isEdit ? 'Editer' : 'Nouvel' }} evenement</h1>
+        <h1 class="text-xl font-bold text-slate-900">{{ isEdit ? 'Editer' : 'Nouvelle' }} offre de fret</h1>
     </div>
 
     <form class="console-panel grid max-w-3xl gap-4 sm:grid-cols-2" @submit.prevent="submit">
@@ -57,45 +57,46 @@ const submit = () => isEdit.value ? form.put(`/partner/divertissement/${props.ev
                 </div>
             </div>
         </div>
+
         <div class="sm:col-span-2">
             <label class="text-sm font-medium text-slate-700">Titre</label>
             <input v-model="form.title" type="text" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
-            <label class="text-sm font-medium text-slate-700">Categorie</label>
-            <input v-model="form.category" type="text" placeholder="concert, sport, spectacle..." class="mt-1 w-full rounded border-slate-300" />
+            <label class="text-sm font-medium text-slate-700">Mode</label>
+            <select v-model="form.mode" class="mt-1 w-full rounded border-slate-300">
+                <option value="route">Routier</option>
+                <option value="mer">Maritime</option>
+                <option value="air">Aerien</option>
+            </select>
         </div>
         <div>
-            <label class="text-sm font-medium text-slate-700">Lieu</label>
-            <input v-model="form.venue" type="text" class="mt-1 w-full rounded border-slate-300" />
+            <label class="text-sm font-medium text-slate-700">Capacite (kg)</label>
+            <input v-model.number="form.capacity_kg" type="number" min="0" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div>
-            <label class="text-sm font-medium text-slate-700">Ville</label>
-            <input v-model="form.city" type="text" class="mt-1 w-full rounded border-slate-300" />
+            <label class="text-sm font-medium text-slate-700">Ville de depart</label>
+            <input v-model="form.origin_city" type="text" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
-            <label class="text-sm font-medium text-slate-700">Pays (ISO2)</label>
-            <input v-model="form.country" type="text" maxlength="2" class="mt-1 w-full rounded border-slate-300" />
+            <label class="text-sm font-medium text-slate-700">Pays de depart (ISO2)</label>
+            <input v-model="form.origin_country" type="text" maxlength="2" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
-            <label class="text-sm font-medium text-slate-700">Debut</label>
-            <input v-model="form.starts_at" type="datetime-local" class="mt-1 w-full rounded border-slate-300" required />
+            <label class="text-sm font-medium text-slate-700">Ville de destination</label>
+            <input v-model="form.destination_city" type="text" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
-            <label class="text-sm font-medium text-slate-700">Fin</label>
-            <input v-model="form.ends_at" type="datetime-local" class="mt-1 w-full rounded border-slate-300" />
+            <label class="text-sm font-medium text-slate-700">Pays de destination (ISO2)</label>
+            <input v-model="form.destination_country" type="text" maxlength="2" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
-            <label class="text-sm font-medium text-slate-700">Prix du billet</label>
-            <input v-model.number="form.price" type="number" min="0" step="0.01" class="mt-1 w-full rounded border-slate-300" required />
+            <label class="text-sm font-medium text-slate-700">Prix / kg</label>
+            <input v-model.number="form.price_per_kg" type="number" min="0" step="0.01" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Devise</label>
             <input v-model="form.currency" type="text" maxlength="3" class="mt-1 w-full rounded border-slate-300" required />
-        </div>
-        <div>
-            <label class="text-sm font-medium text-slate-700">Capacite</label>
-            <input v-model.number="form.capacity" type="number" min="0" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div class="sm:col-span-2">
             <label class="text-sm font-medium text-slate-700">Description</label>
@@ -103,7 +104,7 @@ const submit = () => isEdit.value ? form.put(`/partner/divertissement/${props.ev
         </div>
         <div class="flex items-center gap-2 sm:col-span-2">
             <input v-model="form.is_active" type="checkbox" id="active" />
-            <label for="active" class="text-sm text-slate-700">Publie (billetterie ouverte)</label>
+            <label for="active" class="text-sm text-slate-700">Publie (visible publiquement)</label>
         </div>
         <div class="sm:col-span-2">
             <button type="submit" class="btn-console-primary w-full" :disabled="form.processing">{{ isEdit ? 'Enregistrer' : 'Publier' }}</button>

@@ -5,6 +5,7 @@ namespace App\Models\Voiture;
 use App\Models\Booking;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 // VOITURE module (skeleton).
@@ -15,6 +16,8 @@ class Vehicle extends Model
         'transmission', 'seats', 'price_per_day', 'currency', 'city', 'country',
         'image', 'is_active',
     ];
+
+    protected $appends = ['image_url'];
 
     protected function casts(): array
     {
@@ -44,5 +47,10 @@ class Vehicle extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image ? Storage::disk('public')->url($this->image) : null;
     }
 }

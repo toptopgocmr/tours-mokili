@@ -1,9 +1,9 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
 import OperatorBadge from '@/Components/OperatorBadge.vue';
-import { cemacCountries, bankCards, operatorsForCountry } from '@/data/cemac';
+import { cemacCountries, bankCards, operatorsForCountry, detectCardBrand } from '@/data/cemac';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import axios from 'axios';
 
 defineOptions({ layout: MainLayout });
@@ -20,18 +20,33 @@ const isVerified = computed(() => !!props.wallet?.peex_verified_at);
 // Stripe account connected yet), per product decision.
 const method = ref('mobile_money');
 
-const currentOperators = computed(() => operatorsForCountry(walletForm.country_code));
-
 // Step 1: verify the customer's Peex wallet (mobile money / bank).
 const walletForm = useForm({ country_code: props.wallet?.country_code ?? 'CM', account_number: props.wallet?.account_number ?? '' });
 const verifying = ref(false);
 const verifyResult = ref(null);
 
+const currentOperators = computed(() => operatorsForCountry(walletForm.country_code));
+
+// The customer must actively pick which operator they're paying from - it's
+// no longer just an informational display. Resetting on country change
+// avoids carrying over a selection that doesn't exist in the new country.
+const selectedOperator = ref(currentOperators.value[0]?.key ?? null);
+watch(
+    () => walletForm.country_code,
+    () => {
+        selectedOperator.value = currentOperators.value[0]?.key ?? null;
+    },
+);
+
 const verifyWallet = async () => {
+    if (!selectedOperator.value) {
+        verifyResult.value = { ok: false, message: 'Choisissez votre operateur mobile money avant de continuer.' };
+        return;
+    }
     verifying.value = true;
     verifyResult.value = null;
     try {
-        const { data } = await axios.post('/api/wallet/verify', walletForm.data());
+        const { data } = await axios.post('/api/wallet/verify', { ...walletForm.data(), operator: selectedOperator.value });
         verifyResult.value = { ok: true, message: data.message };
         router.reload({ only: ['wallet'] });
     } catch (e) {
@@ -51,6 +66,11 @@ const cardNotice = ref(false);
 const submitCard = () => {
     cardNotice.value = true;
 };
+
+// Auto-detect Visa vs Mastercard as the customer types their card number, so
+// the matching logo highlights itself instead of the customer having to
+// pick it manually.
+const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
 </script>
 
 <template>
@@ -107,13 +127,23 @@ const submitCard = () => {
                         <div>
                             <label class="text-xs font-medium text-navy-500">Pays (zone CEMAC)</label>
                             <select v-model="walletForm.country_code" class="mt-1 w-full rounded-lg border-gray-300 text-sm">
-                                <option v-for="c in cemacCountries" :key="c.code" :value="c.code">{{ c.name }}</option>
+                                <option v-for="c in cemacCountries" :key="c.code" :value="c.code">{{ c.flag }} {{ c.name }}</option>
                             </select>
                         </div>
 
-                        <div v-if="currentOperators.length" class="flex flex-wrap items-center gap-2">
-                            <span class="text-xs text-navy-500">Operateurs disponibles :</span>
-                            <OperatorBadge v-for="op in currentOperators" :key="op.key" :operator="op" size="sm" />
+                        <div v-if="currentOperators.length">
+                            <span class="text-xs text-navy-500">Choisissez votre operateur :</span>
+                            <div class="mt-1.5 flex flex-wrap items-center gap-2">
+                                <OperatorBadge
+                                    v-for="op in currentOperators"
+                                    :key="op.key"
+                                    :operator="op"
+                                    size="sm"
+                                    clickable
+                                    :selected="selectedOperator === op.key"
+                                    @click="selectedOperator = op.key"
+                                />
+                            </div>
                         </div>
 
                         <input
@@ -124,7 +154,7 @@ const submitCard = () => {
                             required
                         />
 
-                        <button type="submit" class="btn-outline w-full !py-2 text-sm" :disabled="verifying">
+                        <button type="submit" class="btn-outline w-full !py-2 text-sm" :disabled="verifying || !selectedOperator">
                             {{ verifying ? 'Verification...' : 'Verifier mon portefeuille' }}
                         </button>
                         <p v-if="verifyResult" :class="verifyResult.ok ? 'text-green-700' : 'text-red-600'" class="text-xs">
@@ -152,7 +182,14 @@ const submitCard = () => {
                     <div class="flex items-center justify-between">
                         <h2 class="font-semibold text-navy-900">Paiement par carte bancaire</h2>
                         <div class="flex gap-2">
-                            <OperatorBadge v-for="c in bankCards" :key="c.key" :operator="c" size="sm" />
+                            <OperatorBadge
+                                v-for="c in bankCards"
+                                :key="c.key"
+                                :operator="c"
+                                size="sm"
+                                :selected="detectedBrand === c.key"
+                                :dimmed="!!detectedBrand && detectedBrand !== c.key"
+                            />
                         </div>
                     </div>
                     <p class="mt-1 text-xs text-navy-500">Visa et Mastercard - bientot disponible.</p>

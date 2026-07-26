@@ -5,6 +5,7 @@ namespace App\Models\Marketplace;
 use App\Models\Booking;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 // MARKETPLACE module (skeleton).
@@ -16,6 +17,8 @@ class Product extends Model
         'seller_id', 'title', 'slug', 'description', 'category', 'price',
         'currency', 'stock', 'condition', 'city', 'country', 'image', 'is_active',
     ];
+
+    protected $appends = ['image_url'];
 
     protected function casts(): array
     {
@@ -45,5 +48,10 @@ class Product extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image ? Storage::disk('public')->url($this->image) : null;
     }
 }

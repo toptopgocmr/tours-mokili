@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\HandlesImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Voyage\TravelOffer;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +17,8 @@ use Inertia\Response;
  */
 class TravelOfferController extends Controller
 {
+    use HandlesImageUploads;
+
     public function index(Request $request): Response
     {
         return Inertia::render('Admin/Voyage/Index', [
@@ -37,7 +40,10 @@ class TravelOfferController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        TravelOffer::create($this->validated($request));
+        $data = $this->validated($request);
+        $data['image'] = $this->resolveImagePath($request, null, 'voyage');
+
+        TravelOffer::create($data);
 
         return redirect()->route('admin.voyage.index')->with('success', 'Offre creee avec succes.');
     }
@@ -49,7 +55,10 @@ class TravelOfferController extends Controller
 
     public function update(Request $request, TravelOffer $travelOffer): RedirectResponse
     {
-        $travelOffer->update($this->validated($request));
+        $data = $this->validated($request);
+        $data['image'] = $this->resolveImagePath($request, $travelOffer->image, 'voyage');
+
+        $travelOffer->update($data);
 
         return redirect()->route('admin.voyage.index')->with('success', 'Offre mise a jour.');
     }
@@ -80,6 +89,8 @@ class TravelOfferController extends Controller
             'seats_available' => ['required', 'integer', 'min:0'],
             'is_featured' => ['boolean'],
             'is_active' => ['boolean'],
+            'image' => ['nullable', 'image', 'max:4096'],
+            'remove_image' => ['boolean'],
         ]);
     }
 }

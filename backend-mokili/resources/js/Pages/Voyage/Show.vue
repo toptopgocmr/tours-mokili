@@ -18,7 +18,7 @@ const submit = () => form.post(`/voyage/${props.offer.slug}/reserver`);
     <div class="mx-auto grid max-w-5xl gap-10 px-6 py-12 md:grid-cols-2">
         <div>
             <div class="relative h-64 overflow-hidden rounded-2xl">
-                <DestinationImage :city="offer.destination_city" class="h-full w-full" />
+                <DestinationImage :city="offer.destination_city" :image="offer.image_url" class="h-full w-full" />
                 <div class="absolute inset-0 bg-gradient-to-t from-navy-900/70 to-transparent" />
                 <span class="absolute bottom-4 left-5 text-2xl font-semibold text-white drop-shadow">{{ offer.destination_city }}</span>
             </div>

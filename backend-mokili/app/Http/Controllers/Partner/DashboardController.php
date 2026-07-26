@@ -9,9 +9,9 @@ use Inertia\Response;
 
 /**
  * Partner space landing page (role:partner). A partner manages their
- * own listings across the 4 "ownable" modules - Logement, Voiture,
- * Divertissement, Marketplace (Voyage is centrally managed by admin/
- * agent staff, Fret is a client-initiated shipment, not a listing).
+ * own listings across the 5 "ownable" modules - Logement, Voiture,
+ * Divertissement, Marketplace, Fret (carrier offers). Voyage is
+ * centrally managed by admin/agent staff.
  */
 class DashboardController extends Controller
 {
@@ -25,6 +25,7 @@ class DashboardController extends Controller
                 'voiture' => $user->vehicles()->count(),
                 'divertissement' => $user->events()->count(),
                 'marketplace' => $user->products()->count(),
+                'fret' => $user->freightOffers()->count(),
             ],
         ]);
     }

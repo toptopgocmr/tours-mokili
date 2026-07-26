@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Partner;
 
+use App\Http\Controllers\Concerns\HandlesImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Voiture\Vehicle;
 use Illuminate\Http\RedirectResponse;
@@ -11,6 +12,8 @@ use Inertia\Response;
 
 class VehicleController extends Controller
 {
+    use HandlesImageUploads;
+
     public function index(Request $request): Response
     {
         return Inertia::render('Partner/Voiture/Index', [
@@ -25,7 +28,10 @@ class VehicleController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $request->user()->vehicles()->create($this->validated($request));
+        $data = $this->validated($request);
+        $data['image'] = $this->resolveImagePath($request, null, 'voiture');
+
+        $request->user()->vehicles()->create($data);
 
         return redirect()->route('partner.voiture.index')->with('success', 'Vehicule publie.');
     }
@@ -40,7 +46,11 @@ class VehicleController extends Controller
     public function update(Request $request, Vehicle $vehicle): RedirectResponse
     {
         $this->authorizeOwner($vehicle);
-        $vehicle->update($this->validated($request));
+
+        $data = $this->validated($request);
+        $data['image'] = $this->resolveImagePath($request, $vehicle->image, 'voiture');
+
+        $vehicle->update($data);
 
         return redirect()->route('partner.voiture.index')->with('success', 'Vehicule mis a jour.');
     }
@@ -73,6 +83,8 @@ class VehicleController extends Controller
             'city' => ['nullable', 'string', 'max:255'],
             'country' => ['nullable', 'string', 'size:2'],
             'is_active' => ['boolean'],
+            'image' => ['nullable', 'image', 'max:4096'],
+            'remove_image' => ['boolean'],
         ]);
     }
 }

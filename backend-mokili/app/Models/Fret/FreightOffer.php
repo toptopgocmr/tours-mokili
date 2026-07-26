@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Divertissement;
+namespace App\Models\Fret;
 
 use App\Models\Booking;
 use App\Models\User;
@@ -8,13 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-// DIVERTISSEMENT module (skeleton) - billetterie evenements.
-class Event extends Model
+// FRET module - a carrier/partner's published freight service (route,
+// mode, price per kg). Not to be confused with Shipment, which tracks an
+// actual customer shipment once created.
+class FreightOffer extends Model
 {
     protected $fillable = [
-        'organizer_id', 'title', 'slug', 'category', 'description', 'venue',
-        'city', 'country', 'starts_at', 'ends_at', 'price', 'currency',
-        'capacity', 'image', 'is_active',
+        'carrier_id', 'title', 'slug', 'description', 'mode',
+        'origin_city', 'origin_country', 'destination_city', 'destination_country',
+        'price_per_kg', 'currency', 'capacity_kg', 'image', 'is_active',
     ];
 
     protected $appends = ['image_url'];
@@ -22,23 +24,21 @@ class Event extends Model
     protected function casts(): array
     {
         return [
-            'starts_at' => 'datetime',
-            'ends_at' => 'datetime',
-            'price' => 'decimal:2',
+            'price_per_kg' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }
 
     protected static function booted(): void
     {
-        static::creating(function (self $event) {
-            $event->slug ??= Str::slug($event->title).'-'.Str::random(6);
+        static::creating(function (self $offer) {
+            $offer->slug ??= Str::slug($offer->title).'-'.Str::random(6);
         });
     }
 
-    public function organizer()
+    public function carrier()
     {
-        return $this->belongsTo(User::class, 'organizer_id');
+        return $this->belongsTo(User::class, 'carrier_id');
     }
 
     public function bookings()

@@ -53,25 +53,5 @@ class AppServiceProvider extends ServiceProvider
         // string length to 191 chars keeps unique/index columns (users.email,
         // *.slug, etc.) under that limit without touching every migration.
         Schema::defaultStringLength(191);
-
-        // Partner/admin listing forms upload cover photos to the "public"
-        // disk (storage/app/public), served through the public/storage
-        // symlink that `php artisan storage:link` normally creates. Railway's
-        // Railpack build runs `composer install --no-scripts`, which skips
-        // our composer.json scripts entirely, so that symlink would never
-        // get created there. Creating it here instead runs on every request
-        // (the file_exists check makes it a no-op after the first), which
-        // works regardless of how the container was built.
-        //
-        // Note: Railway's filesystem is ephemeral without a persistent
-        // Volume attached to the service - uploaded photos will survive
-        // restarts/redeploys only once a Volume is mounted at
-        // storage/app/public. Until then this keeps local dev and any
-        // single-deploy session working correctly.
-        $link = public_path('storage');
-        $target = storage_path('app/public');
-        if (! file_exists($link) && is_dir($target)) {
-            @symlink($target, $link);
-        }
     }
 }

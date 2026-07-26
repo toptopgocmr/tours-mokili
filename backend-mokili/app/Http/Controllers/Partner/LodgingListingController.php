@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Partner;
 
+use App\Http\Controllers\Concerns\HandlesImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Logement\LodgingListing;
 use Illuminate\Http\RedirectResponse;
@@ -11,6 +12,8 @@ use Inertia\Response;
 
 class LodgingListingController extends Controller
 {
+    use HandlesImageUploads;
+
     public function index(Request $request): Response
     {
         return Inertia::render('Partner/Logement/Index', [
@@ -25,7 +28,10 @@ class LodgingListingController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $request->user()->lodgingListings()->create($this->validated($request));
+        $data = $this->validated($request);
+        $data['image'] = $this->resolveImagePath($request, null, 'logement');
+
+        $request->user()->lodgingListings()->create($data);
 
         return redirect()->route('partner.logement.index')->with('success', 'Logement publie.');
     }
@@ -40,7 +46,11 @@ class LodgingListingController extends Controller
     public function update(Request $request, LodgingListing $listing): RedirectResponse
     {
         $this->authorizeOwner($listing);
-        $listing->update($this->validated($request));
+
+        $data = $this->validated($request);
+        $data['image'] = $this->resolveImagePath($request, $listing->image, 'logement');
+
+        $listing->update($data);
 
         return redirect()->route('partner.logement.index')->with('success', 'Logement mis a jour.');
     }
@@ -72,6 +82,8 @@ class LodgingListingController extends Controller
             'bathrooms' => ['required', 'integer', 'min:0'],
             'max_guests' => ['required', 'integer', 'min:1'],
             'is_active' => ['boolean'],
+            'image' => ['nullable', 'image', 'max:4096'],
+            'remove_image' => ['boolean'],
         ]);
     }
 }

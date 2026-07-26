@@ -5,6 +5,7 @@ namespace App\Models\Voyage;
 use App\Models\Booking;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -23,7 +24,7 @@ class TravelOffer extends Model
 
     // Exposed on every JSON/Inertia response (web + API) so both
     // frontends can read the post-discount price directly.
-    protected $appends = ['discounted_price'];
+    protected $appends = ['discounted_price', 'image_url'];
 
     protected function casts(): array
     {
@@ -51,6 +52,11 @@ class TravelOffer extends Model
     public function getDiscountedPriceAttribute(): float
     {
         return round($this->price * (1 - $this->discount_percent / 100), 2);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image ? Storage::disk('public')->url($this->image) : null;
     }
 
     public function scopeActive($query)

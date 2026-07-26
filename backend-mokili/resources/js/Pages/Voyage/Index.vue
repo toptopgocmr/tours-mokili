@@ -36,7 +36,7 @@ const search = () => router.get('/voyage', { destination: destination.value }, {
                 class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg"
             >
                 <div class="relative h-36 overflow-hidden">
-                    <DestinationImage :city="offer.destination_city" class="h-full w-full" />
+                    <DestinationImage :city="offer.destination_city" :image="offer.image_url" class="h-full w-full" />
                     <div class="absolute inset-0 bg-gradient-to-t from-navy-900/70 to-transparent" />
                     <span class="absolute bottom-2 left-3 font-semibold text-white drop-shadow">{{ offer.destination_city }}</span>
                 </div>

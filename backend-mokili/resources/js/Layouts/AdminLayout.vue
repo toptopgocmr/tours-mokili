@@ -1,6 +1,7 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import LogoMark from '@/Components/LogoMark.vue';
 import {
     HomeIcon,
     PaperAirplaneIcon,
@@ -37,7 +38,7 @@ const breadcrumb = computed(() => {
         <header class="flex h-14 items-center justify-between bg-[#0F1B2A] px-4 text-white">
             <div class="flex items-center gap-3">
                 <Link href="/admin" class="flex items-center gap-2 font-bold">
-                    <span class="flex h-7 w-7 items-center justify-center rounded bg-[#0972D3] text-xs">MT</span>
+                    <LogoMark variant="light" size="h-7" />
                     <span class="hidden sm:inline">MOKILI TOUR <span class="font-normal text-white/50">| Back-office</span></span>
                 </Link>
             </div>

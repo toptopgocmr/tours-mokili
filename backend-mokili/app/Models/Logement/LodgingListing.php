@@ -5,6 +5,7 @@ namespace App\Models\Logement;
 use App\Models\Booking;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 // LOGEMENT module (skeleton, ready for full CRUD following the
@@ -16,6 +17,8 @@ class LodgingListing extends Model
         'price_per_night', 'currency', 'bedrooms', 'bathrooms', 'max_guests',
         'amenities', 'image', 'is_active',
     ];
+
+    protected $appends = ['image_url'];
 
     protected function casts(): array
     {
@@ -46,5 +49,10 @@ class LodgingListing extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image ? Storage::disk('public')->url($this->image) : null;
     }
 }

@@ -13,7 +13,7 @@ class ShipmentController extends Controller
 {
     public function index(Request $request): Response
     {
-        return Inertia::render('Fret/Index', [
+        return Inertia::render('Fret/Suivi/Index', [
             'shipments' => $request->user()
                 ? Shipment::query()->where('user_id', $request->user()->id)->latest()->paginate(9)
                 : ['data' => []],
@@ -22,6 +22,6 @@ class ShipmentController extends Controller
 
     public function show(Shipment $shipment): Response
     {
-        return Inertia::render('Fret/Show', ['shipment' => $shipment]);
+        return Inertia::render('Fret/Suivi/Show', ['shipment' => $shipment]);
     }
 }

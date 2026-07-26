@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Divertissement\EventController;
+use App\Http\Controllers\Fret\FreightOfferController;
 use App\Http\Controllers\Fret\ShipmentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Logement\LodgingListingController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Marketplace\ProductController;
 use App\Http\Controllers\Partner\AuthenticatedSessionController as PartnerAuthenticatedSessionController;
 use App\Http\Controllers\Partner\DashboardController as PartnerDashboardController;
 use App\Http\Controllers\Partner\EventController as PartnerEventController;
+use App\Http\Controllers\Partner\FreightOfferController as PartnerFreightOfferController;
 use App\Http\Controllers\Partner\LodgingListingController as PartnerLodgingListingController;
 use App\Http\Controllers\Partner\ProductController as PartnerProductController;
 use App\Http\Controllers\Partner\VehicleController as PartnerVehicleController;
@@ -83,9 +85,18 @@ Route::prefix('marketplace')->name('marketplace.')->group(function () {
     Route::get('/{product:slug}', [ProductController::class, 'show'])->name('show');
 });
 
-Route::middleware('auth')->prefix('fret')->name('fret.')->group(function () {
-    Route::get('/', [ShipmentController::class, 'index'])->name('index');
-    Route::get('/{shipment}', [ShipmentController::class, 'show'])->name('show');
+Route::prefix('fret')->name('fret.')->group(function () {
+    Route::get('/', [FreightOfferController::class, 'index'])->name('index');
+
+    // Customer's own shipment tracking - must be registered before the
+    // {freightOffer:slug} wildcard below so "mes-envois" isn't parsed as a
+    // slug.
+    Route::middleware('auth')->prefix('mes-envois')->name('shipments.')->group(function () {
+        Route::get('/', [ShipmentController::class, 'index'])->name('index');
+        Route::get('/{shipment}', [ShipmentController::class, 'show'])->name('show');
+    });
+
+    Route::get('/{freightOffer:slug}', [FreightOfferController::class, 'show'])->name('show');
 });
 
 // --- Shared checkout (Peex wallet verification -> payment), any module ---
@@ -158,6 +169,13 @@ Route::middleware(['auth', 'role:partner'])->prefix('partner')->name('partner.')
     Route::get('/marketplace/{product}/editer', [PartnerProductController::class, 'edit'])->name('marketplace.edit');
     Route::put('/marketplace/{product}', [PartnerProductController::class, 'update'])->name('marketplace.update');
     Route::delete('/marketplace/{product}', [PartnerProductController::class, 'destroy'])->name('marketplace.destroy');
+
+    Route::get('/fret', [PartnerFreightOfferController::class, 'index'])->name('fret.index');
+    Route::get('/fret/creer', [PartnerFreightOfferController::class, 'create'])->name('fret.create');
+    Route::post('/fret', [PartnerFreightOfferController::class, 'store'])->name('fret.store');
+    Route::get('/fret/{offer}/editer', [PartnerFreightOfferController::class, 'edit'])->name('fret.edit');
+    Route::put('/fret/{offer}', [PartnerFreightOfferController::class, 'update'])->name('fret.update');
+    Route::delete('/fret/{offer}', [PartnerFreightOfferController::class, 'destroy'])->name('fret.destroy');
 });
 
 // --- Auth (Breeze-style, Inertia) ---

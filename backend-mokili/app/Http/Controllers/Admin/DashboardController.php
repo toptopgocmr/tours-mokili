@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Fret\FreightOffer;
 use App\Models\User;
 use App\Models\Voyage\TravelOffer;
 use Inertia\Inertia;
@@ -23,6 +24,7 @@ class DashboardController extends Controller
                 'partners' => User::query()->where('role', 'partner')->count(),
                 'agents' => User::query()->where('role', 'agent')->count(),
                 'travelOffers' => TravelOffer::query()->count(),
+                'freightOffers' => FreightOffer::query()->count(),
                 'bookings' => Booking::query()->count(),
                 'bookingsConfirmed' => Booking::query()->where('status', 'confirmed')->count(),
             ],

@@ -109,4 +109,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\Marketplace\Product::class, 'seller_id');
     }
+
+    public function freightOffers()
+    {
+        return $this->hasMany(\App\Models\Fret\FreightOffer::class, 'carrier_id');
+    }
 }

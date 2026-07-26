@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Partner;
 
+use App\Http\Controllers\Concerns\HandlesImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Divertissement\Event;
 use Illuminate\Http\RedirectResponse;
@@ -11,6 +12,8 @@ use Inertia\Response;
 
 class EventController extends Controller
 {
+    use HandlesImageUploads;
+
     public function index(Request $request): Response
     {
         return Inertia::render('Partner/Divertissement/Index', [
@@ -25,7 +28,10 @@ class EventController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $request->user()->events()->create($this->validated($request));
+        $data = $this->validated($request);
+        $data['image'] = $this->resolveImagePath($request, null, 'divertissement');
+
+        $request->user()->events()->create($data);
 
         return redirect()->route('partner.divertissement.index')->with('success', 'Evenement publie.');
     }
@@ -40,7 +46,11 @@ class EventController extends Controller
     public function update(Request $request, Event $event): RedirectResponse
     {
         $this->authorizeOwner($event);
-        $event->update($this->validated($request));
+
+        $data = $this->validated($request);
+        $data['image'] = $this->resolveImagePath($request, $event->image, 'divertissement');
+
+        $event->update($data);
 
         return redirect()->route('partner.divertissement.index')->with('success', 'Evenement mis a jour.');
     }
@@ -73,6 +83,8 @@ class EventController extends Controller
             'currency' => ['required', 'string', 'size:3'],
             'capacity' => ['required', 'integer', 'min:0'],
             'is_active' => ['boolean'],
+            'image' => ['nullable', 'image', 'max:4096'],
+            'remove_image' => ['boolean'],
         ]);
     }
 }

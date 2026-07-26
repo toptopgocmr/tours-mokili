@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Partner;
 
+use App\Http\Controllers\Concerns\HandlesImageUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Product;
 use Illuminate\Http\RedirectResponse;
@@ -11,6 +12,8 @@ use Inertia\Response;
 
 class ProductController extends Controller
 {
+    use HandlesImageUploads;
+
     public function index(Request $request): Response
     {
         return Inertia::render('Partner/Marketplace/Index', [
@@ -25,7 +28,10 @@ class ProductController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $request->user()->products()->create($this->validated($request));
+        $data = $this->validated($request);
+        $data['image'] = $this->resolveImagePath($request, null, 'marketplace');
+
+        $request->user()->products()->create($data);
 
         return redirect()->route('partner.marketplace.index')->with('success', 'Produit publie.');
     }
@@ -40,7 +46,11 @@ class ProductController extends Controller
     public function update(Request $request, Product $product): RedirectResponse
     {
         $this->authorizeOwner($product);
-        $product->update($this->validated($request));
+
+        $data = $this->validated($request);
+        $data['image'] = $this->resolveImagePath($request, $product->image, 'marketplace');
+
+        $product->update($data);
 
         return redirect()->route('partner.marketplace.index')->with('success', 'Produit mis a jour.');
     }
@@ -71,6 +81,8 @@ class ProductController extends Controller
             'city' => ['nullable', 'string', 'max:255'],
             'country' => ['nullable', 'string', 'size:2'],
             'is_active' => ['boolean'],
+            'image' => ['nullable', 'image', 'max:4096'],
+            'remove_image' => ['boolean'],
         ]);
     }
 }
