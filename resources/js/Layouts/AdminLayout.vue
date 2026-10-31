@@ -12,7 +12,12 @@ import {
     MagnifyingGlassIcon,
     BellIcon,
     ArrowRightOnRectangleIcon,
+    SparklesIcon,
+    BanknotesIcon,
+    Cog6ToothIcon,
+    BuildingStorefrontIcon,
 } from '@heroicons/vue/24/outline';
+import SplashScreen from '@/Components/SplashScreen.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -22,8 +27,12 @@ const currentUrl = computed(() => page.url);
 const links = [
     { href: '/admin', label: 'Tableau de bord', icon: HomeIcon },
     { href: '/admin/voyage', label: 'Offres Voyage', icon: PaperAirplaneIcon },
+    { href: '/admin/loisirs', label: 'Loisirs & Parcs', icon: SparklesIcon },
+    { href: '/admin/partenaires', label: 'Societes partenaires', icon: BuildingStorefrontIcon },
     { href: '/admin/reservations', label: 'Reservations', icon: CalendarDaysIcon },
-    { href: '/admin/paiements', label: 'Paiements', icon: CreditCardIcon },
+    { href: '/admin/paiements', label: 'Paiements (collecte)', icon: CreditCardIcon },
+    { href: '/admin/decaissements', label: 'Decaissements', icon: BanknotesIcon },
+    { href: '/admin/passerelles', label: 'Moyens de paiement', icon: Cog6ToothIcon },
     { href: '/admin/moderation', label: 'Moderation annonces', icon: ClipboardDocumentCheckIcon },
     { href: '/admin/utilisateurs', label: 'Agents & Partenaires', icon: UsersIcon },
 ];
@@ -37,6 +46,7 @@ const breadcrumb = computed(() => {
 </script>
 
 <template>
+    <SplashScreen storage-key="mokili_admin_splash" subtitle="Back-office" />
     <div class="min-h-screen bg-[#F2F3F3]">
         <!-- Top bar -->
         <header class="flex h-14 items-center justify-between bg-[#0F1B2A] px-4 text-white">

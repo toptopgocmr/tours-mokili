@@ -2,26 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PayBookingRequest;
 use App\Models\Booking;
-use App\Models\Payment;
-use App\Services\Peex\PeexClient;
-use App\Services\Peex\PeexException;
+use App\Services\Payments\PaymentGatewayException;
+use App\Services\Payments\PaymentGatewayManager;
+use App\Services\Payments\PaymentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Shared checkout flow for every service module (bookings are
- * polymorphic - see App\Models\Booking).
+ * Checkout web commun a tous les modules (reservations polymorphes).
  *
- * Step 1: /checkout/{booking}       -> show summary + Peex wallet status
- * Step 2: POST /wallet/verify       -> App\Http\Controllers\Api\WalletVerificationController
- * Step 3: POST /checkout/{booking}/pay (behind "peex.verified" middleware)
+ * 1. /checkout/{booking}            : recapitulatif + choix pays / operateur / passerelle
+ * 2. POST /checkout/{booking}/payer : demande Mobile Money (Peex, pawaPay, MaishaPay, Digitwace)
+ * 3. GET /checkout/{booking}/statut : la page interroge le statut jusqu'a confirmation
  */
 class CheckoutController extends Controller
 {
+    public function __construct(
+        protected PaymentService $payments,
+        protected PaymentGatewayManager $manager,
+    ) {}
+
     public function show(Booking $booking): Response
     {
         abort_unless($booking->user_id === Auth::id(), 403);
@@ -29,56 +34,50 @@ class CheckoutController extends Controller
         return Inertia::render('Checkout', [
             'booking' => $booking->load('bookable'),
             'wallet' => Auth::user()->wallet,
+            'methods' => $this->manager->catalogue('collect'),
+            'lastPayment' => $booking->payments()->latest()->first(),
         ]);
     }
 
-    public function pay(Booking $booking, PeexClient $peex): RedirectResponse
+    public function pay(PayBookingRequest $request, Booking $booking): RedirectResponse
     {
         abort_unless($booking->user_id === Auth::id(), 403);
 
-        $wallet = Auth::user()->wallet;
-
         try {
-            $payment = DB::transaction(function () use ($booking, $wallet) {
-                $payment = Payment::create([
-                    'booking_id' => $booking->id,
-                    'user_id' => $booking->user_id,
-                    'provider' => 'peex',
-                    'method' => 'mobile_money',
-                    'amount' => $booking->total_amount,
-                    'currency' => $booking->currency,
-                    'status' => 'processing',
-                ]);
-
-                $booking->update(['status' => 'confirmed']);
-
-                return $payment;
-            });
-
-            // Sandbox note: Peex fixes every amount at 10 FCFA regardless of
-            // the amount sent (see docs > Base URL & Resources).
-            $response = $peex->requestPayment([
-                'countryCode' => $wallet->country_code,
-                'accountNumber' => $wallet->account_number,
-                'amount' => (float) $booking->total_amount,
-                'currency' => $booking->currency,
-                'track_id' => $payment->id,
-            ]);
-
-            $payment->update([
-                'status' => 'paid',
-                'peex_track_id' => $response['request']['track_id'] ?? null,
-                'peex_request_id' => $response['request']['id'] ?? null,
-                'peex_response' => $response,
-                'paid_at' => now(),
-            ]);
-
-            return redirect()->route('checkout.show', $booking)
-                ->with('success', 'Paiement effectue avec succes. Reservation confirmee !');
-        } catch (PeexException $e) {
-            $booking->update(['status' => 'awaiting_payment']);
-
-            return back()->with('error', 'Paiement Peex echoue : '.$e->getMessage());
+            $payment = $this->payments->collect(
+                $booking,
+                $request->user(),
+                (string) $request->input('gateway'),
+                (string) $request->input('phone'),
+                (string) $request->input('country_code'),
+                $request->input('network'),
+            );
+        } catch (PaymentGatewayException $e) {
+            return back()->with('error', 'Paiement impossible : '.$e->getMessage());
         }
+
+        return match ($payment->status) {
+            'paid' => redirect()->route('checkout.show', $booking)->with('success', 'Paiement recu. Reservation confirmee !'),
+            'failed' => back()->with('error', 'Paiement refuse : '.($payment->failure_reason ?? 'reessayez.')),
+            default => redirect()->route('checkout.show', $booking)
+                ->with('success', 'Demande envoyee sur votre telephone : validez le paiement avec votre code secret Mobile Money.'),
+        };
+    }
+
+    public function status(Booking $booking): JsonResponse
+    {
+        abort_unless($booking->user_id === Auth::id(), 403);
+
+        $payment = $booking->payments()->latest()->first();
+
+        if ($payment && in_array($payment->status, ['pending', 'processing'], true)
+            && (! $payment->last_checked_at || $payment->last_checked_at->diffInSeconds(now()) >= (int) config('payments.pending_recheck_after', 20))) {
+            $payment = $this->payments->refreshPayment($payment);
+        }
+
+        return response()->json([
+            'booking_status' => $booking->fresh()->status,
+            'payment' => $payment?->only(['id', 'status', 'provider', 'failure_reason', 'paid_at']),
+        ]);
     }
 }

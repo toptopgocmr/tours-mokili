@@ -1,0 +1,48 @@
+<script setup>
+// Visuel d'une fiche du Guide Congo : la photo si elle existe (upload ou
+// URL), sinon une illustration aux couleurs de la categorie.
+import { ref } from 'vue';
+import {
+    BuildingOffice2Icon,
+    PaperAirplaneIcon,
+    TruckIcon,
+    MapIcon,
+    LifebuoyIcon,
+    ShoppingCartIcon,
+    CakeIcon,
+    MusicalNoteIcon,
+    ComputerDesktopIcon,
+    BuildingStorefrontIcon,
+} from '@heroicons/vue/24/outline';
+
+const props = defineProps({
+    src: { type: String, default: null },
+    category: { type: String, required: true },
+    alt: { type: String, default: '' },
+    iconClass: { type: String, default: 'h-12 w-12' },
+});
+
+const STYLES = {
+    hotel: { icon: BuildingOffice2Icon, from: '#0B2A5B', to: '#1E4FA0' },
+    compagnie_aerienne: { icon: PaperAirplaneIcon, from: '#0369A1', to: '#38BDF8' },
+    transport_routier: { icon: TruckIcon, from: '#B45309', to: '#F59E0B' },
+    taxi_vtc: { icon: MapIcon, from: '#15803D', to: '#4ADE80' },
+    canot_rapide: { icon: LifebuoyIcon, from: '#0E7490', to: '#22D3EE' },
+    supermarche: { icon: ShoppingCartIcon, from: '#BE123C', to: '#FB7185' },
+    restaurant: { icon: CakeIcon, from: '#9A3412', to: '#FB923C' },
+    bar_lounge: { icon: MusicalNoteIcon, from: '#6D28D9', to: '#C084FC' },
+    ecommerce: { icon: ComputerDesktopIcon, from: '#1D4ED8', to: '#818CF8' },
+};
+
+const style = STYLES[props.category] ?? { icon: BuildingStorefrontIcon, from: '#0B2A5B', to: '#D4A017' };
+const broken = ref(false);
+</script>
+
+<template>
+    <div class="relative h-full w-full overflow-hidden">
+        <img v-if="src && !broken" :src="src" :alt="alt" class="h-full w-full object-cover" loading="lazy" @error="broken = true" />
+        <div v-else class="flex h-full w-full items-center justify-center" :style="{ background: `linear-gradient(135deg, ${style.from}, ${style.to})` }">
+            <component :is="style.icon" :class="[iconClass, 'text-white/85']" />
+        </div>
+    </div>
+</template>

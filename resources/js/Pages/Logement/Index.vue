@@ -1,5 +1,6 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
+import PartnersSection from '@/Components/PartnersSection.vue';
 import ListingImage from '@/Components/ListingImage.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { reactive } from 'vue';
@@ -129,5 +130,6 @@ const bookingHref = (l) => {
                 </p>
             </div>
         </div>
+        <PartnersSection module="logement" title="Hotels a Brazzaville" subtitle="Les grands hotels de la capitale, en complement de nos logements." />
     </div>
 </template>

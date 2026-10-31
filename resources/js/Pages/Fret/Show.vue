@@ -69,7 +69,7 @@ const submit = () => form.post(`/fret/${props.offer.slug}/demande`);
 
                 <button type="submit" class="btn-gold w-full" :disabled="form.processing">Demander &amp; obtenir un code de suivi</button>
                 <p class="text-center text-xs text-navy-500">
-                    Le paiement se fait via portefeuille mobile money / bancaire, verifie par Peex.
+                    Paiement Mobile Money securise : Peex, pawaPay, MaishaPay ou Digitwace.
                 </p>
             </form>
         </div>

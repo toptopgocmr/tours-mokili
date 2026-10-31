@@ -46,6 +46,13 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             FreightOfferSeeder::class,
             ShipmentSeeder::class,
+
+            // LOISIRS - parcs d'attractions et sites du Congo-Brazzaville.
+            AttractionParkSeeder::class,
+
+            // Societes partenaires, rangees dans Logement / Voyage / Voiture /
+            // Divertissement / Marketplace selon leur activite.
+            BusinessSeeder::class,
         ]);
     }
 }

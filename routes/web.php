@@ -1,10 +1,14 @@
 <?php
 
+use App\Http\Controllers\Admin\AttractionParkController as AdminAttractionParkController;
 use App\Http\Controllers\Admin\AuthenticatedSessionController as AdminAuthenticatedSessionController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\BusinessController as AdminBusinessController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\GatewayController as AdminGatewayController;
 use App\Http\Controllers\Admin\ModerationController as AdminModerationController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
+use App\Http\Controllers\Admin\PayoutController as AdminPayoutController;
 use App\Http\Controllers\Admin\TravelOfferController as AdminTravelOfferController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -14,9 +18,11 @@ use App\Http\Controllers\Divertissement\EventController;
 use App\Http\Controllers\Fret\BookingController as FretBookingController;
 use App\Http\Controllers\Fret\FreightOfferController;
 use App\Http\Controllers\Fret\ShipmentController;
+use App\Http\Controllers\Guide\BusinessController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Logement\BookingController as LogementBookingController;
 use App\Http\Controllers\Logement\LodgingListingController;
+use App\Http\Controllers\Loisirs\AttractionParkController;
 use App\Http\Controllers\Marketplace\ProductController;
 use App\Http\Controllers\Partner\AuthenticatedSessionController as PartnerAuthenticatedSessionController;
 use App\Http\Controllers\Partner\DashboardController as PartnerDashboardController;
@@ -88,6 +94,18 @@ Route::prefix('divertissement')->name('divertissement.')->group(function () {
     Route::get('/{event:slug}', [EventController::class, 'show'])->name('show');
 });
 
+// --- LOISIRS : parcs d'attractions, parcs aquatiques, zoos, sites naturels du Congo ---
+Route::prefix('loisirs')->name('loisirs.')->group(function () {
+    Route::get('/', [AttractionParkController::class, 'index'])->name('index');
+    Route::get('/{attractionPark:slug}', [AttractionParkController::class, 'show'])->name('show');
+
+    Route::middleware('auth')->post('/{attractionPark:slug}/reserver', [AttractionParkController::class, 'book'])->name('book');
+});
+
+// --- Fiche d'une societe partenaire (hotel, compagnie, taxi, restaurant...),
+// listee dans la rubrique de son activite (Logement, Voyage, Voiture...) ---
+Route::get('/partenaires/{business:slug}', [BusinessController::class, 'show'])->name('partners.show');
+
 Route::prefix('marketplace')->name('marketplace.')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('index');
     Route::get('/{product:slug}', [ProductController::class, 'show'])->name('show');
@@ -115,12 +133,14 @@ Route::prefix('fret')->name('fret.')->group(function () {
     Route::middleware('auth')->post('/{freightOffer:slug}/demande', [FretBookingController::class, 'store'])->name('book');
 });
 
-// --- Shared checkout (Peex wallet verification -> payment), any module ---
+// --- Shared checkout (Mobile Money multi-passerelles), any module ---
 Route::middleware('auth')->group(function () {
     Route::get('/checkout/{booking}', [CheckoutController::class, 'show'])->name('checkout.show');
-    Route::post('/checkout/{booking}/payer', [CheckoutController::class, 'pay'])
-        ->middleware('peex.verified')
-        ->name('checkout.pay');
+    // Mobile Money multi-passerelles (Peex, pawaPay, MaishaPay, Digitwace) :
+    // plus de verification Peex prealable obligatoire, chaque passerelle
+    // valide le numero elle-meme.
+    Route::post('/checkout/{booking}/payer', [CheckoutController::class, 'pay'])->name('checkout.pay');
+    Route::get('/checkout/{booking}/statut', [CheckoutController::class, 'status'])->name('checkout.status');
 });
 
 // --- Separate, non-public login entry points for staff/partners ---
@@ -145,10 +165,34 @@ Route::middleware(['auth', 'role:admin,agent'])->prefix('admin')->name('admin.')
     Route::put('/voyage/{travelOffer}', [AdminTravelOfferController::class, 'update'])->name('voyage.update');
     Route::delete('/voyage/{travelOffer}', [AdminTravelOfferController::class, 'destroy'])->name('voyage.destroy');
 
+    Route::get('/loisirs', [AdminAttractionParkController::class, 'index'])->name('loisirs.index');
+    Route::get('/loisirs/creer', [AdminAttractionParkController::class, 'create'])->name('loisirs.create');
+    Route::post('/loisirs', [AdminAttractionParkController::class, 'store'])->name('loisirs.store');
+    Route::get('/loisirs/{park}/editer', [AdminAttractionParkController::class, 'edit'])->name('loisirs.edit');
+    Route::put('/loisirs/{park}', [AdminAttractionParkController::class, 'update'])->name('loisirs.update');
+    Route::delete('/loisirs/{park}', [AdminAttractionParkController::class, 'destroy'])->name('loisirs.destroy');
+
+    Route::get('/partenaires', [AdminBusinessController::class, 'index'])->name('partners.index');
+    Route::get('/partenaires/creer', [AdminBusinessController::class, 'create'])->name('partners.create');
+    Route::post('/partenaires', [AdminBusinessController::class, 'store'])->name('partners.store');
+    Route::get('/partenaires/{business}/editer', [AdminBusinessController::class, 'edit'])->name('partners.edit');
+    Route::put('/partenaires/{business}', [AdminBusinessController::class, 'update'])->name('partners.update');
+    Route::delete('/partenaires/{business}', [AdminBusinessController::class, 'destroy'])->name('partners.destroy');
+
     Route::get('/reservations', [AdminBookingController::class, 'index'])->name('bookings.index');
 
     Route::get('/paiements', [AdminPaymentController::class, 'index'])->name('payments.index');
     Route::post('/paiements/{payment}/rembourser', [AdminPaymentController::class, 'refund'])->name('payments.refund');
+    Route::post('/paiements/{payment}/verifier', [AdminPaymentController::class, 'refresh'])->name('payments.refresh');
+    Route::post('/paiements/{payment}/confirmer', [AdminPaymentController::class, 'markPaid'])->name('payments.mark-paid');
+    Route::post('/paiements/{payment}/echec', [AdminPaymentController::class, 'markFailed'])->name('payments.mark-failed');
+
+    // Decaissements Mobile Money (PAY-OUT) et reglages des passerelles.
+    Route::get('/decaissements', [AdminPayoutController::class, 'index'])->name('payouts.index');
+    Route::post('/decaissements', [AdminPayoutController::class, 'store'])->name('payouts.store');
+    Route::post('/decaissements/{payout}/verifier', [AdminPayoutController::class, 'refresh'])->name('payouts.refresh');
+    Route::get('/passerelles', [AdminGatewayController::class, 'index'])->name('gateways.index');
+    Route::put('/passerelles/{gateway}', [AdminGatewayController::class, 'update'])->name('gateways.update');
 
     Route::get('/moderation', [AdminModerationController::class, 'index'])->name('moderation.index');
     Route::post('/moderation/{module}/{id}/approuver', [AdminModerationController::class, 'approve'])->name('moderation.approve');

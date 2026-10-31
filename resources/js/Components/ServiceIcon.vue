@@ -96,6 +96,25 @@ const props = defineProps({
         <circle cx="17.5" cy="18" r="1.7" :fill="accent" stroke="currentColor" stroke-width="1.1" />
     </svg>
 
+    <!-- Loisirs & Parcs: ferris wheel (grande roue) -->
+    <svg v-else-if="slug === 'loisirs'" :class="props.class" viewBox="0 0 24 24">
+        <circle cx="12" cy="10" r="7.2" fill="none" stroke="currentColor" stroke-width="1.8" />
+        <g stroke="currentColor" stroke-width="1.1">
+            <line x1="12" y1="2.8" x2="12" y2="17.2" />
+            <line x1="4.8" y1="10" x2="19.2" y2="10" />
+            <line x1="6.9" y1="4.9" x2="17.1" y2="15.1" />
+            <line x1="17.1" y1="4.9" x2="6.9" y2="15.1" />
+        </g>
+        <g fill="currentColor">
+            <circle cx="12" cy="2.8" r="1.5" />
+            <circle cx="19.2" cy="10" r="1.5" />
+            <circle cx="12" cy="17.2" r="1.5" />
+            <circle cx="4.8" cy="10" r="1.5" />
+            <circle cx="12" cy="10" r="1.6" />
+            <path d="M12 10 7.5 21.5h2.1L12 15l2.4 6.5h2.1z" />
+        </g>
+    </svg>
+
     <svg v-else :class="props.class" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
         <circle cx="12" cy="12" r="9" />
     </svg>

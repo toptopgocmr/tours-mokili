@@ -106,7 +106,7 @@ const submit = () => form.post(`/logement/${props.listing.slug}/reserver`);
 
                 <button type="submit" class="btn-gold w-full" :disabled="form.processing || nights === 0">Reserver maintenant</button>
                 <p class="text-center text-xs text-navy-500">
-                    Le paiement se fait via portefeuille mobile money / bancaire, verifie par Peex.
+                    Paiement Mobile Money securise : Peex, pawaPay, MaishaPay ou Digitwace.
                 </p>
             </form>
         </div>

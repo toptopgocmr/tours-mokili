@@ -79,7 +79,7 @@ const features = [
          same navy as this background - white keeps every icon legible
          and consistent, brand colors stay intact everywhere else. -->
     <section id="services" class="scroll-mt-24 bg-navy-900 py-10">
-        <div class="mx-auto grid max-w-5xl grid-cols-3 gap-3 px-6 sm:grid-cols-6 sm:gap-4">
+        <div class="mx-auto grid max-w-6xl grid-cols-3 gap-3 px-6 sm:grid-cols-4 sm:gap-4 lg:grid-cols-7">
             <Link
                 v-for="c in categories"
                 :key="c.slug"
