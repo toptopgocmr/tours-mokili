@@ -92,7 +92,7 @@ const features = [
          big colored icon (that service's own brand color) and a bold
          uppercase label in the same color underneath. -->
     <section id="services" class="relative z-10 -mt-14 px-6 pb-2 sm:-mt-16">
-        <div class="mx-auto grid max-w-5xl grid-cols-3 gap-3 sm:grid-cols-6 sm:gap-4">
+        <div class="mx-auto grid max-w-6xl grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 lg:grid-cols-7">
             <Link
                 v-for="c in categories"
                 :key="c.slug"

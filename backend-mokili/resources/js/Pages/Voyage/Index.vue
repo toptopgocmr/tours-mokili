@@ -1,5 +1,6 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
+import PartnersSection from '@/Components/PartnersSection.vue';
 import DestinationImage from '@/Components/DestinationImage.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
@@ -102,5 +103,6 @@ const setType = (value) => {
         </div>
 
         <p v-if="!offers.data.length" class="mt-10 text-center text-navy-500">Aucune offre pour le moment.</p>
+        <PartnersSection module="voyage" title="Compagnies & transport" subtitle="Compagnies aeriennes, bus interurbains et canots rapides vers Kinshasa." />
     </div>
 </template>

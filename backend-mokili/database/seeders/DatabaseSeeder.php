@@ -12,6 +12,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ServiceCategorySeeder::class,
             TravelOfferSeeder::class,
+            // Parcs d'attractions du Congo + societes partenaires par rubrique.
+            AttractionParkSeeder::class,
+            BusinessSeeder::class,
         ]);
 
         User::factory()->create([

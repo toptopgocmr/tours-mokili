@@ -51,7 +51,7 @@ const submit = () => form.post(`/voyage/${props.offer.slug}/reserver`);
                 </div>
                 <button type="submit" class="btn-gold w-full" :disabled="form.processing">Reserver maintenant</button>
                 <p class="text-center text-xs text-navy-500">
-                    Le paiement se fait via portefeuille mobile money / bancaire, verifie par Peex.
+                    Paiement Mobile Money securise : Peex, pawaPay, MaishaPay ou Digitwace.
                 </p>
             </form>
         </div>

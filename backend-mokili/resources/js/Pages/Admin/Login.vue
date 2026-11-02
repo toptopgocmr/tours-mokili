@@ -1,5 +1,6 @@
 <script setup>
 import LogoMark from '@/Components/LogoMark.vue';
+import SplashScreen from '@/Components/SplashScreen.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 
 // Standalone layout (no MainLayout/client nav) - this is a
@@ -10,6 +11,7 @@ const submit = () => form.post('/admin/login', { onFinish: () => form.reset('pas
 
 <template>
     <Head title="Connexion back-office" />
+    <SplashScreen storage-key="mokili_admin_splash" subtitle="Back-office" />
 
     <div class="flex min-h-screen flex-col items-center justify-center gap-6 bg-navy-900 px-6 py-12">
         <div class="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">

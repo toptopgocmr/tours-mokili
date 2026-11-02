@@ -1,5 +1,6 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
+import PartnersSection from '@/Components/PartnersSection.vue';
 import ListingImage from '@/Components/ListingImage.vue';
 import { Head, Link } from '@inertiajs/vue3';
 defineOptions({ layout: MainLayout });
@@ -20,5 +21,6 @@ defineProps({ vehicles: { type: Object, required: true } });
             </Link>
         </div>
         <p v-if="!vehicles.data.length" class="mt-10 text-center text-navy-500">Aucun vehicule pour le moment.</p>
+        <PartnersSection module="voiture" title="Taxis & VTC" subtitle="Applications de taxi et chauffeurs prives a Brazzaville." />
     </div>
 </template>

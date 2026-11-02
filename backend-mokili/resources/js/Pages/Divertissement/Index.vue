@@ -1,5 +1,6 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
+import PartnersSection from '@/Components/PartnersSection.vue';
 import ListingImage from '@/Components/ListingImage.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { reactive } from 'vue';
@@ -90,5 +91,6 @@ const setCategory = (value) => {
             </Link>
         </div>
         <p v-if="!events.data.length" class="mt-10 text-center text-navy-500">Aucun evenement pour le moment.</p>
+        <PartnersSection module="divertissement" title="Restaurants, bars & lounges" subtitle="Les bonnes tables et les sorties du soir a Brazzaville." />
     </div>
 </template>

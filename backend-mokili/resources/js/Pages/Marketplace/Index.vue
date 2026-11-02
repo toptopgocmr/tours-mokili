@@ -1,5 +1,6 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
+import PartnersSection from '@/Components/PartnersSection.vue';
 import ListingImage from '@/Components/ListingImage.vue';
 import ServiceIcon from '@/Components/ServiceIcon.vue';
 import { Head, Link } from '@inertiajs/vue3';
@@ -26,5 +27,6 @@ defineProps({ products: { type: Object, required: true } });
             </Link>
         </div>
         <p v-if="!products.data.length" class="mt-10 text-center text-navy-500">Aucun produit pour le moment.</p>
+        <PartnersSection module="marketplace" title="Supermarches & boutiques en ligne" subtitle="Ou faire vos courses et vos achats en ligne au Congo." />
     </div>
 </template>
