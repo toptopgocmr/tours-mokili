@@ -28,6 +28,7 @@ const STYLES = {
     transport_routier: { icon: TruckIcon, from: '#B45309', to: '#F59E0B' },
     taxi_vtc: { icon: MapIcon, from: '#15803D', to: '#4ADE80' },
     canot_rapide: { icon: LifebuoyIcon, from: '#0E7490', to: '#22D3EE' },
+    transport_ferroviaire: { icon: MapIcon, from: '#334155', to: '#94A3B8' },
     supermarche: { icon: ShoppingCartIcon, from: '#BE123C', to: '#FB7185' },
     restaurant: { icon: CakeIcon, from: '#9A3412', to: '#FB923C' },
     bar_lounge: { icon: MusicalNoteIcon, from: '#6D28D9', to: '#C084FC' },

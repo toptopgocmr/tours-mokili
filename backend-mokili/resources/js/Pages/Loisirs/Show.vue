@@ -20,7 +20,7 @@ const childPrice = computed(() => Number(props.park.price_child ?? props.park.pr
 const total = computed(() => form.adults * adultPrice.value + form.children * childPrice.value);
 const fmt = (n) => `${Number(n).toLocaleString('fr-FR')} ${props.park.currency}`;
 
-const submit = () => form.post(`/loisirs/${props.park.slug}/reserver`);
+const submit = () => form.post(`/divertissement/parcs/${props.park.slug}/reserver`);
 
 const mapsUrl = computed(() => {
     if (props.park.latitude && props.park.longitude) {
@@ -34,7 +34,7 @@ const mapsUrl = computed(() => {
     <Head :title="park.name" />
 
     <div class="mx-auto max-w-6xl px-6 py-10">
-        <Link href="/loisirs" class="text-sm text-navy-500 hover:text-navy-900">&larr; Tous les loisirs</Link>
+        <Link href="/divertissement?category=parcs" class="text-sm text-navy-500 hover:text-navy-900">&larr; Divertissement &middot; Tous les parcs</Link>
 
         <div class="mt-4 grid gap-10 md:grid-cols-[1fr_360px]">
             <div>
@@ -120,7 +120,7 @@ const mapsUrl = computed(() => {
         <section v-if="similar.length" class="mt-14">
             <h2 class="text-xl font-bold text-navy-900">Autres sorties a {{ park.city }}</h2>
             <div class="mt-4 grid gap-5 sm:grid-cols-3">
-                <Link v-for="s in similar" :key="s.id" :href="`/loisirs/${s.slug}`" class="rounded-2xl border p-4 transition hover:shadow-md">
+                <Link v-for="s in similar" :key="s.id" :href="`/divertissement/parcs/${s.slug}`" class="rounded-2xl border p-4 transition hover:shadow-md">
                     <p class="text-xs font-semibold uppercase text-gold-600">{{ s.category_label }}</p>
                     <p class="mt-1 font-semibold text-navy-900">{{ s.name }}</p>
                     <p class="text-sm text-navy-500">{{ s.district ?? s.city }}</p>

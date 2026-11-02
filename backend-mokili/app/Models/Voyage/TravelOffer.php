@@ -15,8 +15,19 @@ class TravelOffer extends Model
 {
     use HasFactory;
 
+    /** Moyens de transport d'un circuit (les vols sont toujours "avion"). */
+    public const TRANSPORT_MODES = [
+        'avion' => 'Avion',
+        'bus' => 'Bus / car',
+        'bateau' => 'Bateau / fluvial',
+        'train' => 'Train',
+        'voiture' => 'Voiture / 4x4',
+        'combine' => 'Combine (plusieurs transports)',
+    ];
+
     protected $fillable = [
-        'title', 'slug', 'type', 'description', 'origin_city', 'origin_country',
+        'title', 'slug', 'type', 'transport_mode', 'description', 'origin_city', 'origin_country',
+        'departure_point', 'duration_label',
         'destination_city', 'destination_country', 'airline', 'departure_at',
         'return_at', 'price', 'discount_percent', 'currency', 'seats_available',
         'image', 'is_featured', 'is_active',
@@ -24,7 +35,7 @@ class TravelOffer extends Model
 
     // Exposed on every JSON/Inertia response (web + API) so both
     // frontends can read the post-discount price directly.
-    protected $appends = ['discounted_price', 'image_url'];
+    protected $appends = ['discounted_price', 'image_url', 'transport_mode_label'];
 
     protected function casts(): array
     {
@@ -57,6 +68,11 @@ class TravelOffer extends Model
     public function getImageUrlAttribute(): ?string
     {
         return $this->image ? Storage::disk('public')->url($this->image) : null;
+    }
+
+    public function getTransportModeLabelAttribute(): ?string
+    {
+        return $this->transport_mode ? (self::TRANSPORT_MODES[$this->transport_mode] ?? $this->transport_mode) : null;
     }
 
     public function scopeActive($query)

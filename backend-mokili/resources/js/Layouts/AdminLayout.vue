@@ -16,6 +16,8 @@ import {
     BanknotesIcon,
     Cog6ToothIcon,
     BuildingStorefrontIcon,
+    TicketIcon,
+    TableCellsIcon,
 } from '@heroicons/vue/24/outline';
 import SplashScreen from '@/Components/SplashScreen.vue';
 
@@ -27,7 +29,9 @@ const currentUrl = computed(() => page.url);
 const links = [
     { href: '/admin', label: 'Tableau de bord', icon: HomeIcon },
     { href: '/admin/voyage', label: 'Offres Voyage', icon: PaperAirplaneIcon },
-    { href: '/admin/loisirs', label: 'Loisirs & Parcs', icon: SparklesIcon },
+    { href: '/admin/vols', label: 'Billetterie aerienne', icon: TicketIcon },
+    { href: '/admin/vols/tarifs', label: 'Tarifs vols', icon: TableCellsIcon },
+    { href: '/admin/loisirs', label: 'Parcs (Divertissement)', icon: SparklesIcon },
     { href: '/admin/partenaires', label: 'Societes partenaires', icon: BuildingStorefrontIcon },
     { href: '/admin/reservations', label: 'Reservations', icon: CalendarDaysIcon },
     { href: '/admin/paiements', label: 'Paiements (collecte)', icon: CreditCardIcon },
@@ -37,7 +41,10 @@ const links = [
     { href: '/admin/utilisateurs', label: 'Agents & Partenaires', icon: UsersIcon },
 ];
 
-const isActive = (href) => currentUrl.value === href || (href !== '/admin' && currentUrl.value.startsWith(href));
+const matches = (href) => currentUrl.value === href || (href !== '/admin' && currentUrl.value.startsWith(href));
+// Lien le plus precis gagne (/admin/vols/tarifs plutot que /admin/vols).
+const bestMatch = computed(() => links.filter((l) => matches(l.href)).sort((a, b) => b.href.length - a.href.length)[0]?.href);
+const isActive = (href) => href === bestMatch.value;
 
 const breadcrumb = computed(() => {
     const active = links.find((l) => isActive(l.href));

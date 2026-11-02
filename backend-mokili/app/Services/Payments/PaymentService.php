@@ -6,6 +6,9 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Payout;
 use App\Models\User;
+use App\Services\Flights\FlightBookingService;
+use App\Services\Flights\FlightException;
+use App\Services\Flights\FlightPaymentHooks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -35,6 +38,13 @@ class PaymentService
 
         if (in_array($booking->status, ['confirmed', 'completed', 'refunded'], true)) {
             throw new PaymentGatewayException('Cette reservation est deja payee.');
+        }
+
+        // Billetterie aerienne : prix revalide et pas de double paiement.
+        try {
+            app(FlightBookingService::class)->beforePayment($booking);
+        } catch (FlightException $e) {
+            throw new PaymentGatewayException($e->getMessage());
         }
 
         $msisdn = PaymentGatewayManager::normalizePhone($phone, $country);
@@ -238,8 +248,10 @@ class PaymentService
 
             if ($booking && $result->status === GatewayResult::SUCCESS) {
                 $booking->update(['status' => 'confirmed']);
+                app(FlightPaymentHooks::class)->paymentConfirmed($booking);
             } elseif ($booking && $result->status === GatewayResult::FAILED && $booking->status !== 'confirmed') {
                 $booking->update(['status' => 'awaiting_payment']);
+                app(FlightPaymentHooks::class)->paymentFailed($booking);
             }
         });
     }

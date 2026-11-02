@@ -23,7 +23,7 @@ const navLinks = [
     { href: '/', label: 'Accueil' },
     { href: '/#services', label: 'Services' },
     { href: '/voyage', label: 'Offres' },
-    { href: '/loisirs', label: 'Loisirs' },
+    { href: '/voyage?type=vol', label: 'Billets d\'avion' },
     { href: '/#apropos', label: 'À propos' },
     { href: '/#contact', label: 'Contact' },
 ];
@@ -46,6 +46,7 @@ const navLinks = [
                 <div class="flex items-center gap-3">
                     <template v-if="user">
                         <span class="hidden text-sm text-navy-700 sm:inline">Bonjour, {{ user.name }}</span>
+                        <Link href="/voyage/vols/mes-billets" class="hidden text-sm font-medium text-navy-700 hover:text-gold-600 lg:inline">Mes billets</Link>
                         <Link v-if="spaceLink" :href="spaceLink.href" class="btn-outline !px-4 !py-2 text-sm">
                             {{ spaceLink.label }}
                         </Link>

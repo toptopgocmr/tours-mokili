@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BusinessController;
 use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\FlightController;
 use App\Http\Controllers\Api\FreightOfferController;
 use App\Http\Controllers\Api\LodgingListingController;
 use App\Http\Controllers\Api\PaymentController;
@@ -49,7 +50,14 @@ Route::post('/auth/phone/verify-code', [PhoneOtpController::class, 'verify']);
 
 // VOYAGE catalogue is public (browse without login, like the web site).
 Route::get('/voyage/offers', [TravelOfferController::class, 'index']);
+Route::get('/voyage/transport-modes', [TravelOfferController::class, 'modes']);
 Route::get('/voyage/offers/{travelOffer:slug}', [TravelOfferController::class, 'show']);
+
+// Billetterie aerienne (moteur central, meme logique que le site).
+Route::get('/flights/airports', [FlightController::class, 'airports'])->middleware('throttle:60,1');
+Route::post('/flights/search', [FlightController::class, 'search'])->middleware('throttle:20,1');
+Route::get('/flights/searches/{uuid}', [FlightController::class, 'offers']);
+Route::get('/flights/offers/{flightOffer}', [FlightController::class, 'offer']);
 
 // LOGEMENT (style Booking.com), VOITURE, DIVERTISSEMENT, MARKETPLACE
 // (style Amazon) and FRET (style DHL) catalogues - public browsing like
@@ -101,4 +109,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/marketplace/products/{product:slug}/book', [ProductController::class, 'book']);
     Route::post('/loisirs/parks/{attractionPark:slug}/book', [AttractionParkController::class, 'book']);
     Route::post('/fret/offers/{offer:slug}/book', [FreightOfferController::class, 'book']);
+
+    Route::post('/flights/offers/{flightOffer}/book', [FlightController::class, 'book'])->middleware('throttle:10,1');
+    Route::get('/flights/bookings', [FlightController::class, 'index']);
+    Route::get('/flights/bookings/{flightBooking}', [FlightController::class, 'show']);
+    Route::post('/flights/bookings/{flightBooking}/confirm-price', [FlightController::class, 'confirmPrice']);
+    Route::post('/flights/bookings/{flightBooking}/after-sales', [FlightController::class, 'afterSale']);
 });

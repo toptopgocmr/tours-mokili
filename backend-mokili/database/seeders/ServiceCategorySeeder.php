@@ -5,7 +5,8 @@ namespace Database\Seeders;
 use App\Models\ServiceCategory;
 use Illuminate\Database\Seeder;
 
-// The 6 pillars shown on the marketing artwork.
+// The 6 pillars shown on the marketing artwork (les parcs d'attractions
+// sont dans Divertissement).
 class ServiceCategorySeeder extends Seeder
 {
     public function run(): void
@@ -17,7 +18,6 @@ class ServiceCategorySeeder extends Seeder
             ['slug' => 'divertissement', 'name' => 'Divertissement', 'icon' => 'ticket', 'color' => '#7A2FBF', 'position' => 4],
             ['slug' => 'marketplace', 'name' => 'Marketplace', 'icon' => 'shopping-bag', 'color' => '#D6216B', 'position' => 5],
             ['slug' => 'fret', 'name' => 'Fret', 'icon' => 'truck', 'color' => '#0FA3A3', 'position' => 6],
-            ['slug' => 'loisirs', 'name' => 'Loisirs & Parcs', 'icon' => 'ferris-wheel', 'color' => '#F59E0B', 'position' => 7],
         ];
 
         foreach ($categories as $category) {

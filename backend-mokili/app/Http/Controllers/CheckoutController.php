@@ -53,6 +53,12 @@ class CheckoutController extends Controller
                 $request->input('network'),
             );
         } catch (PaymentGatewayException $e) {
+            // Billetterie : prix modifie / offre expiree -> le dossier explique quoi faire.
+            $flight = $booking->bookable;
+            if ($flight instanceof \App\Models\Flights\FlightBooking && ! in_array($flight->fresh()->status, ['PRICE_CONFIRMED', 'PAYMENT_PENDING'], true)) {
+                return redirect()->route('voyage.vols.dossier', $flight->reference)->with('error', $e->getMessage());
+            }
+
             return back()->with('error', 'Paiement impossible : '.$e->getMessage());
         }
 

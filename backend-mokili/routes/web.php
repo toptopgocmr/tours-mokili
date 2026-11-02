@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\AuthenticatedSessionController as AdminAuthentica
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\BusinessController as AdminBusinessController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\FlightBookingController as AdminFlightBookingController;
+use App\Http\Controllers\Admin\FlightFareController as AdminFlightFareController;
 use App\Http\Controllers\Admin\GatewayController as AdminGatewayController;
 use App\Http\Controllers\Admin\ModerationController as AdminModerationController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
@@ -34,6 +36,7 @@ use App\Http\Controllers\Partner\ProductController as PartnerProductController;
 use App\Http\Controllers\Partner\VehicleController as PartnerVehicleController;
 use App\Http\Controllers\Voiture\VehicleController;
 use App\Http\Controllers\Voyage\BookingController as VoyageBookingController;
+use App\Http\Controllers\Voyage\FlightController;
 use App\Http\Controllers\Voyage\TravelOfferController;
 use Illuminate\Support\Facades\Route;
 
@@ -68,6 +71,27 @@ Route::get('/__debug-scheme', function () {
 // --- VOYAGE (pilot module - full CRUD + booking + checkout) ---
 Route::prefix('voyage')->name('voyage.')->group(function () {
     Route::get('/', [TravelOfferController::class, 'index'])->name('index');
+
+    // --- VOLS : billetterie aerienne (cahier des charges Billetterie) ---
+    // Declare avant le joker {travelOffer:slug} pour que "vols" ne soit pas lu comme un slug.
+    Route::prefix('vols')->name('vols.')->group(function () {
+        Route::get('/', fn () => redirect('/voyage?type=vol'))->name('home');
+        Route::get('/aeroports', [FlightController::class, 'airports'])->middleware('throttle:60,1')->name('airports');
+        Route::get('/recherche', [FlightController::class, 'search'])->middleware('throttle:20,1')->name('search');
+        Route::get('/resultats/{uuid}', [FlightController::class, 'results'])->name('results');
+
+        Route::middleware('auth')->group(function () {
+            Route::get('/offres/{flightOffer}', [FlightController::class, 'offer'])->name('offer');
+            Route::post('/offres/{flightOffer}/reserver', [FlightController::class, 'book'])->middleware('throttle:10,1')->name('book');
+            Route::get('/mes-billets', [FlightController::class, 'index'])->name('dossiers');
+            Route::get('/dossiers/{flightBooking}', [FlightController::class, 'show'])->name('dossier');
+            Route::post('/dossiers/{flightBooking}/confirmer-prix', [FlightController::class, 'confirmPrice'])->name('confirm-price');
+            Route::post('/dossiers/{flightBooking}/annuler', [FlightController::class, 'cancel'])->name('cancel');
+            Route::post('/dossiers/{flightBooking}/apres-vente', [FlightController::class, 'afterSale'])->middleware('throttle:5,1')->name('after-sale');
+            Route::get('/dossiers/{flightBooking}/document/{type}', [FlightController::class, 'document'])
+                ->whereIn('type', ['recu', 'confirmation', 'billet'])->name('document');
+        });
+    });
     Route::get('/{travelOffer:slug}', [TravelOfferController::class, 'show'])->name('show');
 
     Route::middleware('auth')->group(function () {
@@ -92,14 +116,19 @@ Route::prefix('voiture')->name('voiture.')->group(function () {
 
 Route::prefix('divertissement')->name('divertissement.')->group(function () {
     Route::get('/', [EventController::class, 'index'])->name('index');
+
+    // Parcs d'attractions, parcs aquatiques, zoos, sites naturels du Congo
+    // (anciennement rubrique "Loisirs") - avant le joker {event:slug}.
+    Route::get('/parcs/{attractionPark:slug}', [AttractionParkController::class, 'show'])->name('parks.show');
+    Route::middleware('auth')->post('/parcs/{attractionPark:slug}/reserver', [AttractionParkController::class, 'book'])->name('parks.book');
+
     Route::get('/{event:slug}', [EventController::class, 'show'])->name('show');
 });
 
-// --- LOISIRS : parcs d'attractions, parcs aquatiques, zoos, sites naturels du Congo ---
+// Anciennes adresses "Loisirs" : redirigees vers Divertissement > Parcs.
 Route::prefix('loisirs')->name('loisirs.')->group(function () {
-    Route::get('/', [AttractionParkController::class, 'index'])->name('index');
-    Route::get('/{attractionPark:slug}', [AttractionParkController::class, 'show'])->name('show');
-
+    Route::get('/', fn () => redirect('/divertissement?category=parcs', 301))->name('index');
+    Route::get('/{slug}', fn (string $slug) => redirect('/divertissement/parcs/'.$slug, 301))->name('show');
     Route::middleware('auth')->post('/{attractionPark:slug}/reserver', [AttractionParkController::class, 'book'])->name('book');
 });
 
@@ -166,6 +195,29 @@ Route::middleware(['auth', 'role:admin,agent'])->prefix('admin')->name('admin.')
     Route::put('/voyage/{travelOffer}', [AdminTravelOfferController::class, 'update'])->name('voyage.update');
     Route::delete('/voyage/{travelOffer}', [AdminTravelOfferController::class, 'destroy'])->name('voyage.destroy');
 
+    // Billetterie aerienne : dossiers, tarifs negocies, fournisseurs.
+    Route::get('/vols', [AdminFlightBookingController::class, 'index'])->name('vols.index');
+    Route::get('/vols/tarifs', [AdminFlightFareController::class, 'index'])->name('vols.fares.index');
+    Route::get('/vols/tarifs/creer', [AdminFlightFareController::class, 'create'])->name('vols.fares.create');
+    Route::post('/vols/tarifs', [AdminFlightFareController::class, 'store'])->name('vols.fares.store');
+    Route::get('/vols/tarifs/{fare}/editer', [AdminFlightFareController::class, 'edit'])->name('vols.fares.edit');
+    Route::put('/vols/tarifs/{fare}', [AdminFlightFareController::class, 'update'])->name('vols.fares.update');
+    Route::delete('/vols/tarifs/{fare}', [AdminFlightFareController::class, 'destroy'])->name('vols.fares.destroy');
+    Route::post('/vols/fournisseurs/{supplier}/basculer', [AdminFlightFareController::class, 'toggleSupplier'])->name('vols.suppliers.toggle');
+    Route::put('/vols/apres-vente/{afterSale}', [AdminFlightBookingController::class, 'updateAfterSale'])->name('vols.after-sale.update');
+    Route::get('/vols/apres-vente/{afterSale}/piece/{index}', [AdminFlightBookingController::class, 'attachment'])->whereNumber('index')->name('vols.after-sale.attachment');
+    Route::get('/vols/{flightBooking}', [AdminFlightBookingController::class, 'show'])->name('vols.show');
+    Route::post('/vols/{flightBooking}/traiter', [AdminFlightBookingController::class, 'process'])->name('vols.process');
+    Route::post('/vols/{flightBooking}/verifier', [AdminFlightBookingController::class, 'reconcile'])->name('vols.reconcile');
+    Route::post('/vols/{flightBooking}/pnr', [AdminFlightBookingController::class, 'recordPnr'])->name('vols.pnr');
+    Route::post('/vols/{flightBooking}/billets', [AdminFlightBookingController::class, 'recordTickets'])->name('vols.tickets');
+    Route::post('/vols/{flightBooking}/echec', [AdminFlightBookingController::class, 'markFailed'])->name('vols.fail');
+    Route::post('/vols/{flightBooking}/annuler', [AdminFlightBookingController::class, 'cancel'])->name('vols.cancel');
+    Route::post('/vols/{flightBooking}/remboursement', [AdminFlightBookingController::class, 'startRefund'])->name('vols.refund.start');
+    Route::post('/vols/{flightBooking}/rembourse', [AdminFlightBookingController::class, 'confirmRefund'])->name('vols.refund.confirm');
+    Route::post('/vols/{flightBooking}/alerte-levee', [AdminFlightBookingController::class, 'resolveAttention'])->name('vols.resolve');
+
+    // Parcs d'attractions (rubrique Divertissement).
     Route::get('/loisirs', [AdminAttractionParkController::class, 'index'])->name('loisirs.index');
     Route::get('/loisirs/creer', [AdminAttractionParkController::class, 'create'])->name('loisirs.create');
     Route::post('/loisirs', [AdminAttractionParkController::class, 'store'])->name('loisirs.store');

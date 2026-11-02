@@ -20,6 +20,10 @@ class BookingController extends Controller
 
     public function store(StoreBookingRequest $request, TravelOffer $travelOffer): JsonResponse
     {
+        if ($travelOffer->type === 'vol') {
+            return response()->json(['message' => 'Les billets d\'avion se reservent via /api/flights/search.', 'reason' => 'use_flights'], 422);
+        }
+
         $quantity = $request->integer('quantity');
         $unitPrice = $travelOffer->discounted_price;
 

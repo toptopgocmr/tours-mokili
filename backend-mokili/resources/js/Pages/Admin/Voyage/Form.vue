@@ -7,6 +7,7 @@ defineOptions({ layout: AdminLayout });
 
 const props = defineProps({
     offer: { type: Object, default: null },
+    transportModes: { type: Object, default: () => ({}) },
 });
 
 const isEdit = computed(() => !!props.offer);
@@ -14,6 +15,9 @@ const isEdit = computed(() => !!props.offer);
 const form = useForm({
     title: props.offer?.title ?? '',
     type: props.offer?.type ?? 'vol',
+    transport_mode: props.offer?.transport_mode ?? '',
+    departure_point: props.offer?.departure_point ?? '',
+    duration_label: props.offer?.duration_label ?? '',
     description: props.offer?.description ?? '',
     origin_city: props.offer?.origin_city ?? '',
     origin_country: props.offer?.origin_country ?? '',
@@ -80,12 +84,28 @@ const submit = () => {
             <select v-model="form.type" class="mt-1 w-full rounded border-slate-300">
                 <option value="vol">Vol</option>
                 <option value="sejour">Sejour</option>
-                <option value="circuit">Circuit</option>
+                <option value="circuit">Circuit (bus, bateau, train...)</option>
             </select>
         </div>
         <div>
-            <label class="text-sm font-medium text-slate-700">Compagnie</label>
-            <input v-model="form.airline" type="text" class="mt-1 w-full rounded border-slate-300" />
+            <label class="text-sm font-medium text-slate-700">Compagnie / transporteur</label>
+            <input v-model="form.airline" type="text" placeholder="Ex : Ocean du Nord, CFCO, ECAir..." class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div v-if="form.type !== 'vol'">
+            <label class="text-sm font-medium text-slate-700">Moyen de transport <span v-if="form.type === 'circuit'" class="text-red-600">*</span></label>
+            <select v-model="form.transport_mode" class="mt-1 w-full rounded border-slate-300" :required="form.type === 'circuit'">
+                <option value="">-- Choisir --</option>
+                <option v-for="(label, key) in transportModes" :key="key" :value="key">{{ label }}</option>
+            </select>
+            <p v-if="form.errors.transport_mode" class="mt-1 text-xs text-red-600">{{ form.errors.transport_mode }}</p>
+        </div>
+        <div v-if="form.type !== 'vol'">
+            <label class="text-sm font-medium text-slate-700">Lieu de depart / embarquement</label>
+            <input v-model="form.departure_point" type="text" placeholder="Ex : Gare routiere de Mikalou, Port du Beach..." class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div v-if="form.type !== 'vol'">
+            <label class="text-sm font-medium text-slate-700">Duree</label>
+            <input v-model="form.duration_label" type="text" placeholder="Ex : 3 jours / 2 nuits, 8 h de route" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Ville de depart</label>

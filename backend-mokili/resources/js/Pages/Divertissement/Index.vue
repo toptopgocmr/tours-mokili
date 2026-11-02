@@ -2,42 +2,59 @@
 import MainLayout from '@/Layouts/MainLayout.vue';
 import PartnersSection from '@/Components/PartnersSection.vue';
 import ListingImage from '@/Components/ListingImage.vue';
+import ParkCard from '@/Components/ParkCard.vue';
+import Paginator from '@/Components/Paginator.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import { computed, reactive } from 'vue';
 
 defineOptions({ layout: MainLayout });
 
 const props = defineProps({
-    events: { type: Object, required: true },
+    events: { type: Object, default: null },
+    parks: { type: [Object, Array], default: () => [] },
+    parkCategories: { type: Object, default: () => ({}) },
     filters: { type: Object, default: () => ({}) },
 });
 
 const search = reactive({
     city: props.filters.city ?? '',
     category: props.filters.category ?? '',
+    type: props.filters.type ?? '',
 });
 
+// Les parcs d'attractions (ex-rubrique "Loisirs") sont une categorie de
+// Divertissement.
 const categories = [
     { value: '', label: 'Tout' },
     { value: 'concert', label: 'Concerts' },
     { value: 'sport', label: 'Sport' },
     { value: 'spectacle', label: 'Spectacles' },
     { value: 'cinema', label: 'Cinema' },
+    { value: 'parcs', label: "Parcs d'attractions & loisirs" },
 ];
 
+const isParks = computed(() => search.category === 'parcs');
+const parkList = computed(() => (Array.isArray(props.parks) ? props.parks : props.parks?.data ?? []));
+
 const submitSearch = () => {
-    const query = Object.fromEntries(Object.entries(search).filter(([, v]) => v));
+    const query = Object.fromEntries(Object.entries(search).filter(([k, v]) => v && (k !== 'type' || isParks.value)));
     router.get('/divertissement', query, { preserveState: true, preserveScroll: true, replace: true });
 };
 
 const setCategory = (value) => {
     search.category = value;
+    search.type = '';
+    submitSearch();
+};
+
+const setParkType = (value) => {
+    search.type = search.type === value ? '' : value;
     submitSearch();
 };
 </script>
 
 <template>
-    <Head title="Divertissement" />
+    <Head :title="isParks ? 'Parcs d\'attractions & loisirs' : 'Divertissement'" />
 
     <!-- Hero + search: style Booking.com "Attractions, activites et
          experiences" (barre de recherche flottante par-dessus la
@@ -47,9 +64,13 @@ const setCategory = (value) => {
         <div class="absolute inset-0 bg-gradient-to-b from-navy-900/70 via-navy-900/30 to-navy-900/10" />
         <div class="relative flex h-full max-w-3xl flex-col justify-start px-6 pt-14 text-left sm:px-10 sm:pt-16">
             <p class="text-sm font-semibold uppercase tracking-widest text-gold-600">Divertissement</p>
-            <h1 class="mt-2 text-2xl font-extrabold text-white drop-shadow sm:text-3xl">Concerts, spectacles et sorties</h1>
+            <h1 class="mt-2 text-2xl font-extrabold text-white drop-shadow sm:text-3xl">
+                {{ isParks ? "Parcs d'attractions, zoos & loisirs" : 'Concerts, spectacles, sorties et parcs' }}
+            </h1>
             <p class="mt-1 max-w-lg text-sm text-white/90 drop-shadow">
-                Concerts, spectacles, sport et billetterie pres de chez vous.
+                {{ isParks
+                    ? 'Parcs aquatiques, aires de jeux, iles de loisirs et parcs naturels du Congo.'
+                    : "Concerts, spectacles, sport, billetterie et parcs d'attractions pres de chez vous." }}
             </p>
         </div>
     </section>
@@ -72,7 +93,7 @@ const setCategory = (value) => {
                 <input
                     v-model="search.city"
                     type="text"
-                    placeholder="Ville ou salle (ex: Douala, Kinshasa...)"
+                    :placeholder="isParks ? 'Ville (ex: Brazzaville, Pointe-Noire...)' : 'Ville ou salle (ex: Brazzaville, Kinshasa...)'"
                     class="flex-1 rounded-full border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600"
                 />
                 <button type="submit" class="btn-gold sm:px-10">Rechercher</button>
@@ -81,16 +102,55 @@ const setCategory = (value) => {
     </div>
 
     <div class="mx-auto max-w-7xl px-6 py-10">
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <Link v-for="e in events.data" :key="e.id" :href="`/divertissement/${e.slug}`" class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg">
-                <ListingImage :src="e.image_url" fallback-class="bg-purple-700">{{ e.venue ?? e.city }}</ListingImage>
-                <div class="p-4">
-                    <p class="font-semibold text-navy-900">{{ e.title }}</p>
-                    <p class="mt-1 text-sm font-semibold text-gold-600">{{ Number(e.price).toLocaleString('fr-FR') }} {{ e.currency }}</p>
+        <!-- PARCS : catalogue complet avec filtre par type -->
+        <template v-if="isParks">
+            <div class="flex flex-wrap gap-2">
+                <button
+                    v-for="(label, key) in parkCategories"
+                    :key="key"
+                    type="button"
+                    class="rounded-full border px-4 py-1.5 text-sm font-medium transition"
+                    :class="search.type === key ? 'border-navy-900 bg-navy-900 text-white' : 'border-gray-200 text-navy-700 hover:border-navy-400'"
+                    @click="setParkType(key)"
+                >
+                    {{ label }}
+                </button>
+            </div>
+            <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <ParkCard v-for="p in parkList" :key="p.id" :park="p" />
+            </div>
+            <p v-if="!parkList.length" class="mt-10 text-center text-navy-500">Aucun parc ne correspond a votre recherche.</p>
+            <Paginator v-if="!Array.isArray(parks)" :page="parks" />
+        </template>
+
+        <!-- EVENEMENTS (+ parcs a la une sur "Tout") -->
+        <template v-else>
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <Link v-for="e in events.data" :key="e.id" :href="`/divertissement/${e.slug}`" class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg">
+                    <ListingImage :src="e.image_url" fallback-class="bg-purple-700">{{ e.venue ?? e.city }}</ListingImage>
+                    <div class="p-4">
+                        <p class="font-semibold text-navy-900">{{ e.title }}</p>
+                        <p class="mt-1 text-sm font-semibold text-gold-600">{{ Number(e.price).toLocaleString('fr-FR') }} {{ e.currency }}</p>
+                    </div>
+                </Link>
+            </div>
+            <p v-if="!events.data.length" class="mt-10 text-center text-navy-500">Aucun evenement pour le moment.</p>
+            <Paginator :page="events" />
+
+            <section v-if="parkList.length" class="mt-14">
+                <div class="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-2xl font-bold text-navy-900">Parcs d'attractions & loisirs</h2>
+                        <p class="mt-1 text-sm text-navy-500">Parcs aquatiques, zoos, aires de jeux et sites naturels du Congo.</p>
+                    </div>
+                    <button type="button" class="text-sm font-semibold text-gold-600 hover:underline" @click="setCategory('parcs')">Voir tous les parcs →</button>
                 </div>
-            </Link>
-        </div>
-        <p v-if="!events.data.length" class="mt-10 text-center text-navy-500">Aucun evenement pour le moment.</p>
+                <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <ParkCard v-for="p in parkList" :key="p.id" :park="p" />
+                </div>
+            </section>
+        </template>
+
         <PartnersSection module="divertissement" title="Restaurants, bars & lounges" subtitle="Les bonnes tables et les sorties du soir a Brazzaville." />
     </div>
 </template>
