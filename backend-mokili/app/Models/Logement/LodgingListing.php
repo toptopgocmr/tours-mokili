@@ -16,12 +16,17 @@ class LodgingListing extends Model
     use HasPublishingStatus;
 
     protected $fillable = [
-        'owner_id', 'title', 'slug', 'description', 'city', 'country', 'address',
+        'owner_id', 'title', 'property_type', 'slug', 'description', 'city', 'country', 'address',
         'price_per_night', 'currency', 'bedrooms', 'bathrooms', 'max_guests',
         'amenities', 'image', 'is_active', 'status', 'rejection_reason',
     ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'property_type_label'];
+
+    public function getPropertyTypeLabelAttribute(): ?string
+    {
+        return $this->property_type ? (config('catalogue.logement.property_types')[$this->property_type] ?? $this->property_type) : null;
+    }
 
     protected function casts(): array
     {

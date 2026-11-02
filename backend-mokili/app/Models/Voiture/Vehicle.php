@@ -15,17 +15,35 @@ class Vehicle extends Model
     use HasPublishingStatus;
 
     protected $fillable = [
-        'owner_id', 'title', 'slug', 'brand', 'model', 'year', 'category',
-        'transmission', 'seats', 'price_per_day', 'currency', 'city', 'country',
+        'owner_id', 'title', 'offer_type', 'slug', 'brand', 'model', 'description', 'year', 'category',
+        'transmission', 'seats', 'mileage_km', 'fuel', 'services', 'price_per_day', 'sale_price',
+        'currency', 'city', 'country', 'phone',
         'image', 'is_active', 'status', 'rejection_reason',
     ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'offer_type_label', 'display_price'];
+
+    public function getOfferTypeLabelAttribute(): string
+    {
+        return config('catalogue.voiture.offer_types')[$this->offer_type ?? 'location'] ?? (string) $this->offer_type;
+    }
+
+    /** Prix affiche selon le type : / jour (location), prix de vente, ou "a partir de" (mecanique). */
+    public function getDisplayPriceAttribute(): ?array
+    {
+        return match ($this->offer_type) {
+            'vente' => $this->sale_price !== null ? ['amount' => (float) $this->sale_price, 'suffix' => ''] : null,
+            'mecanique' => $this->sale_price !== null ? ['amount' => (float) $this->sale_price, 'suffix' => 'a partir de'] : null,
+            default => $this->price_per_day !== null ? ['amount' => (float) $this->price_per_day, 'suffix' => '/ jour'] : null,
+        };
+    }
 
     protected function casts(): array
     {
         return [
             'price_per_day' => 'decimal:2',
+            'sale_price' => 'decimal:2',
+            'services' => 'array',
             'is_active' => 'boolean',
         ];
     }

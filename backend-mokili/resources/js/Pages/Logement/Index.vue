@@ -10,6 +10,7 @@ defineOptions({ layout: MainLayout });
 const props = defineProps({
     listings: { type: Object, required: true },
     filters: { type: Object, default: () => ({}) },
+    propertyTypes: { type: Object, default: () => ({}) },
 });
 
 const search = reactive({
@@ -19,7 +20,14 @@ const search = reactive({
     guests: props.filters.guests ?? '',
     price_min: props.filters.price_min ?? '',
     price_max: props.filters.price_max ?? '',
+    type: props.filters.type ?? '',
 });
+
+const TYPE_ICONS = { villa: '🏡', hotel: '🏨', appartement: '🏢' };
+const setType = (value) => {
+    search.type = value;
+    submitSearch();
+};
 
 const submitSearch = () => {
     const query = Object.fromEntries(Object.entries(search).filter(([, v]) => v !== '' && v !== null));
@@ -33,6 +41,7 @@ const resetFilters = () => {
     search.guests = '';
     search.price_min = '';
     search.price_max = '';
+    search.type = '';
     router.get('/logement', {}, { preserveState: true, preserveScroll: true, replace: true });
 };
 
@@ -58,12 +67,32 @@ const bookingHref = (l) => {
             <p class="text-sm font-semibold uppercase tracking-widest text-gold-600">Logement</p>
             <h1 class="mt-2 text-2xl font-extrabold text-white drop-shadow sm:text-3xl">Trouvez votre logement</h1>
             <p class="mt-1 max-w-lg text-sm text-white/90 drop-shadow">
-                Appartements, maisons et residences a louer partout au Congo.
+                Villas, hotels et appartements partout au Congo.
             </p>
         </div>
     </section>
 
     <div class="relative z-10 -mt-10 px-6 sm:-mt-12">
+        <div class="mx-auto mb-2 flex max-w-5xl flex-wrap gap-2">
+            <button
+                type="button"
+                class="rounded-full px-4 py-1.5 text-sm font-semibold shadow transition"
+                :class="!search.type ? 'bg-navy-900 text-white' : 'bg-white text-navy-700 hover:bg-navy-50'"
+                @click="setType('')"
+            >
+                Tous
+            </button>
+            <button
+                v-for="(label, key) in propertyTypes"
+                :key="key"
+                type="button"
+                class="rounded-full px-4 py-1.5 text-sm font-semibold shadow transition"
+                :class="search.type === key ? 'bg-navy-900 text-white' : 'bg-white text-navy-700 hover:bg-navy-50'"
+                @click="setType(key)"
+            >
+                {{ TYPE_ICONS[key] }} {{ label }}
+            </button>
+        </div>
         <form
             class="mx-auto grid max-w-5xl gap-3 rounded-2xl bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.15)] sm:grid-cols-2 lg:grid-cols-5"
             @submit.prevent="submitSearch"
@@ -128,7 +157,7 @@ const bookingHref = (l) => {
                         <ListingImage :src="l.image_url" fallback-class="bg-green-700">{{ l.city }}</ListingImage>
                         <div class="p-4">
                             <p class="font-semibold text-navy-900">{{ l.title }}</p>
-                            <p class="text-xs text-navy-500">{{ l.city }} - jusqu'a {{ l.max_guests }} voyageurs</p>
+                            <p class="text-xs text-navy-500"><span v-if="l.property_type_label" class="font-semibold text-green-700">{{ l.property_type_label }} · </span>{{ l.city }} - jusqu'a {{ l.max_guests }} voyageurs</p>
                             <p class="mt-1 text-sm font-semibold text-gold-600">
                                 {{ Number(l.price_per_night).toLocaleString('fr-FR') }} {{ l.currency }} / nuit
                             </p>

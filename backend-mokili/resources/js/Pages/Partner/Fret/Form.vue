@@ -12,6 +12,8 @@ const form = useForm({
     title: props.offer?.title ?? '',
     description: props.offer?.description ?? '',
     mode: props.offer?.mode ?? 'route',
+    package_types: props.offer?.package_types ?? ['marchandise'],
+    transit_time: props.offer?.transit_time ?? '',
     origin_city: props.offer?.origin_city ?? '',
     origin_country: props.offer?.origin_country ?? '',
     destination_city: props.offer?.destination_city ?? '',
@@ -66,6 +68,17 @@ const submit = (intent) => {
             </div>
         </div>
 
+        <div class="sm:col-span-2">
+            <label class="text-sm font-medium text-slate-700">Types de colis acceptes</label>
+            <div class="mt-1 flex flex-wrap gap-3 text-sm">
+                <label v-for="(label, key) in $page.props.catalogue.fret.package_types" :key="key" class="flex items-center gap-1.5"><input v-model="form.package_types" type="checkbox" :value="key" /> {{ label }}</label>
+            </div>
+            <p v-if="form.errors.package_types" class="mt-1 text-xs text-red-600">{{ form.errors.package_types }}</p>
+        </div>
+        <div class="sm:col-span-2">
+            <label class="text-sm font-medium text-slate-700">Delai d'acheminement (ex. 5 a 7 jours)</label>
+            <input v-model="form.transit_time" type="text" class="mt-1 w-full rounded border-slate-300" />
+        </div>
         <div class="sm:col-span-2">
             <label class="text-sm font-medium text-slate-700">Titre</label>
             <input v-model="form.title" type="text" class="mt-1 w-full rounded border-slate-300" required />

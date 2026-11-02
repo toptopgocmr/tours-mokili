@@ -10,6 +10,13 @@ const isEdit = computed(() => !!props.vehicle);
 
 const form = useForm({
     title: props.vehicle?.title ?? '',
+    offer_type: props.vehicle?.offer_type ?? 'location',
+    description: props.vehicle?.description ?? '',
+    sale_price: props.vehicle?.sale_price ?? '',
+    mileage_km: props.vehicle?.mileage_km ?? '',
+    fuel: props.vehicle?.fuel ?? '',
+    services: props.vehicle?.services ?? [],
+    phone: props.vehicle?.phone ?? '',
     brand: props.vehicle?.brand ?? '',
     model: props.vehicle?.model ?? '',
     year: props.vehicle?.year ?? '',
@@ -66,6 +73,20 @@ const submit = (intent) => {
             </div>
         </div>
         <div class="sm:col-span-2">
+            <label class="text-sm font-medium text-slate-700">Type d'annonce</label>
+            <div class="mt-1 flex flex-wrap gap-2">
+                <label v-for="(label, key) in $page.props.catalogue.voiture.offer_types" :key="key" class="flex items-center gap-1.5 rounded border border-slate-300 px-3 py-1.5 text-sm">
+                    <input v-model="form.offer_type" type="radio" :value="key" /> {{ label }}
+                </label>
+            </div>
+        </div>
+        <div v-if="form.offer_type === 'mecanique'" class="sm:col-span-2">
+            <label class="text-sm font-medium text-slate-700">Prestations proposees</label>
+            <div class="mt-1 flex flex-wrap gap-3 text-sm">
+                <label v-for="s in $page.props.catalogue.voiture.mechanic_services" :key="s" class="flex items-center gap-1.5"><input v-model="form.services" type="checkbox" :value="s" /> {{ s }}</label>
+            </div>
+        </div>
+        <div class="sm:col-span-2">
             <label class="text-sm font-medium text-slate-700">Titre de l'annonce</label>
             <input v-model="form.title" type="text" class="mt-1 w-full rounded border-slate-300" required />
         </div>
@@ -102,9 +123,32 @@ const submit = (intent) => {
             <label class="text-sm font-medium text-slate-700">Places</label>
             <input v-model.number="form.seats" type="number" min="1" max="9" class="mt-1 w-full rounded border-slate-300" />
         </div>
-        <div>
+        <div v-if="form.offer_type === 'location'">
             <label class="text-sm font-medium text-slate-700">Prix / jour</label>
             <input v-model.number="form.price_per_day" type="number" min="0" step="0.01" class="mt-1 w-full rounded border-slate-300" required />
+        </div>
+        <div v-else>
+            <label class="text-sm font-medium text-slate-700">{{ form.offer_type === 'vente' ? 'Prix de vente' : 'Prix a partir de' }}</label>
+            <input v-model.number="form.sale_price" type="number" min="0" step="1" class="mt-1 w-full rounded border-slate-300" :required="form.offer_type === 'vente'" />
+            <p v-if="form.errors.sale_price" class="mt-1 text-xs text-red-600">{{ form.errors.sale_price }}</p>
+        </div>
+        <div v-if="form.offer_type === 'vente'">
+            <label class="text-sm font-medium text-slate-700">Kilometrage</label>
+            <input v-model.number="form.mileage_km" type="number" min="0" class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div v-if="form.offer_type !== 'mecanique'">
+            <label class="text-sm font-medium text-slate-700">Carburant</label>
+            <select v-model="form.fuel" class="mt-1 w-full rounded border-slate-300">
+                <option value="">--</option><option value="essence">Essence</option><option value="diesel">Diesel</option><option value="hybride">Hybride</option><option value="electrique">Electrique</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Telephone / WhatsApp</label>
+            <input v-model="form.phone" type="tel" class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div class="sm:col-span-2">
+            <label class="text-sm font-medium text-slate-700">Description</label>
+            <textarea v-model="form.description" rows="3" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Devise</label>

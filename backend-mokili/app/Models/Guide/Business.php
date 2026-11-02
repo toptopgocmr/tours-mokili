@@ -22,8 +22,11 @@ class Business extends Model
         'canot_rapide' => 'Canots rapides & fluvial',
         'transport_ferroviaire' => 'Train',
         'supermarche' => 'Supermarches',
+        'garage' => 'Garages & mecanique',
         'restaurant' => 'Restaurants',
         'bar_lounge' => 'Bars & lounges',
+        'night_club' => 'Night clubs',
+        'site_touristique' => 'Visites & sites touristiques',
         'ecommerce' => 'Boutiques en ligne',
     ];
 
@@ -35,7 +38,10 @@ class Business extends Model
         'canot_rapide' => 'voyage',
         'transport_ferroviaire' => 'voyage',
         'taxi_vtc' => 'voiture',
+        'garage' => 'voiture',
         'restaurant' => 'divertissement',
+        'night_club' => 'divertissement',
+        'site_touristique' => 'divertissement',
         'bar_lounge' => 'divertissement',
         'supermarche' => 'marketplace',
         'ecommerce' => 'marketplace',

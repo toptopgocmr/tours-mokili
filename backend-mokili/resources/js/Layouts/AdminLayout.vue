@@ -31,7 +31,7 @@ const links = [
     { href: '/admin/voyage', label: 'Offres Voyage', icon: PaperAirplaneIcon },
     { href: '/admin/vols', label: 'Billetterie aerienne', icon: TicketIcon },
     { href: '/admin/vols/tarifs', label: 'Tarifs vols', icon: TableCellsIcon },
-    { href: '/admin/loisirs', label: 'Parcs (Divertissement)', icon: SparklesIcon },
+    { href: '/admin/loisirs', label: 'Parcs (Tourisme)', icon: SparklesIcon },
     { href: '/admin/partenaires', label: 'Societes partenaires', icon: BuildingStorefrontIcon },
     { href: '/admin/reservations', label: 'Reservations', icon: CalendarDaysIcon },
     { href: '/admin/paiements', label: 'Paiements (collecte)', icon: CreditCardIcon },

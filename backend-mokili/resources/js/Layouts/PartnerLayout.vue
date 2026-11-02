@@ -23,7 +23,7 @@ const links = [
     { href: '/partner', label: 'Tableau de bord', icon: HomeIcon },
     { href: '/partner/logement', label: 'Logement', icon: BuildingOfficeIcon },
     { href: '/partner/voiture', label: 'Voiture', icon: TruckIcon },
-    { href: '/partner/divertissement', label: 'Divertissement', icon: TicketIcon },
+    { href: '/partner/divertissement', label: 'Tourisme', icon: TicketIcon },
     { href: '/partner/marketplace', label: 'Marketplace', icon: ShoppingBagIcon },
     { href: '/partner/fret', label: 'Fret', icon: CubeIcon },
 ];

@@ -82,7 +82,12 @@ class ProductController extends Controller
         return $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'category' => ['nullable', 'string', 'max:255'],
+            'category' => ['required', 'in:'.implode(',', array_keys(config('catalogue.marketplace.categories')))],
+            'listing_type' => ['required', 'in:'.implode(',', array_keys(config('catalogue.marketplace.listing_types')))],
+            'negotiable' => ['boolean'],
+            'district' => ['nullable', 'string', 'max:120'],
+            'contact_phone' => ['nullable', 'string', 'max:30'],
+            'contact_whatsapp' => ['nullable', 'string', 'max:30'],
             'price' => ['required', 'numeric', 'min:0'],
             'currency' => ['required', 'string', 'size:3'],
             'stock' => ['required', 'integer', 'min:0'],

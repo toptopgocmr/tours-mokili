@@ -71,7 +71,11 @@ const submit = (intent) => {
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Categorie</label>
-            <input v-model="form.category" type="text" placeholder="concert, sport, spectacle..." class="mt-1 w-full rounded border-slate-300" />
+            <select v-model="form.category" class="mt-1 w-full rounded border-slate-300" required>
+                <option value="">--</option>
+                <option v-for="(label, key) in $page.props.catalogue.tourisme.event_categories" :key="key" :value="key">{{ label }}</option>
+            </select>
+            <p v-if="form.errors.category" class="mt-1 text-xs text-red-600">{{ form.errors.category }}</p>
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Lieu</label>

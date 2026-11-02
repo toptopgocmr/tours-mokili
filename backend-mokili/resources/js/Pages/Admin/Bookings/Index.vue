@@ -27,7 +27,7 @@ const badgeClass = (s) => ({
 
     <div class="mb-5">
         <h1 class="text-xl font-bold text-slate-900">Toutes les reservations</h1>
-        <p class="text-sm text-slate-500">Tous modules confondus (Voyage, Logement, Voiture, Divertissement, Marketplace).</p>
+        <p class="text-sm text-slate-500">Tous modules confondus (Voyage, Logement, Voiture, Tourisme, Marketplace, Fret).</p>
     </div>
 
     <select v-model="status" class="mb-4 rounded border-slate-300 text-sm" @change="filter">

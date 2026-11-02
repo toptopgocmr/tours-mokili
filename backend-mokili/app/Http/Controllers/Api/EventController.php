@@ -24,8 +24,8 @@ class EventController extends Controller
             ->when($request->string('city')->isNotEmpty(), fn ($q) => $q->where(
                 'city', 'like', '%'.$request->string('city').'%'
             ))
-            ->when($request->string('category')->isNotEmpty(), fn ($q) => $q->where(
-                'category', $request->string('category')
+            ->when($request->string('category')->isNotEmpty(), fn ($q) => $q->whereIn(
+                'category', explode(',', (string) $request->string('category'))
             ))
             ->orderBy('starts_at')
             ->paginate(10);

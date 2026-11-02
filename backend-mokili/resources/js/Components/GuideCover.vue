@@ -13,6 +13,9 @@ import {
     MusicalNoteIcon,
     ComputerDesktopIcon,
     BuildingStorefrontIcon,
+    WrenchScrewdriverIcon,
+    SparklesIcon,
+    CameraIcon,
 } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
@@ -30,6 +33,9 @@ const STYLES = {
     canot_rapide: { icon: LifebuoyIcon, from: '#0E7490', to: '#22D3EE' },
     transport_ferroviaire: { icon: MapIcon, from: '#334155', to: '#94A3B8' },
     supermarche: { icon: ShoppingCartIcon, from: '#BE123C', to: '#FB7185' },
+    garage: { icon: WrenchScrewdriverIcon, from: '#C2410C', to: '#FDBA74' },
+    night_club: { icon: SparklesIcon, from: '#4C1D95', to: '#EC4899' },
+    site_touristique: { icon: CameraIcon, from: '#065F46', to: '#34D399' },
     restaurant: { icon: CakeIcon, from: '#9A3412', to: '#FB923C' },
     bar_lounge: { icon: MusicalNoteIcon, from: '#6D28D9', to: '#C084FC' },
     ecommerce: { icon: ComputerDesktopIcon, from: '#1D4ED8', to: '#818CF8' },

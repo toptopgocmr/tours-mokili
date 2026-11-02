@@ -27,6 +27,13 @@ class ProductController extends Controller
             ->when($request->string('q')->isNotEmpty(), fn ($q) => $q->where(
                 'title', 'like', '%'.$request->string('q').'%'
             ))
+            // Petites annonces : je vends / je recherche, ville, etat, prix.
+            ->whereNull('sold_at')
+            ->when($request->string('listing_type')->isNotEmpty(), fn ($q) => $q->where('listing_type', $request->string('listing_type')))
+            ->when($request->string('city')->isNotEmpty(), fn ($q) => $q->where('city', 'like', '%'.$request->string('city').'%'))
+            ->when($request->string('condition')->isNotEmpty(), fn ($q) => $q->where('condition', $request->string('condition')))
+            ->when($request->filled('price_min'), fn ($q) => $q->where('price', '>=', $request->float('price_min')))
+            ->when($request->filled('price_max'), fn ($q) => $q->where('price', '<=', $request->float('price_max')))
             ->orderByDesc('created_at')
             ->paginate(12);
 

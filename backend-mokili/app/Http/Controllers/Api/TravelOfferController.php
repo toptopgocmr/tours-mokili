@@ -22,6 +22,10 @@ class TravelOfferController extends Controller
             ->when($request->string('type')->isNotEmpty(), fn ($q) => $q->where('type', $request->string('type')))
             // Circuits par moyen de transport : avion, bus, bateau, train, voiture, combine.
             ->when($request->string('mode')->isNotEmpty(), fn ($q) => $q->where('transport_mode', $request->string('mode')))
+            ->when($request->string('scope')->isNotEmpty(), fn ($q) => $q->where('trip_scope', $request->string('scope')))
+            ->when($request->string('departement')->isNotEmpty(), fn ($q) => $q->where(fn ($w) => $w
+                ->where('origin_department', $request->string('departement'))
+                ->orWhere('destination_department', $request->string('departement'))))
             ->orderByDesc('is_featured')
             ->paginate(10);
 

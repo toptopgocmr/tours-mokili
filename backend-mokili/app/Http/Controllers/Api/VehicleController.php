@@ -26,6 +26,8 @@ class VehicleController extends Controller
             ->when($request->string('category')->isNotEmpty(), fn ($q) => $q->where(
                 'category', $request->string('category')
             ))
+            // Location, vente, mecanique.
+            ->when($request->string('offer_type')->isNotEmpty(), fn ($q) => $q->where('offer_type', $request->string('offer_type')))
             ->orderByDesc('created_at')
             ->paginate(10);
 

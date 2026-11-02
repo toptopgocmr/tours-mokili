@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AttractionParkController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BusinessController;
+use App\Http\Controllers\Api\CatalogueController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\FlightController;
 use App\Http\Controllers\Api\FreightOfferController;
@@ -49,6 +50,9 @@ Route::post('/auth/phone/send-code', [PhoneOtpController::class, 'send']);
 Route::post('/auth/phone/verify-code', [PhoneOtpController::class, 'verify']);
 
 // VOYAGE catalogue is public (browse without login, like the web site).
+// Rubriques et filtres (Tourisme, Logement, Voiture, Marketplace, Fret, circuits).
+Route::get('/catalogue', [CatalogueController::class, 'index']);
+Route::get('/tourisme', [CatalogueController::class, 'tourisme']);
 Route::get('/voyage/offers', [TravelOfferController::class, 'index']);
 Route::get('/voyage/transport-modes', [TravelOfferController::class, 'modes']);
 Route::get('/voyage/offers/{travelOffer:slug}', [TravelOfferController::class, 'show']);

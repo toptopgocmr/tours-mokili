@@ -14,21 +14,26 @@ const props = defineProps({
     transportModes: { type: Object, default: () => ({}) },
     cabins: { type: Object, default: () => ({}) },
     popularAirports: { type: Array, default: () => [] },
+    tripScopes: { type: Object, default: () => ({}) },
+    departments: { type: Array, default: () => [] },
 });
 
 const destination = ref(props.filters.destination ?? '');
 const type = ref(props.filters.type ?? '');
 const mode = ref(props.filters.mode ?? '');
+const scope = ref(props.filters.scope ?? '');
+const departement = ref(props.filters.departement ?? '');
 
 // Icones des moyens de transport des circuits.
-const MODE_ICONS = { avion: '✈️', bus: '🚌', bateau: '⛴️', train: '🚆', voiture: '🚙', combine: '🧭' };
+const MODE_ICONS = { avion: '✈️', bus: '🚌', bateau: '⛴️', canot: '🚤', train: '🚆', voiture: '🚙', combine: '🧭' };
 const modeChips = computed(() => [{ value: '', label: 'Tous les transports', icon: '' },
     ...Object.entries(props.transportModes).map(([value, label]) => ({ value, label, icon: MODE_ICONS[value] ?? '' }))]);
 
 // Partenaires transport affiches selon le moyen choisi.
 const partnersSubtitle = computed(() => ({
     bus: 'Compagnies de bus interurbains : Brazzaville, Pointe-Noire, Dolisie, Oyo, Ouesso...',
-    bateau: 'Canots rapides et bateaux sur le fleuve Congo (Brazzaville - Kinshasa).',
+    bateau: 'Bateaux sur le fleuve Congo et ses affluents.',
+    canot: 'Canots rapides et pirogues (Brazzaville - Kinshasa, fleuve Congo).',
     train: 'Ligne ferroviaire Congo-Ocean : Brazzaville - Dolisie - Pointe-Noire.',
 }[mode.value] ?? 'Compagnies aeriennes, bus interurbains, train et canots rapides vers Kinshasa.'));
 
@@ -41,14 +46,24 @@ const types = [
 
 const search = () => {
     const query = Object.fromEntries(
-        Object.entries({ destination: destination.value, type: type.value, mode: type.value === 'circuit' ? mode.value : '' }).filter(([, v]) => v)
+        Object.entries({
+            destination: destination.value,
+            type: type.value,
+            mode: type.value === 'circuit' ? mode.value : '',
+            scope: type.value === 'circuit' ? scope.value : '',
+            departement: type.value === 'circuit' ? departement.value : '',
+        }).filter(([, v]) => v)
     );
     router.get('/voyage', query, { preserveState: true, preserveScroll: true, replace: true });
 };
 
 const setType = (value) => {
     type.value = value;
-    if (value !== 'circuit') mode.value = '';
+    if (value !== 'circuit') {
+        mode.value = '';
+        scope.value = '';
+        departement.value = '';
+    }
     search();
 };
 
@@ -57,9 +72,14 @@ const setMode = (value) => {
     search();
 };
 
+const setScope = (value) => {
+    scope.value = scope.value === value ? '' : value;
+    search();
+};
+
 const cardSubtitle = (offer) => {
     if (offer.type === 'circuit' && offer.transport_mode_label) {
-        return [offer.transport_mode_label, offer.airline].filter(Boolean).join(' - ');
+        return [offer.transport_mode_label, offer.trip_scope_label, offer.airline].filter(Boolean).join(' - ');
     }
     return [offer.type, offer.airline].filter(Boolean).join(' - ');
 };
@@ -114,6 +134,23 @@ const cardSubtitle = (offer) => {
     </div>
 
     <div class="mx-auto max-w-7xl px-6 py-10">
+        <!-- CIRCUITS : portee (ville / inter-departements / international) + departement -->
+        <div v-if="type === 'circuit'" class="mb-3 flex flex-wrap items-center gap-2">
+            <button
+                v-for="(label, key) in tripScopes"
+                :key="key"
+                type="button"
+                class="rounded-full border px-4 py-1.5 text-sm font-semibold transition"
+                :class="scope === key ? 'border-gold-600 bg-gold-600 text-navy-900' : 'border-gold-600/40 text-navy-700 hover:border-gold-600'"
+                @click="setScope(key)"
+            >
+                {{ label }}
+            </button>
+            <select v-model="departement" class="rounded-full border-gray-200 py-1.5 text-sm" @change="search">
+                <option value="">Tous les departements</option>
+                <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
+            </select>
+        </div>
         <!-- CIRCUITS : choix du moyen de transport -->
         <div v-if="type === 'circuit'" class="mb-6 flex flex-wrap gap-2">
             <button
@@ -164,6 +201,6 @@ const cardSubtitle = (offer) => {
         <p v-if="!offers.data.length" class="mt-10 text-center text-navy-500">
             {{ type === 'circuit' && mode ? `Aucun circuit en ${(transportModes[mode] ?? mode).toLowerCase()} pour le moment : contactez nos transporteurs partenaires ci-dessous.` : 'Aucune offre pour le moment.' }}
         </p>
-        <PartnersSection :key="mode" module="voyage" title="Compagnies & transport" :subtitle="partnersSubtitle" :category="{ bus: 'transport_routier', bateau: 'canot_rapide', train: 'transport_ferroviaire', avion: 'compagnie_aerienne' }[mode] ?? ''" />
+        <PartnersSection :key="mode" module="voyage" title="Compagnies & transport" :subtitle="partnersSubtitle" :category="{ bus: 'transport_routier', bateau: 'canot_rapide', canot: 'canot_rapide', train: 'transport_ferroviaire', avion: 'compagnie_aerienne' }[mode] ?? ''" />
     </div>
 </template>

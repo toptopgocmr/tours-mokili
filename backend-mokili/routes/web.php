@@ -125,9 +125,12 @@ Route::prefix('divertissement')->name('divertissement.')->group(function () {
     Route::get('/{event:slug}', [EventController::class, 'show'])->name('show');
 });
 
-// Anciennes adresses "Loisirs" : redirigees vers Divertissement > Parcs.
+// TOURISME = rubrique Divertissement renommee (adresses /divertissement conservees).
+Route::get('/tourisme', fn (\Illuminate\Http\Request $r) => redirect('/divertissement'.($r->getQueryString() ? '?'.$r->getQueryString() : '')))->name('tourisme');
+
+// Anciennes adresses "Loisirs" : redirigees vers Tourisme > Parcs.
 Route::prefix('loisirs')->name('loisirs.')->group(function () {
-    Route::get('/', fn () => redirect('/divertissement?category=parcs', 301))->name('index');
+    Route::get('/', fn () => redirect('/divertissement?tab=parcs', 301))->name('index');
     Route::get('/{slug}', fn (string $slug) => redirect('/divertissement/parcs/'.$slug, 301))->name('show');
     Route::middleware('auth')->post('/{attractionPark:slug}/reserver', [AttractionParkController::class, 'book'])->name('book');
 });
@@ -136,8 +139,21 @@ Route::prefix('loisirs')->name('loisirs.')->group(function () {
 // listee dans la rubrique de son activite (Logement, Voyage, Voiture...) ---
 Route::get('/partenaires/{business:slug}', [BusinessController::class, 'show'])->name('partners.show');
 
+// --- MARKETPLACE : petites annonces achat / vente (Leboncoin, Facebook Marketplace) ---
 Route::prefix('marketplace')->name('marketplace.')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('index');
+
+    // Avant le joker {product:slug}.
+    Route::middleware('auth')->group(function () {
+        Route::get('/deposer', [ProductController::class, 'create'])->name('create');
+        Route::post('/deposer', [ProductController::class, 'store'])->middleware('throttle:10,1')->name('store');
+        Route::get('/mes-annonces', [ProductController::class, 'mine'])->name('mine');
+        Route::get('/annonce/{product}/modifier', [ProductController::class, 'edit'])->name('edit');
+        Route::put('/annonce/{product}', [ProductController::class, 'update'])->name('update');
+        Route::post('/annonce/{product}/vendu', [ProductController::class, 'markSold'])->name('sold');
+        Route::delete('/annonce/{product}', [ProductController::class, 'destroy'])->name('destroy');
+    });
+
     Route::get('/{product:slug}', [ProductController::class, 'show'])->name('show');
 });
 

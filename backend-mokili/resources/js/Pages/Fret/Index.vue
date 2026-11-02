@@ -1,11 +1,33 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
 import ListingImage from '@/Components/ListingImage.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import Paginator from '@/Components/Paginator.vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { computed, reactive, ref } from 'vue';
 
 defineOptions({ layout: MainLayout });
-const props = defineProps({ offers: { type: Object, required: true } });
+const props = defineProps({
+    offers: { type: Object, required: true },
+    filters: { type: Object, default: () => ({}) },
+});
+
+// FRET & LOGISTIQUE : national / international, maritime / aerien /
+// routier, type de colis (documents, marchandise, vehicule, conteneur...).
+const fret = computed(() => usePage().props.catalogue?.fret ?? {});
+const f = reactive({
+    scope: props.filters.scope ?? '', mode: props.filters.mode ?? '', colis: props.filters.colis ?? '',
+    origine: props.filters.origine ?? '', destination: props.filters.destination ?? '',
+});
+const MODE_ICONS = { mer: '🚢', air: '✈️', route: '🚛' };
+const PACKAGE_ICONS = { documents: '📄', marchandise: '📦', vehicule: '🚗', conteneur: '🚢', autre: '🧳' };
+const applyFilters = () => {
+    const query = Object.fromEntries(Object.entries(f).filter(([, v]) => v));
+    router.get('/fret', query, { preserveState: true, preserveScroll: true, replace: true });
+};
+const toggle = (key, value) => {
+    f[key] = f[key] === value ? '' : value;
+    applyFilters();
+};
 
 const modeLabel = { air: 'Aerien', mer: 'Maritime', route: 'Routier' };
 
@@ -16,18 +38,6 @@ const track = () => {
     router.get(`/fret/suivi/${encodeURIComponent(trackingCode.value.trim())}`);
 };
 
-// "Palettes & marchandises" - existing partner-published freight offers,
-// filterable by transport mode.
-const activeMode = ref('all');
-const modes = [
-    { value: 'all', label: 'Tous' },
-    { value: 'air', label: 'Aerien' },
-    { value: 'mer', label: 'Maritime' },
-    { value: 'route', label: 'Routier' },
-];
-const filteredOffers = computed(() =>
-    activeMode.value === 'all' ? props.offers.data : props.offers.data.filter((o) => o.mode === activeMode.value),
-);
 
 // "Colis & documents" - simple indicative quote calculator (individuals /
 // small parcels), separate from the freight-forwarding catalogue below,
@@ -47,7 +57,7 @@ const parcelEstimate = computed(() => {
 </script>
 
 <template>
-    <Head title="Fret" />
+    <Head title="Fret & logistique" />
 
     <div class="bg-navy-900 py-8">
         <div class="mx-auto max-w-3xl px-6 text-center">
@@ -97,38 +107,44 @@ const parcelEstimate = computed(() => {
             </div>
         </section>
 
-        <!-- Palettes & marchandises -->
+        <!-- Fret & logistique : offres des transporteurs -->
         <section class="mt-14">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h2 class="text-xl font-bold text-navy-900">Palettes &amp; marchandises</h2>
-                    <p class="mt-1 text-sm text-navy-700">Transport professionnel : fret aerien, maritime et routier par nos partenaires transporteurs.</p>
+            <h2 class="text-xl font-bold text-navy-900">Fret &amp; logistique</h2>
+            <p class="mt-1 text-sm text-navy-700">National et international, par voie maritime, aerienne ou routiere : documents, marchandises, vehicules, conteneurs.</p>
+
+            <div class="mt-5 space-y-3 rounded-2xl border p-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="w-28 text-xs font-semibold uppercase text-navy-500">Zone</span>
+                    <button v-for="(label, key) in fret.scopes" :key="key" type="button" class="rounded-full border px-4 py-1.5 text-sm font-semibold transition" :class="f.scope === key ? 'border-navy-900 bg-navy-900 text-white' : 'border-gray-200 text-navy-700'" @click="toggle('scope', key)">{{ label }}</button>
                 </div>
-                <div class="flex gap-1 rounded-full bg-navy-50 p-1">
-                    <button
-                        v-for="m in modes"
-                        :key="m.value"
-                        type="button"
-                        class="rounded-full px-4 py-1.5 text-xs font-semibold transition"
-                        :class="activeMode === m.value ? 'bg-navy-900 text-white' : 'text-navy-700 hover:bg-navy-100'"
-                        @click="activeMode = m.value"
-                    >
-                        {{ m.label }}
-                    </button>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="w-28 text-xs font-semibold uppercase text-navy-500">Transport</span>
+                    <button v-for="(label, key) in fret.modes" :key="key" type="button" class="rounded-full border px-4 py-1.5 text-sm font-semibold transition" :class="f.mode === key ? 'border-teal-700 bg-teal-700 text-white' : 'border-gray-200 text-navy-700'" @click="toggle('mode', key)">{{ MODE_ICONS[key] }} {{ label }}</button>
                 </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="w-28 text-xs font-semibold uppercase text-navy-500">Type de colis</span>
+                    <button v-for="(label, key) in fret.package_types" :key="key" type="button" class="rounded-full border px-4 py-1.5 text-sm font-semibold transition" :class="f.colis === key ? 'border-gold-600 bg-gold-600 text-navy-900' : 'border-gray-200 text-navy-700'" @click="toggle('colis', key)">{{ PACKAGE_ICONS[key] }} {{ label }}</button>
+                </div>
+                <form class="flex flex-col gap-2 sm:flex-row" @submit.prevent="applyFilters">
+                    <input v-model="f.origine" type="text" placeholder="Depart (ex. Brazzaville)" class="flex-1 rounded-full border-gray-200 text-sm" />
+                    <input v-model="f.destination" type="text" placeholder="Arrivee (ex. Douala, Guangzhou)" class="flex-1 rounded-full border-gray-200 text-sm" />
+                    <button type="submit" class="btn-gold sm:px-8">Rechercher</button>
+                </form>
             </div>
 
             <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                <Link v-for="o in filteredOffers" :key="o.id" :href="`/fret/${o.slug}`" class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg">
+                <Link v-for="o in offers.data" :key="o.id" :href="`/fret/${o.slug}`" class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg">
                     <ListingImage :src="o.image_url" fallback-class="bg-teal-700">{{ o.origin_city }} &rarr; {{ o.destination_city }}</ListingImage>
                     <div class="p-4">
                         <p class="font-semibold text-navy-900">{{ o.title }}</p>
-                        <p class="mt-1 text-xs uppercase text-navy-500">{{ modeLabel[o.mode] }} - {{ o.origin_city }} &rarr; {{ o.destination_city }}</p>
+                        <p class="mt-1 text-xs uppercase text-navy-500">{{ MODE_ICONS[o.mode] }} {{ modeLabel[o.mode] }} · {{ o.scope === 'national' ? 'National' : 'International' }} · {{ o.origin_city }} &rarr; {{ o.destination_city }}</p>
+                        <p class="mt-1 text-xs text-navy-600">{{ o.package_type_labels?.join(', ') }}</p>
                         <p class="mt-1 text-sm font-semibold text-gold-600">{{ Number(o.price_per_kg).toLocaleString('fr-FR') }} {{ o.currency }} / kg</p>
                     </div>
                 </Link>
             </div>
-            <p v-if="!filteredOffers.length" class="mt-10 text-center text-navy-500">Aucune offre de fret pour ce mode.</p>
+            <p v-if="!offers.data.length" class="mt-10 text-center text-navy-500">Aucune offre de fret pour ces criteres.</p>
+            <Paginator :page="offers" />
         </section>
     </div>
 </template>

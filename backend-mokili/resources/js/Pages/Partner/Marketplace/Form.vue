@@ -11,7 +11,12 @@ const isEdit = computed(() => !!props.product);
 const form = useForm({
     title: props.product?.title ?? '',
     description: props.product?.description ?? '',
-    category: props.product?.category ?? '',
+    category: props.product?.category ?? 'autres',
+    listing_type: props.product?.listing_type ?? 'vente',
+    negotiable: props.product?.negotiable ?? false,
+    district: props.product?.district ?? '',
+    contact_phone: props.product?.contact_phone ?? '',
+    contact_whatsapp: props.product?.contact_whatsapp ?? '',
     price: props.product?.price ?? '',
     currency: props.product?.currency ?? 'XAF',
     stock: props.product?.stock ?? 1,
@@ -69,7 +74,30 @@ const submit = (intent) => {
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Categorie</label>
-            <input v-model="form.category" type="text" class="mt-1 w-full rounded border-slate-300" />
+            <select v-model="form.category" class="mt-1 w-full rounded border-slate-300">
+                <option v-for="(label, key) in $page.props.catalogue.marketplace.categories" :key="key" :value="key">{{ label }}</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Type d'annonce</label>
+            <select v-model="form.listing_type" class="mt-1 w-full rounded border-slate-300">
+                <option v-for="(label, key) in $page.props.catalogue.marketplace.listing_types" :key="key" :value="key">{{ label }}</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Telephone</label>
+            <input v-model="form.contact_phone" type="tel" class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">WhatsApp</label>
+            <input v-model="form.contact_whatsapp" type="tel" class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Quartier</label>
+            <input v-model="form.district" type="text" class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div class="flex items-center gap-2">
+            <input id="neg" v-model="form.negotiable" type="checkbox" /><label for="neg" class="text-sm text-slate-700">Prix a debattre</label>
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Etat</label>

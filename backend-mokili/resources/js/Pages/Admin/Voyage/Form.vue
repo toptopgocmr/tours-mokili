@@ -8,6 +8,8 @@ defineOptions({ layout: AdminLayout });
 const props = defineProps({
     offer: { type: Object, default: null },
     transportModes: { type: Object, default: () => ({}) },
+    tripScopes: { type: Object, default: () => ({}) },
+    departments: { type: Array, default: () => [] },
 });
 
 const isEdit = computed(() => !!props.offer);
@@ -18,6 +20,9 @@ const form = useForm({
     transport_mode: props.offer?.transport_mode ?? '',
     departure_point: props.offer?.departure_point ?? '',
     duration_label: props.offer?.duration_label ?? '',
+    trip_scope: props.offer?.trip_scope ?? '',
+    origin_department: props.offer?.origin_department ?? '',
+    destination_department: props.offer?.destination_department ?? '',
     description: props.offer?.description ?? '',
     origin_city: props.offer?.origin_city ?? '',
     origin_country: props.offer?.origin_country ?? '',
@@ -102,6 +107,27 @@ const submit = () => {
         <div v-if="form.type !== 'vol'">
             <label class="text-sm font-medium text-slate-700">Lieu de depart / embarquement</label>
             <input v-model="form.departure_point" type="text" placeholder="Ex : Gare routiere de Mikalou, Port du Beach..." class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div v-if="form.type !== 'vol'">
+            <label class="text-sm font-medium text-slate-700">Portee du trajet</label>
+            <select v-model="form.trip_scope" class="mt-1 w-full rounded border-slate-300">
+                <option value="">--</option>
+                <option v-for="(label, key) in tripScopes" :key="key" :value="key">{{ label }}</option>
+            </select>
+        </div>
+        <div v-if="form.type !== 'vol'">
+            <label class="text-sm font-medium text-slate-700">Departement de depart</label>
+            <select v-model="form.origin_department" class="mt-1 w-full rounded border-slate-300">
+                <option value="">--</option>
+                <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
+            </select>
+        </div>
+        <div v-if="form.type !== 'vol'">
+            <label class="text-sm font-medium text-slate-700">Departement d'arrivee</label>
+            <select v-model="form.destination_department" class="mt-1 w-full rounded border-slate-300">
+                <option value="">--</option>
+                <option v-for="d in departments" :key="d" :value="d">{{ d }}</option>
+            </select>
         </div>
         <div v-if="form.type !== 'vol'">
             <label class="text-sm font-medium text-slate-700">Duree</label>

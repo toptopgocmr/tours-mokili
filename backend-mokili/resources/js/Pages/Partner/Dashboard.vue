@@ -10,7 +10,7 @@ const props = defineProps({ counts: { type: Object, required: true } });
 const modules = [
     { key: 'logement', label: 'Logement', href: '/partner/logement', icon: BuildingOfficeIcon, color: 'text-green-600', bg: 'bg-green-50' },
     { key: 'voiture', label: 'Voiture', href: '/partner/voiture', icon: TruckIcon, color: 'text-orange-600', bg: 'bg-orange-50' },
-    { key: 'divertissement', label: 'Divertissement', href: '/partner/divertissement', icon: TicketIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { key: 'divertissement', label: 'Tourisme', href: '/partner/divertissement', icon: TicketIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
     { key: 'marketplace', label: 'Marketplace', href: '/partner/marketplace', icon: ShoppingBagIcon, color: 'text-pink-600', bg: 'bg-pink-50' },
     { key: 'fret', label: 'Fret', href: '/partner/fret', icon: CubeIcon, color: 'text-[#0972D3]', bg: 'bg-blue-50' },
 ];

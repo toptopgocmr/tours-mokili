@@ -23,6 +23,11 @@ class TravelOfferController extends Controller
             ))
             ->when($request->string('type')->isNotEmpty(), fn ($q) => $q->where('type', $request->string('type')))
             ->when($request->string('mode')->isNotEmpty(), fn ($q) => $q->where('transport_mode', $request->string('mode')))
+            // Circuits : en ville, inter-departements, international + departement.
+            ->when($request->string('scope')->isNotEmpty(), fn ($q) => $q->where('trip_scope', $request->string('scope')))
+            ->when($request->string('departement')->isNotEmpty(), fn ($q) => $q->where(fn ($w) => $w
+                ->where('origin_department', $request->string('departement'))
+                ->orWhere('destination_department', $request->string('departement'))))
             ->orderByDesc('is_featured')
             ->orderBy('departure_at')
             ->paginate(9)
@@ -30,8 +35,10 @@ class TravelOfferController extends Controller
 
         return Inertia::render('Voyage/Index', [
             'offers' => $offers,
-            'filters' => $request->only(['destination', 'type', 'mode']),
+            'filters' => (object) $request->only(['destination', 'type', 'mode', 'scope', 'departement']),
             'transportModes' => TravelOffer::TRANSPORT_MODES,
+            'tripScopes' => config('catalogue.voyage.trip_scopes'),
+            'departments' => config('catalogue.departments'),
             'cabins' => config('flights.cabins'),
             'popularAirports' => Airport::query()->active()->orderByDesc('popularity')
                 ->limit(12)->get(['iata_code', 'city', 'name', 'country_code']),

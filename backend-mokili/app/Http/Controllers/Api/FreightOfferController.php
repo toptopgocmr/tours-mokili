@@ -31,6 +31,10 @@ class FreightOfferController extends Controller
             ->when($request->string('mode')->isNotEmpty(), fn ($q) => $q->where(
                 'mode', $request->string('mode')
             ))
+            // National / international, type de colis accepte.
+            ->forScope($request->string('scope')->toString() ?: null)
+            ->when($request->string('package_type')->isNotEmpty(), fn ($q) => $q->where(fn ($w) => $w
+                ->whereNull('package_types')->orWhereJsonContains('package_types', (string) $request->string('package_type'))))
             ->orderByDesc('created_at')
             ->paginate(10);
 

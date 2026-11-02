@@ -34,7 +34,7 @@ const mapsUrl = computed(() => {
     <Head :title="park.name" />
 
     <div class="mx-auto max-w-6xl px-6 py-10">
-        <Link href="/divertissement?category=parcs" class="text-sm text-navy-500 hover:text-navy-900">&larr; Divertissement &middot; Tous les parcs</Link>
+        <Link href="/divertissement?tab=parcs" class="text-sm text-navy-500 hover:text-navy-900">&larr; Tourisme &middot; Tous les parcs</Link>
 
         <div class="mt-4 grid gap-10 md:grid-cols-[1fr_360px]">
             <div>

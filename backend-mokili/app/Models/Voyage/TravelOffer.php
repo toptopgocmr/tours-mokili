@@ -19,7 +19,8 @@ class TravelOffer extends Model
     public const TRANSPORT_MODES = [
         'avion' => 'Avion',
         'bus' => 'Bus / car',
-        'bateau' => 'Bateau / fluvial',
+        'bateau' => 'Bateau',
+        'canot' => 'Canot rapide / pirogue',
         'train' => 'Train',
         'voiture' => 'Voiture / 4x4',
         'combine' => 'Combine (plusieurs transports)',
@@ -27,7 +28,7 @@ class TravelOffer extends Model
 
     protected $fillable = [
         'title', 'slug', 'type', 'transport_mode', 'description', 'origin_city', 'origin_country',
-        'departure_point', 'duration_label',
+        'departure_point', 'duration_label', 'trip_scope', 'origin_department', 'destination_department',
         'destination_city', 'destination_country', 'airline', 'departure_at',
         'return_at', 'price', 'discount_percent', 'currency', 'seats_available',
         'image', 'is_featured', 'is_active',
@@ -35,7 +36,7 @@ class TravelOffer extends Model
 
     // Exposed on every JSON/Inertia response (web + API) so both
     // frontends can read the post-discount price directly.
-    protected $appends = ['discounted_price', 'image_url', 'transport_mode_label'];
+    protected $appends = ['discounted_price', 'image_url', 'transport_mode_label', 'trip_scope_label'];
 
     protected function casts(): array
     {
@@ -73,6 +74,11 @@ class TravelOffer extends Model
     public function getTransportModeLabelAttribute(): ?string
     {
         return $this->transport_mode ? (self::TRANSPORT_MODES[$this->transport_mode] ?? $this->transport_mode) : null;
+    }
+
+    public function getTripScopeLabelAttribute(): ?string
+    {
+        return $this->trip_scope ? (config('catalogue.voyage.trip_scopes')[$this->trip_scope] ?? $this->trip_scope) : null;
     }
 
     public function scopeActive($query)

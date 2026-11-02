@@ -25,6 +25,8 @@ class BookingController extends Controller
         $data = $request->validate([
             'weight_kg' => ['required', 'numeric', 'min:0.1', 'max:'.max(0.1, (float) ($freightOffer->capacity_kg ?: 100000))],
             'dimensions' => ['nullable', 'string', 'max:120'],
+            'package_type' => ['required', 'in:'.implode(',', $freightOffer->package_types ?: array_keys(config('catalogue.fret.package_types')))],
+            'package_description' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -41,6 +43,8 @@ class BookingController extends Controller
                 'weight_kg' => $data['weight_kg'],
                 'dimensions' => $data['dimensions'] ?? null,
                 'mode' => $freightOffer->mode,
+                'package_type' => $data['package_type'],
+                'package_description' => $data['package_description'] ?? null,
                 'status' => 'enregistre',
                 'estimated_price' => $total,
                 'currency' => $freightOffer->currency,
@@ -60,6 +64,7 @@ class BookingController extends Controller
                     'destination' => $freightOffer->destination_city,
                     'tracking_code' => $shipment->tracking_code,
                     'shipment_id' => $shipment->id,
+                    'package_type' => $data['package_type'],
                 ],
                 'notes' => $data['notes'] ?? null,
             ]);

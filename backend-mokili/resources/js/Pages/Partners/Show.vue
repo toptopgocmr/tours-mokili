@@ -21,7 +21,7 @@ const MODULE_PAGES = {
     logement: ['/logement', 'Logement'],
     voyage: ['/voyage', 'Voyage'],
     voiture: ['/voiture', 'Voiture'],
-    divertissement: ['/divertissement', 'Divertissement'],
+    divertissement: ['/divertissement', 'Tourisme'],
     marketplace: ['/marketplace', 'Marketplace'],
 };
 const back = computed(() => MODULE_PAGES[b.value.module] ?? ['/', 'Accueil']);

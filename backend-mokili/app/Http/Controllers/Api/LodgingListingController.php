@@ -27,6 +27,8 @@ class LodgingListingController extends Controller
             ->when($request->integer('guests') > 0, fn ($q) => $q->where(
                 'max_guests', '>=', $request->integer('guests')
             ))
+            // Villa, hotel, appartement.
+            ->when($request->string('property_type')->isNotEmpty(), fn ($q) => $q->where('property_type', $request->string('property_type')))
             ->orderByDesc('created_at')
             ->paginate(10);
 

@@ -15,7 +15,7 @@ class Shipment extends Model
     protected $fillable = [
         'user_id', 'tracking_code', 'origin_city', 'origin_country',
         'destination_city', 'destination_country', 'weight_kg', 'dimensions',
-        'mode', 'status', 'estimated_price', 'currency', 'picked_up_at',
+        'mode', 'package_type', 'package_description', 'status', 'estimated_price', 'currency', 'picked_up_at',
         'delivered_at',
     ];
 

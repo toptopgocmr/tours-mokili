@@ -1,7 +1,7 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
 import ListingImage from '@/Components/ListingImage.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 defineOptions({ layout: MainLayout });
@@ -9,7 +9,13 @@ const props = defineProps({ offer: { type: Object, required: true } });
 
 const modeLabel = { air: 'Aerien', mer: 'Maritime', route: 'Routier' };
 
-const form = useForm({ weight_kg: 1, dimensions: '', notes: '' });
+const form = useForm({ weight_kg: 1, dimensions: '', notes: '', package_type: props.offer.package_types?.[0] ?? 'marchandise', package_description: '' });
+const page = usePage();
+const packageTypes = computed(() => {
+    const all = page.props.catalogue?.fret?.package_types ?? {};
+    const allowed = props.offer.package_types?.length ? props.offer.package_types : Object.keys(all);
+    return allowed.map((k) => [k, all[k] ?? k]);
+});
 
 const total = computed(() => (Number(form.weight_kg) || 0) * Number(props.offer.price_per_kg));
 
@@ -23,7 +29,10 @@ const submit = () => form.post(`/fret/${props.offer.slug}/demande`);
                 <ListingImage :src="offer.image_url" fallback-class="bg-teal-700 h-56" class="h-56">{{ offer.origin_city }} &rarr; {{ offer.destination_city }}</ListingImage>
             </div>
             <h1 class="mt-6 text-2xl font-bold text-navy-900">{{ offer.title }}</h1>
-            <p class="mt-1 text-sm uppercase text-navy-500">{{ modeLabel[offer.mode] }}</p>
+            <p class="mt-1 text-sm uppercase text-navy-500">{{ modeLabel[offer.mode] }} · {{ offer.scope === 'national' ? 'National' : 'International' }}<span v-if="offer.transit_time"> · {{ offer.transit_time }}</span></p>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+                <span v-for="l in offer.package_type_labels" :key="l" class="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">{{ l }}</span>
+            </div>
             <p v-if="offer.description" class="mt-4 text-navy-700">{{ offer.description }}</p>
 
             <dl class="mt-6 grid grid-cols-2 gap-4 text-sm">
@@ -39,6 +48,17 @@ const submit = () => form.post(`/fret/${props.offer.slug}/demande`);
             <p class="mt-1 text-xs text-navy-500">Un code de suivi vous sera fourni immediatement, avant meme la confirmation du paiement.</p>
 
             <form class="mt-5 space-y-4" @submit.prevent="submit">
+                <div>
+                    <label class="text-sm font-medium text-navy-900">Type de colis</label>
+                    <select v-model="form.package_type" class="mt-1 w-full rounded-lg border-gray-300">
+                        <option v-for="[k, l] in packageTypes" :key="k" :value="k">{{ l }}</option>
+                    </select>
+                    <p v-if="form.errors.package_type" class="mt-1 text-xs text-red-600">{{ form.errors.package_type }}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-navy-900">Contenu</label>
+                    <input v-model="form.package_description" type="text" :placeholder="form.package_type === 'vehicule' ? 'ex. Toyota RAV4 2018' : form.package_type === 'conteneur' ? 'ex. 1 conteneur 20 pieds, electromenager' : 'ex. vetements, pieces detachees...'" class="mt-1 w-full rounded-lg border-gray-300" />
+                </div>
                 <div>
                     <label class="text-sm font-medium text-navy-900">Poids (kg)</label>
                     <input

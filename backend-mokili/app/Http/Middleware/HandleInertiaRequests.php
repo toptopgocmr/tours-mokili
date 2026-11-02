@@ -24,6 +24,8 @@ class HandleInertiaRequests extends Middleware
             'services' => fn () => \App\Models\ServiceCategory::query()
                 ->orderBy('position')
                 ->get(['id', 'slug', 'name', 'icon', 'color']),
+            // Libelles des rubriques et filtres (config/catalogue.php).
+            'catalogue' => fn () => config('catalogue'),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
