@@ -17,30 +17,27 @@ class DatabaseSeeder extends Seeder
             BusinessSeeder::class,
         ]);
 
-        User::factory()->create([
+        // firstOrCreate : le seeder peut etre relance sans doublon.
+        User::query()->firstOrCreate(['email' => 'demo@mokili-tour.com'], [
             'name' => 'Demo Client',
-            'email' => 'demo@mokili-tour.com',
             'password' => bcrypt('password'),
             'role' => 'client',
         ]);
 
-        User::factory()->create([
+        User::query()->firstOrCreate(['email' => 'admin@mokili-tour.com'], [
             'name' => 'Admin MOKILI TOUR',
-            'email' => 'admin@mokili-tour.com',
             'password' => bcrypt('password'),
             'role' => 'admin',
         ]);
 
-        User::factory()->create([
+        User::query()->firstOrCreate(['email' => 'agent@mokili-tour.com'], [
             'name' => 'Agent MOKILI TOUR',
-            'email' => 'agent@mokili-tour.com',
             'password' => bcrypt('password'),
             'role' => 'agent',
         ]);
 
-        User::factory()->create([
+        User::query()->firstOrCreate(['email' => 'partner@mokili-tour.com'], [
             'name' => 'Partenaire Demo',
-            'email' => 'partner@mokili-tour.com',
             'password' => bcrypt('password'),
             'role' => 'partner',
         ]);

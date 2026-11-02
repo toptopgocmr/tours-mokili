@@ -14,8 +14,22 @@ use Illuminate\Support\Facades\Schema;
  */
 return new class extends Migration
 {
+    private const TABLES = [
+        'audit_logs', 'flight_after_sales', 'flight_idempotency_keys', 'flight_supplier_logs',
+        'flight_status_histories', 'flight_tickets', 'flight_passengers', 'flight_bookings',
+        'flight_offers', 'flight_searches', 'flight_fares', 'flight_suppliers', 'airports',
+    ];
+
     public function up(): void
     {
+        // Reprise apres un deploiement interrompu : ces tables sont neuves,
+        // on supprime d'eventuels restes avant de les recreer.
+        Schema::disableForeignKeyConstraints();
+        foreach (self::TABLES as $t) {
+            Schema::dropIfExists($t);
+        }
+        Schema::enableForeignKeyConstraints();
+
         Schema::create('airports', function (Blueprint $table) {
             $table->id();
             $table->string('iata_code', 3)->unique();
@@ -282,18 +296,10 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('audit_logs');
-        Schema::dropIfExists('flight_after_sales');
-        Schema::dropIfExists('flight_idempotency_keys');
-        Schema::dropIfExists('flight_supplier_logs');
-        Schema::dropIfExists('flight_status_histories');
-        Schema::dropIfExists('flight_tickets');
-        Schema::dropIfExists('flight_passengers');
-        Schema::dropIfExists('flight_bookings');
-        Schema::dropIfExists('flight_offers');
-        Schema::dropIfExists('flight_searches');
-        Schema::dropIfExists('flight_fares');
-        Schema::dropIfExists('flight_suppliers');
-        Schema::dropIfExists('airports');
+        Schema::disableForeignKeyConstraints();
+        foreach (self::TABLES as $t) {
+            Schema::dropIfExists($t);
+        }
+        Schema::enableForeignKeyConstraints();
     }
 };

@@ -18,52 +18,64 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('travel_offers', function (Blueprint $table) {
-            $table->string('trip_scope', 20)->nullable()->after('transport_mode')->index();
-            $table->string('origin_department')->nullable()->after('departure_point');
-            $table->string('destination_department')->nullable()->after('origin_department');
-        });
+        if (! Schema::hasColumn('travel_offers', 'trip_scope')) {
+            Schema::table('travel_offers', function (Blueprint $table) {
+                $table->string('trip_scope', 20)->nullable()->after('transport_mode')->index();
+                $table->string('origin_department')->nullable()->after('departure_point');
+                $table->string('destination_department')->nullable()->after('origin_department');
+            });
+        }
 
-        Schema::table('lodging_listings', function (Blueprint $table) {
-            $table->string('property_type', 20)->nullable()->after('title')->index();
-        });
+        if (! Schema::hasColumn('lodging_listings', 'property_type')) {
+            Schema::table('lodging_listings', function (Blueprint $table) {
+                $table->string('property_type', 20)->nullable()->after('title')->index();
+            });
+        }
 
-        Schema::table('vehicles', function (Blueprint $table) {
-            $table->string('offer_type', 20)->default('location')->after('title')->index();
-            $table->text('description')->nullable()->after('model');
-            $table->decimal('sale_price', 14, 2)->nullable()->after('price_per_day');
-            $table->unsignedInteger('mileage_km')->nullable()->after('seats');
-            $table->string('fuel', 20)->nullable()->after('mileage_km');
-            $table->json('services')->nullable()->after('fuel');
-            $table->string('phone')->nullable()->after('country');
-        });
+        if (! Schema::hasColumn('vehicles', 'offer_type')) {
+            Schema::table('vehicles', function (Blueprint $table) {
+                $table->string('offer_type', 20)->default('location')->after('title')->index();
+                $table->text('description')->nullable()->after('model');
+                $table->decimal('sale_price', 14, 2)->nullable()->after('price_per_day');
+                $table->unsignedInteger('mileage_km')->nullable()->after('seats');
+                $table->string('fuel', 20)->nullable()->after('mileage_km');
+                $table->json('services')->nullable()->after('fuel');
+                $table->string('phone')->nullable()->after('country');
+            });
+        }
         // Vente / mecanique : pas de prix a la journee.
         Schema::table('vehicles', function (Blueprint $table) {
             $table->decimal('price_per_day', 12, 2)->nullable()->change();
         });
 
-        Schema::table('marketplace_products', function (Blueprint $table) {
-            $table->string('listing_type', 20)->default('vente')->after('title')->index();
-            $table->boolean('negotiable')->default(false)->after('price');
-            $table->string('district')->nullable()->after('city');
-            $table->string('contact_name')->nullable()->after('country');
-            $table->string('contact_phone')->nullable()->after('contact_name');
-            $table->string('contact_whatsapp')->nullable()->after('contact_phone');
-            $table->json('gallery')->nullable()->after('image');
-            $table->unsignedInteger('views')->default(0)->after('gallery');
-            $table->timestamp('sold_at')->nullable()->after('views');
-            $table->index(['category', 'city']);
-        });
+        if (! Schema::hasColumn('marketplace_products', 'listing_type')) {
+            Schema::table('marketplace_products', function (Blueprint $table) {
+                $table->string('listing_type', 20)->default('vente')->after('title')->index();
+                $table->boolean('negotiable')->default(false)->after('price');
+                $table->string('district')->nullable()->after('city');
+                $table->string('contact_name')->nullable()->after('country');
+                $table->string('contact_phone')->nullable()->after('contact_name');
+                $table->string('contact_whatsapp')->nullable()->after('contact_phone');
+                $table->json('gallery')->nullable()->after('image');
+                $table->unsignedInteger('views')->default(0)->after('gallery');
+                $table->timestamp('sold_at')->nullable()->after('views');
+                $table->index(['category', 'city']);
+            });
+        }
 
-        Schema::table('freight_offers', function (Blueprint $table) {
-            $table->json('package_types')->nullable()->after('mode');
-            $table->string('transit_time')->nullable()->after('capacity_kg');
-        });
+        if (! Schema::hasColumn('freight_offers', 'package_types')) {
+            Schema::table('freight_offers', function (Blueprint $table) {
+                $table->json('package_types')->nullable()->after('mode');
+                $table->string('transit_time')->nullable()->after('capacity_kg');
+            });
+        }
 
-        Schema::table('freight_shipments', function (Blueprint $table) {
-            $table->string('package_type', 20)->nullable()->after('mode');
-            $table->string('package_description')->nullable()->after('package_type');
-        });
+        if (! Schema::hasColumn('freight_shipments', 'package_type')) {
+            Schema::table('freight_shipments', function (Blueprint $table) {
+                $table->string('package_type', 20)->nullable()->after('mode');
+                $table->string('package_description')->nullable()->after('package_type');
+            });
+        }
 
         // Anciennes categories libres des produits -> categories des annonces.
         $map = [

@@ -13,6 +13,15 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Deploiement precedent interrompu (MySQL ne fait pas de rollback des
+        // CREATE TABLE) : table presente sans trace dans `migrations`.
+        if (Schema::hasTable('gateway_settings')) {
+            if (\Illuminate\Support\Facades\DB::table('gateway_settings')->exists()) {
+                return; // deja creee et utilisee : on la garde
+            }
+            Schema::drop('gateway_settings');
+        }
+
         Schema::create('gateway_settings', function (Blueprint $table) {
             $table->id();
             $table->string('gateway', 32)->unique();

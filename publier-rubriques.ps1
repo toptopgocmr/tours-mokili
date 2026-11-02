@@ -39,6 +39,10 @@ $fichiers = @(
   'backend-mokili/app/Models/Voyage/TravelOffer.php',
   'backend-mokili/app/Services/Payments/PaymentService.php',
   'backend-mokili/database/migrations/2026_01_02_000000_add_agent_role_to_users_table.php',
+  'backend-mokili/database/migrations/2026_11_01_000011_create_payouts_table.php',
+  'backend-mokili/database/migrations/2026_11_01_000012_create_gateway_settings_table.php',
+  'backend-mokili/database/migrations/2026_11_02_000001_create_businesses_table.php',
+  'backend-mokili/database/seeders/DatabaseSeeder.php',
   'backend-mokili/database/seeders/ServiceCategorySeeder.php',
   'backend-mokili/resources/js/Components/GuideCover.vue',
   'backend-mokili/resources/js/Components/PartnersSection.vue',
@@ -147,7 +151,6 @@ $fichiers = @(
   'backend-mokili/tests/Feature/FlightTicketingTest.php',
   'backend-mokili/tests/Feature/RubricsTest.php',
   'backend-mokili/tests/TestCase.php',
-  'publier-billetterie.ps1',
   'publier-rubriques.ps1'
 )
 
@@ -156,7 +159,7 @@ git status --short -- $fichiers
 git add -A -- $fichiers
 if ($LASTEXITCODE -ne 0) { Write-Host "git add a echoue" -ForegroundColor Red; exit 1 }
 
-git commit -m "Tourisme, filtres Logement/Voiture/Fret, Marketplace petites annonces, circuits par departement"
+git commit -m "Migrations relancables apres deploiement interrompu ; Tourisme, filtres Logement/Voiture/Fret, Marketplace petites annonces, circuits par departement"
 if ($LASTEXITCODE -ne 0) { Write-Host "Rien a publier (deja envoye ?)" -ForegroundColor Yellow }
 
 git push origin main

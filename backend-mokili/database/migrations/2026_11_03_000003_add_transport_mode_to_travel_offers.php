@@ -12,11 +12,13 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('travel_offers', function (Blueprint $table) {
-            $table->string('transport_mode', 20)->nullable()->after('type')->index();
-            $table->string('departure_point')->nullable()->after('origin_country');
-            $table->string('duration_label')->nullable()->after('return_at');
-        });
+        if (! Schema::hasColumn('travel_offers', 'transport_mode')) {
+    Schema::table('travel_offers', function (Blueprint $table) {
+                $table->string('transport_mode', 20)->nullable()->after('type')->index();
+                $table->string('departure_point')->nullable()->after('origin_country');
+                $table->string('duration_label')->nullable()->after('return_at');
+            });
+        }
 
         DB::table('travel_offers')->where('type', 'vol')->update(['transport_mode' => 'avion']);
         DB::table('travel_offers')->whereNull('transport_mode')->whereNotNull('airline')

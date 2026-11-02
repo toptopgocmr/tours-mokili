@@ -11,6 +11,15 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Deploiement precedent interrompu (MySQL ne fait pas de rollback des
+        // CREATE TABLE) : table presente sans trace dans `migrations`.
+        if (Schema::hasTable('businesses')) {
+            if (\Illuminate\Support\Facades\DB::table('businesses')->exists()) {
+                return; // deja creee et utilisee : on la garde
+            }
+            Schema::drop('businesses');
+        }
+
         Schema::create('businesses', function (Blueprint $table) {
             $table->id();
             $table->string('name');
