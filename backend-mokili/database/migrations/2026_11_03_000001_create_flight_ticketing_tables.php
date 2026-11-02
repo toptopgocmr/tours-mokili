@@ -102,7 +102,7 @@ return new class extends Migration
         Schema::create('flight_searches', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->index();
             $table->string('trip_type')->default('oneway');
             $table->string('origin', 3);
             $table->string('destination', 3);
@@ -143,11 +143,11 @@ return new class extends Migration
         Schema::create('flight_bookings', function (Blueprint $table) {
             $table->id();
             $table->string('reference')->unique();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('agency_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('user_id')->index();
+            $table->foreignId('agency_id')->nullable()->index();
             $table->foreignId('flight_offer_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('flight_supplier_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('booking_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('booking_id')->nullable()->index();
             $table->string('status')->default('DRAFT')->index();
             $table->string('after_sales_status')->nullable();
             $table->string('refund_status')->nullable();
@@ -223,7 +223,7 @@ return new class extends Migration
             $table->string('from_status')->nullable();
             $table->string('to_status');
             $table->string('actor_type')->default('system');
-            $table->foreignId('actor_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('actor_id')->nullable()->index();
             $table->string('note')->nullable();
             $table->json('context')->nullable();
             $table->timestamp('created_at')->useCurrent();
@@ -261,7 +261,7 @@ return new class extends Migration
         Schema::create('flight_after_sales', function (Blueprint $table) {
             $table->id();
             $table->foreignId('flight_booking_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->index();
             $table->string('type');
             $table->text('reason');
             $table->json('attachments')->nullable();
@@ -275,7 +275,7 @@ return new class extends Migration
             $table->string('refund_status')->nullable();
             $table->string('refund_reference')->nullable();
             $table->text('admin_notes')->nullable();
-            $table->foreignId('processed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('processed_by')->nullable()->index();
             $table->timestamp('processed_at')->nullable();
             $table->timestamps();
         });
@@ -283,7 +283,7 @@ return new class extends Migration
         // Journal des actions administratives et consultations sensibles.
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->index();
             $table->string('action');
             $table->string('subject_type')->nullable();
             $table->unsignedBigInteger('subject_id')->nullable();
