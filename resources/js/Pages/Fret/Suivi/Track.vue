@@ -13,9 +13,12 @@ const props = defineProps({
 
 const query = ref(props.code || '');
 
-const steps = ['enregistre', 'en_transit', 'dedouanement', 'livre'];
+const steps = ['enregistre', 'prise_en_charge', 'en_transit', 'arrive', 'dedouanement', 'en_livraison', 'livre'];
 const stepLabels = {
     enregistre: 'Enregistre',
+    prise_en_charge: 'Pris en charge',
+    arrive: 'Arrive',
+    en_livraison: 'En livraison',
     en_transit: 'En transit',
     dedouanement: 'Dedouanement',
     livre: 'Livre',
@@ -103,6 +106,17 @@ const submit = () => {
                 </div>
             </div>
             <p v-else class="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">Cette expedition a ete annulee.</p>
+
+            <div v-if="shipment.events?.length" class="mt-8">
+                <p class="font-semibold text-navy-900">Historique du transport</p>
+                <ul class="mt-3 space-y-3 border-l-2 border-teal-200 pl-4">
+                    <li v-for="e in [...shipment.events].reverse()" :key="e.id" class="text-sm">
+                        <p class="font-medium text-navy-900">{{ e.status.replaceAll('_', ' ') }}<span v-if="e.location"> - {{ e.location }}</span></p>
+                        <p class="text-xs text-navy-500">{{ e.occurred_at?.slice(0, 16).replace('T', ' ') }}</p>
+                        <p v-if="e.comment" class="text-xs text-navy-700">{{ e.comment }}</p>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         <p v-else class="text-center text-navy-500">Entrez un code de suivi ci-dessus pour voir l'etat de votre expedition.</p>

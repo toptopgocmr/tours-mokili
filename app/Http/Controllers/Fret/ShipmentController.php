@@ -38,8 +38,9 @@ class ShipmentController extends Controller
 
         if ($code) {
             $shipment = Shipment::query()
+                ->with('events:id,shipment_id,status,location,occurred_at,comment')
                 ->where('tracking_code', strtoupper(trim($code)))
-                ->first(['tracking_code', 'origin_city', 'origin_country', 'destination_city', 'destination_country', 'mode', 'status', 'weight_kg', 'picked_up_at', 'delivered_at', 'created_at']);
+                ->first(['id', 'tracking_code', 'origin_city', 'origin_country', 'destination_city', 'destination_country', 'mode', 'status', 'weight_kg', 'picked_up_at', 'delivered_at', 'created_at']);
             $notFound = ! $shipment;
         }
 

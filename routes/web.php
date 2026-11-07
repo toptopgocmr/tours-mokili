@@ -36,6 +36,15 @@ use App\Http\Controllers\Voiture\VehicleController;
 use App\Http\Controllers\Voyage\BookingController as VoyageBookingController;
 use App\Http\Controllers\Voyage\TravelOfferController;
 use App\Http\Controllers\Vols\FlightController;
+use App\Http\Controllers\Admin\FreightFinanceController as AdminFreightFinanceController;
+use App\Http\Controllers\Admin\FreightOrderController as AdminFreightOrderController;
+use App\Http\Controllers\Admin\FreightPartnerController as AdminFreightPartnerController;
+use App\Http\Controllers\Fret\FreightDocumentController;
+use App\Http\Controllers\Fret\OrderController as FretOrderController;
+use App\Http\Controllers\Fret\QuoteController as FretQuoteController;
+use App\Http\Controllers\Partner\FreightOrderController as PartnerFreightOrderController;
+use App\Http\Controllers\Partner\FreightProfileController as PartnerFreightProfileController;
+use App\Http\Controllers\Partner\FreightQuoteController as PartnerFreightQuoteController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -144,6 +153,24 @@ Route::prefix('fret')->name('fret.')->group(function () {
         Route::get('/{shipment}', [ShipmentController::class, 'show'])->name('show');
     });
 
+    // --- Marketplace : demandes de devis, commandes, reclamations, pieces (avant le wildcard {freightOffer:slug}) ---
+    Route::middleware('auth')->group(function () {
+        Route::get('/demandes', [FretQuoteController::class, 'index'])->name('requests.index');
+        Route::get('/demandes/creer', [FretQuoteController::class, 'create'])->name('requests.create');
+        Route::post('/demandes', [FretQuoteController::class, 'store'])->middleware('throttle:20,1')->name('requests.store');
+        Route::get('/demandes/{quoteRequest:reference}', [FretQuoteController::class, 'show'])->name('requests.show');
+        Route::post('/devis/{quote:reference}/accepter', [FretQuoteController::class, 'accept'])->name('quotes.accept');
+        Route::post('/devis/{quote:reference}/refuser', [FretQuoteController::class, 'refuse'])->name('quotes.refuse');
+
+        Route::get('/commandes', [FretOrderController::class, 'index'])->name('orders.index');
+        Route::get('/commandes/{order:reference}', [FretOrderController::class, 'show'])->name('orders.show');
+        Route::post('/commandes/{order:reference}/annuler', [FretOrderController::class, 'cancel'])->name('orders.cancel');
+        Route::post('/commandes/{order:reference}/reclamation', [FretOrderController::class, 'claim'])->name('orders.claim');
+
+        Route::post('/documents', [FreightDocumentController::class, 'store'])->name('documents.store');
+        Route::get('/documents/{document}/telecharger', [FreightDocumentController::class, 'download'])->name('documents.download');
+    });
+
     Route::get('/{freightOffer:slug}', [FreightOfferController::class, 'show'])->name('show');
 
     Route::middleware('auth')->post('/{freightOffer:slug}/demande', [FretBookingController::class, 'store'])->name('book');
@@ -218,6 +245,24 @@ Route::middleware(['auth', 'role:admin,agent'])->prefix('admin')->name('admin.')
     Route::post('/vols/remboursements/{refund}/rembourser', [AdminFlightOrderController::class, 'markRefunded'])->name('flights.refunded');
     Route::post('/vols/remboursements/{refund}/rejeter', [AdminFlightOrderController::class, 'rejectRefund'])->name('flights.refund.reject');
 
+    // Fret & Logistique : partenaires, commandes, reclamations, finance, indicateurs, audit.
+    Route::get('/fret/partenaires', [AdminFreightPartnerController::class, 'index'])->name('fret.partners.index');
+    Route::get('/fret/partenaires/{profile}', [AdminFreightPartnerController::class, 'show'])->name('fret.partners.show');
+    Route::post('/fret/partenaires/{profile}/decision', [AdminFreightPartnerController::class, 'decide'])->name('fret.partners.decide');
+    Route::get('/fret/commandes', [AdminFreightOrderController::class, 'index'])->name('fret.orders.index');
+    Route::get('/fret/commandes/{order:reference}', [AdminFreightOrderController::class, 'show'])->name('fret.orders.show');
+    Route::post('/fret/commandes/{order:reference}/annuler', [AdminFreightOrderController::class, 'cancel'])->name('fret.orders.cancel');
+    Route::post('/fret/commandes/{order:reference}/rembourser', [AdminFreightOrderController::class, 'refund'])->name('fret.orders.refund');
+    Route::post('/fret/commandes/{order:reference}/suivi', [AdminFreightOrderController::class, 'addEvent'])->name('fret.orders.event');
+    Route::get('/fret/reclamations', [AdminFreightOrderController::class, 'claims'])->name('fret.claims.index');
+    Route::get('/fret/reclamations/{claim}', [AdminFreightOrderController::class, 'claim'])->name('fret.claims.show');
+    Route::post('/fret/reclamations/{claim}/traiter', [AdminFreightOrderController::class, 'resolveClaim'])->name('fret.claims.resolve');
+    Route::get('/fret/finance', [AdminFreightFinanceController::class, 'index'])->name('fret.finance');
+    Route::post('/fret/finance/reverser', [AdminFreightFinanceController::class, 'settle'])->name('fret.finance.settle');
+    Route::get('/fret/indicateurs', [AdminFreightFinanceController::class, 'kpis'])->name('fret.kpis');
+    Route::get('/fret/audit', [AdminFreightFinanceController::class, 'audit'])->name('fret.audit');
+    Route::get('/fret/documents/{document}', [FreightDocumentController::class, 'download'])->name('fret.documents.download');
+
     Route::get('/moderation', [AdminModerationController::class, 'index'])->name('moderation.index');
     Route::post('/moderation/{module}/{id}/approuver', [AdminModerationController::class, 'approve'])->name('moderation.approve');
     Route::post('/moderation/{module}/{id}/rejeter', [AdminModerationController::class, 'reject'])->name('moderation.reject');
@@ -260,6 +305,20 @@ Route::middleware(['auth', 'role:partner'])->prefix('partner')->name('partner.')
     Route::get('/marketplace/{product}/editer', [PartnerProductController::class, 'edit'])->name('marketplace.edit');
     Route::put('/marketplace/{product}', [PartnerProductController::class, 'update'])->name('marketplace.update');
     Route::delete('/marketplace/{product}', [PartnerProductController::class, 'destroy'])->name('marketplace.destroy');
+
+    // Fret & Logistique : candidature, devis, commandes, suivi, reclamations, finances (isolation stricte par partenaire).
+    Route::get('/fret/profil', [PartnerFreightProfileController::class, 'show'])->name('fret.profile');
+    Route::post('/fret/profil', [PartnerFreightProfileController::class, 'store'])->name('fret.profile.store');
+    Route::get('/fret/demandes', [PartnerFreightQuoteController::class, 'index'])->name('fret.requests.index');
+    Route::get('/fret/demandes/{quoteRequest:reference}', [PartnerFreightQuoteController::class, 'show'])->name('fret.requests.show');
+    Route::post('/fret/demandes/{quoteRequest:reference}/devis', [PartnerFreightQuoteController::class, 'respond'])->name('fret.requests.respond');
+    Route::get('/fret/commandes', [PartnerFreightOrderController::class, 'index'])->name('fret.orders.index');
+    Route::get('/fret/commandes/{order:reference}', [PartnerFreightOrderController::class, 'show'])->name('fret.orders.show');
+    Route::post('/fret/commandes/{order:reference}/confirmer', [PartnerFreightOrderController::class, 'confirm'])->name('fret.orders.confirm');
+    Route::post('/fret/commandes/{order:reference}/suivi', [PartnerFreightOrderController::class, 'addEvent'])->name('fret.orders.event');
+    Route::get('/fret/reclamations', [PartnerFreightOrderController::class, 'claimsIndex'])->name('fret.claims');
+    Route::post('/fret/reclamations/{claim}/message', [PartnerFreightOrderController::class, 'claimMessage'])->name('fret.claims.message');
+    Route::get('/fret/finances', [PartnerFreightOrderController::class, 'finances'])->name('fret.finances');
 
     Route::get('/fret', [PartnerFreightOfferController::class, 'index'])->name('fret.index');
     Route::get('/fret/creer', [PartnerFreightOfferController::class, 'create'])->name('fret.create');

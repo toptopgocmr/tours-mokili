@@ -1,7 +1,7 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
 import ListingImage from '@/Components/ListingImage.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 defineOptions({ layout: MainLayout });
@@ -11,7 +11,12 @@ const modeLabel = { air: 'Aerien', mer: 'Maritime', route: 'Routier' };
 
 const form = useForm({ weight_kg: 1, dimensions: '', notes: '' });
 
-const total = computed(() => (Number(form.weight_kg) || 0) * Number(props.offer.price_per_kg));
+const total = computed(() => {
+    const t = (Number(form.weight_kg) || 0) * Number(props.offer.price_per_kg);
+    const min = Number(props.offer.min_price) || 0;
+    return Math.max(t, min);
+});
+const isQuote = computed(() => props.offer.pricing_mode === 'quote');
 
 const submit = () => form.post(`/fret/${props.offer.slug}/demande`);
 </script>
@@ -29,12 +34,28 @@ const submit = () => form.post(`/fret/${props.offer.slug}/demande`);
             <dl class="mt-6 grid grid-cols-2 gap-4 text-sm">
                 <div><dt class="text-navy-500">Origine</dt><dd class="font-medium">{{ offer.origin_city }}</dd></div>
                 <div><dt class="text-navy-500">Destination</dt><dd class="font-medium">{{ offer.destination_city }}</dd></div>
-                <div><dt class="text-navy-500">Prix</dt><dd class="font-semibold text-gold-600">{{ Number(offer.price_per_kg).toLocaleString('fr-FR') }} {{ offer.currency }} / kg</dd></div>
+                <div><dt class="text-navy-500">Tarif</dt><dd class="font-semibold text-gold-600">
+                    <template v-if="isQuote">Sur devis</template>
+                    <template v-else>{{ offer.price_is_firm ? 'Prix ferme' : 'Estimation' }} : {{ Number(offer.price_per_kg).toLocaleString('fr-FR') }} {{ offer.currency }} / {{ offer.unit || 'kg' }}</template>
+                </dd></div>
+                <div v-if="offer.valid_until"><dt class="text-navy-500">Valable jusqu'au</dt><dd class="font-medium">{{ offer.valid_until.slice(0, 10) }}</dd></div>
+                <div v-if="offer.transit_days_max"><dt class="text-navy-500">Delai indicatif</dt><dd class="font-medium">{{ offer.transit_days_min ? offer.transit_days_min + ' a ' : '' }}{{ offer.transit_days_max }} jours (sans garantie)</dd></div>
+                <div v-if="offer.partner_profile"><dt class="text-navy-500">Partenaire</dt><dd class="font-medium">{{ offer.partner_profile.trade_name || offer.partner_profile.company_name }}</dd></div>
                 <div v-if="offer.capacity_kg"><dt class="text-navy-500">Capacite</dt><dd class="font-medium">{{ offer.capacity_kg }} kg</dd></div>
             </dl>
+
+            <div v-if="offer.inclusions" class="mt-5 text-sm"><p class="font-semibold text-navy-900">Services inclus</p><p class="text-navy-700 whitespace-pre-line">{{ offer.inclusions }}</p></div>
+            <div v-if="offer.exclusions" class="mt-3 text-sm"><p class="font-semibold text-navy-900">Non inclus (a prevoir en plus)</p><p class="text-navy-700 whitespace-pre-line">{{ offer.exclusions }}</p></div>
+            <div v-if="offer.restrictions" class="mt-3 text-sm"><p class="font-semibold text-navy-900">Marchandises refusees / reglementees</p><p class="text-navy-700 whitespace-pre-line">{{ offer.restrictions }}</p></div>
         </div>
 
-        <div class="h-fit rounded-2xl border p-6 shadow-sm">
+        <div v-if="isQuote" class="h-fit rounded-2xl border p-6 shadow-sm">
+            <p class="font-semibold text-navy-900">Cette prestation est proposee sur devis</p>
+            <p class="mt-1 text-sm text-navy-700">Decrivez votre expedition : le partenaire vous envoie une proposition detaillee que vous pouvez accepter ou refuser.</p>
+            <Link :href="`/fret/demandes/creer?offre=${offer.slug}`" class="btn-gold mt-4 block text-center">Demander un devis</Link>
+        </div>
+
+        <div v-else class="h-fit rounded-2xl border p-6 shadow-sm">
             <p class="font-semibold text-navy-900">Demander ce transport</p>
             <p class="mt-1 text-xs text-navy-500">Un code de suivi vous sera fourni immediatement, avant meme la confirmation du paiement.</p>
 
@@ -67,7 +88,9 @@ const submit = () => form.post(`/fret/${props.offer.slug}/demande`);
                     </div>
                 </div>
 
-                <button type="submit" class="btn-gold w-full" :disabled="form.processing">Demander &amp; obtenir un code de suivi</button>
+                <p class="text-xs text-navy-500">{{ offer.price_is_firm ? 'Prix ferme selon la grille.' : 'Estimation : le montant final reste a confirmer par le partenaire.' }} Le prix est recalcule par le serveur a la commande.</p>
+                <button type="submit" class="btn-gold w-full" :disabled="form.processing">Commander &amp; obtenir un code de suivi</button>
+                <Link :href="`/fret/demandes/creer?offre=${offer.slug}`" class="block text-center text-xs font-semibold text-navy-700 underline">Ou demander un devis personnalise</Link>
                 <p class="text-center text-xs text-navy-500">
                     Paiement Mobile Money securise : Peex, pawaPay, MaishaPay ou Digitwace.
                 </p>

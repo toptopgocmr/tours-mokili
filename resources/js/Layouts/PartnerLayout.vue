@@ -25,10 +25,19 @@ const links = [
     { href: '/partner/voiture', label: 'Voiture', icon: TruckIcon },
     { href: '/partner/divertissement', label: 'Divertissement', icon: TicketIcon },
     { href: '/partner/marketplace', label: 'Marketplace', icon: ShoppingBagIcon },
-    { href: '/partner/fret', label: 'Fret', icon: CubeIcon },
+    { href: '/partner/fret/profil', label: 'Fret - Profil', icon: CubeIcon },
+    { href: '/partner/fret/demandes', label: 'Fret - Devis', icon: CubeIcon },
+    { href: '/partner/fret/commandes', label: 'Fret - Commandes', icon: CubeIcon },
+    { href: '/partner/fret/reclamations', label: 'Fret - Reclamations', icon: CubeIcon },
+    { href: '/partner/fret/finances', label: 'Fret - Finances', icon: CubeIcon },
+    { href: '/partner/fret', label: 'Fret - Offres', icon: CubeIcon },
 ];
 
-const isActive = (href) => currentUrl.value === href || (href !== '/partner' && currentUrl.value.startsWith(href));
+const isActive = (href) => {
+    // "Fret - Offres" ne doit pas s'allumer sur les sous-sections /partner/fret/profil, /demandes...
+    if (href === '/partner/fret') return /^\/partner\/fret(\/creer|\/\d+\/editer)?(\?.*)?$/.test(currentUrl.value);
+    return currentUrl.value === href || (href !== '/partner' && currentUrl.value.startsWith(href));
+};
 
 const breadcrumb = computed(() => {
     const active = links.find((l) => isActive(l.href));

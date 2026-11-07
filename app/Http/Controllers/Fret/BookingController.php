@@ -3,71 +3,40 @@
 namespace App\Http\Controllers\Fret;
 
 use App\Http\Controllers\Controller;
-use App\Models\Booking;
 use App\Models\Fret\FreightOffer;
-use App\Models\Fret\Shipment;
+use App\Services\Fret\FreightOrderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 /**
- * Requests transport on a published FreightOffer (weight -> price per kg),
- * then redirects to the shared checkout flow. A companion Shipment is
- * created immediately so the customer gets a tracking code right away,
- * mirroring DHL's "get a quote -> create shipment -> track" pattern
- * rather than waiting for payment confirmation to generate one.
+ * Tarif instantane : reservation directe depuis la grille du partenaire.
+ * Le prix est RECALCULE cote serveur ; la commande fige les conditions
+ * (grille, validite, exclusions) et cree le colis + son code de suivi.
+ * Le paiement reste distinct de la reservation (confirmee par le partenaire).
  */
 class BookingController extends Controller
 {
-    public function store(Request $request, FreightOffer $freightOffer): RedirectResponse
+    public function store(Request $request, FreightOffer $freightOffer, FreightOrderService $orders): RedirectResponse
     {
         $data = $request->validate([
-            'weight_kg' => ['required', 'numeric', 'min:0.1', 'max:'.max(0.1, (float) ($freightOffer->capacity_kg ?: 100000))],
+            'weight_kg' => ['required', 'numeric', 'min:0.1', 'max:10000000'],
+            'volume_m3' => ['nullable', 'numeric', 'min:0.001', 'max:100000'],
             'dimensions' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        [$booking, $shipment] = DB::transaction(function () use ($data, $freightOffer) {
-            $unitPrice = $freightOffer->price_per_kg;
-            $total = round($unitPrice * $data['weight_kg'], 2);
-
-            $shipment = Shipment::create([
-                'user_id' => Auth::id(),
-                'origin_city' => $freightOffer->origin_city,
-                'origin_country' => $freightOffer->origin_country,
-                'destination_city' => $freightOffer->destination_city,
-                'destination_country' => $freightOffer->destination_country,
-                'weight_kg' => $data['weight_kg'],
+        try {
+            $order = $orders->createInstant($request->user(), $freightOffer, [
+                'weight_kg' => (float) $data['weight_kg'],
+                'volume_m3' => isset($data['volume_m3']) ? (float) $data['volume_m3'] : null,
                 'dimensions' => $data['dimensions'] ?? null,
-                'mode' => $freightOffer->mode,
-                'status' => 'enregistre',
-                'estimated_price' => $total,
-                'currency' => $freightOffer->currency,
-            ]);
+            ], $data['notes'] ?? null);
+        } catch (RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
-            $booking = Booking::create([
-                'user_id' => Auth::id(),
-                'bookable_type' => FreightOffer::class,
-                'bookable_id' => $freightOffer->id,
-                'quantity' => $data['weight_kg'],
-                'unit_price' => $unitPrice,
-                'total_amount' => $total,
-                'currency' => $freightOffer->currency,
-                'status' => 'awaiting_payment',
-                'meta' => [
-                    'origin' => $freightOffer->origin_city,
-                    'destination' => $freightOffer->destination_city,
-                    'tracking_code' => $shipment->tracking_code,
-                    'shipment_id' => $shipment->id,
-                ],
-                'notes' => $data['notes'] ?? null,
-            ]);
-
-            return [$booking, $shipment];
-        });
-
-        return redirect()->route('checkout.show', $booking)
-            ->with('success', "Demande enregistree. Votre code de suivi est {$shipment->tracking_code}.");
+        return redirect()->route('checkout.show', $order->booking_id)
+            ->with('success', "Commande {$order->reference} creee. Code de suivi : {$order->shipment->tracking_code}.");
     }
 }

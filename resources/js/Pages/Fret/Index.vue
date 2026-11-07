@@ -62,9 +62,12 @@ const parcelEstimate = computed(() => {
                 />
                 <button type="submit" class="btn-gold whitespace-nowrap px-6">Suivre</button>
             </form>
-            <Link href="/fret/mes-envois" class="mt-3 inline-block text-xs font-semibold text-navy-200 hover:underline">
-                Voir toutes mes expeditions &rarr;
-            </Link>
+            <div class="mt-3 flex flex-wrap justify-center gap-4 text-xs font-semibold text-navy-200">
+                <Link href="/fret/mes-envois" class="hover:underline">Mes expeditions</Link>
+                <Link href="/fret/commandes" class="hover:underline">Mes commandes</Link>
+                <Link href="/fret/demandes" class="hover:underline">Mes demandes de devis</Link>
+            </div>
+            <Link href="/fret/demandes/creer" class="btn-gold mt-4 inline-block px-6">Demander un devis</Link>
         </div>
     </div>
 
@@ -124,7 +127,12 @@ const parcelEstimate = computed(() => {
                     <div class="p-4">
                         <p class="font-semibold text-navy-900">{{ o.title }}</p>
                         <p class="mt-1 text-xs uppercase text-navy-500">{{ modeLabel[o.mode] }} - {{ o.origin_city }} &rarr; {{ o.destination_city }}</p>
-                        <p class="mt-1 text-sm font-semibold text-gold-600">{{ Number(o.price_per_kg).toLocaleString('fr-FR') }} {{ o.currency }} / kg</p>
+                        <p class="mt-1 text-sm font-semibold text-gold-600">
+                            <template v-if="o.pricing_mode === 'quote'">Sur devis</template>
+                            <template v-else>{{ o.price_is_firm ? '' : 'a partir de ' }}{{ Number(o.price_per_kg).toLocaleString('fr-FR') }} {{ o.currency }} / {{ o.unit || 'kg' }}</template>
+                        </p>
+                        <p v-if="o.partner_profile" class="mt-1 text-xs text-navy-500">{{ o.partner_profile.trade_name || o.partner_profile.company_name }} - partenaire verifie</p>
+                        <p v-if="o.transit_days_max" class="text-xs text-navy-500">Delai indicatif : {{ o.transit_days_min ? o.transit_days_min + ' a ' : '' }}{{ o.transit_days_max }} j</p>
                     </div>
                 </Link>
             </div>

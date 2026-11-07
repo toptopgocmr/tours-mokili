@@ -14,7 +14,7 @@ class Shipment extends Model
         'user_id', 'tracking_code', 'origin_city', 'origin_country',
         'destination_city', 'destination_country', 'weight_kg', 'dimensions',
         'mode', 'status', 'estimated_price', 'currency', 'picked_up_at',
-        'delivered_at',
+        'delivered_at', 'partner_user_id', 'freight_order_id', 'proof_at',
     ];
 
     protected function casts(): array
@@ -32,6 +32,11 @@ class Shipment extends Model
         static::creating(function (self $shipment) {
             $shipment->tracking_code ??= 'FRT-'.strtoupper(Str::random(10));
         });
+    }
+
+    public function events()
+    {
+        return $this->hasMany(TrackingEvent::class)->orderBy('occurred_at')->orderBy('id');
     }
 
     public function user()

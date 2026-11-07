@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\Payout;
 use App\Models\User;
 use App\Services\Flights\FlightPaymentBridge;
+use App\Services\Fret\FreightPaymentBridge;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -76,6 +77,7 @@ class PaymentService
         }
 
         FlightPaymentBridge::initiated($payment); // dossier de vol : PRICE_CONFIRMED -> PAYMENT_PENDING
+        FreightPaymentBridge::initiated($payment);
 
         $this->applyToPayment($payment, $result);
 
@@ -248,7 +250,9 @@ class PaymentService
 
         // Vols : le paiement confirme / refuse declenche (ou non) la reservation + l'emission.
         if ($result->status !== GatewayResult::PENDING) {
-            FlightPaymentBridge::settled($payment->fresh(), $result->status === GatewayResult::SUCCESS);
+            $fresh = $payment->fresh();
+            FlightPaymentBridge::settled($fresh, $result->status === GatewayResult::SUCCESS);
+            FreightPaymentBridge::settled($fresh, $result->status === GatewayResult::SUCCESS);
         }
     }
 

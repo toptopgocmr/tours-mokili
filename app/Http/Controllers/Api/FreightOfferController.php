@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Booking;
 use App\Models\Fret\FreightOffer;
-use App\Models\Fret\Shipment;
+use App\Services\Fret\FreightOrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 /**
  * JSON API for the Flutter app - FRET module: catalogue of published
@@ -31,6 +29,8 @@ class FreightOfferController extends Controller
                 'destination_city', 'like', '%'.$request->string('destination').'%'
             ))
             ->when($request->filled('mode'), fn ($q) => $q->where('mode', $request->string('mode')))
+            ->when($request->filled('service_type'), fn ($q) => $q->where('service_type', $request->string('service_type')))
+            ->with('partnerProfile:user_id,company_name,trade_name')
             ->latest()
             ->paginate(10);
 
@@ -39,57 +39,30 @@ class FreightOfferController extends Controller
 
     public function show(FreightOffer $freightOffer): JsonResponse
     {
-        abort_unless($freightOffer->is_active && $freightOffer->status === 'published', 404);
+        abort_unless(FreightOffer::active()->whereKey($freightOffer->id)->exists(), 404);
 
-        return response()->json($freightOffer);
+        return response()->json($freightOffer->load('partnerProfile:user_id,company_name,trade_name'));
     }
 
-    public function book(Request $request, FreightOffer $freightOffer): JsonResponse
+    public function book(Request $request, FreightOffer $freightOffer, FreightOrderService $orders): JsonResponse
     {
         $data = $request->validate([
-            // The mobile app sends the weight (kg) as "quantity" to stay
-            // consistent with every other module's book() payload.
-            'quantity' => ['required', 'numeric', 'min:0.1', 'max:'.max(0.1, (float) ($freightOffer->capacity_kg ?: 100000))],
+            // L'application envoie le poids (kg) dans "quantity" comme les autres modules.
+            'quantity' => ['required', 'numeric', 'min:0.1', 'max:10000000'],
+            'volume_m3' => ['nullable', 'numeric', 'min:0.001', 'max:100000'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $booking = DB::transaction(function () use ($data, $freightOffer) {
-            $weightKg = $data['quantity'];
-            $unitPrice = $freightOffer->price_per_kg;
-            $total = round($unitPrice * $weightKg, 2);
+        try {
+            $order = $orders->createInstant($request->user(), $freightOffer, [
+                'weight_kg' => (float) $data['quantity'],
+                'volume_m3' => isset($data['volume_m3']) ? (float) $data['volume_m3'] : null,
+            ], $data['notes'] ?? null);
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
-            $shipment = Shipment::create([
-                'user_id' => Auth::id(),
-                'origin_city' => $freightOffer->origin_city,
-                'origin_country' => $freightOffer->origin_country,
-                'destination_city' => $freightOffer->destination_city,
-                'destination_country' => $freightOffer->destination_country,
-                'weight_kg' => $weightKg,
-                'mode' => $freightOffer->mode,
-                'status' => 'enregistre',
-                'estimated_price' => $total,
-                'currency' => $freightOffer->currency,
-            ]);
-
-            return Booking::create([
-                'user_id' => Auth::id(),
-                'bookable_type' => FreightOffer::class,
-                'bookable_id' => $freightOffer->id,
-                'quantity' => $weightKg,
-                'unit_price' => $unitPrice,
-                'total_amount' => $total,
-                'currency' => $freightOffer->currency,
-                'status' => 'awaiting_payment',
-                'meta' => [
-                    'origin' => $freightOffer->origin_city,
-                    'destination' => $freightOffer->destination_city,
-                    'tracking_code' => $shipment->tracking_code,
-                    'shipment_id' => $shipment->id,
-                ],
-                'notes' => $data['notes'] ?? null,
-            ]);
-        });
-
-        return response()->json($booking, 201);
+        // Reponse compatible : "id" = reservation de paiement (booking) comme avant.
+        return response()->json($order->booking->toArray() + ['order_reference' => $order->reference, 'tracking_code' => $order->shipment->tracking_code], 201);
     }
 }

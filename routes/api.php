@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BusinessController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\FlightController;
+use App\Http\Controllers\Api\FreightMarketController;
 use App\Http\Controllers\Api\FreightOfferController;
 use App\Http\Controllers\Api\LodgingListingController;
 use App\Http\Controllers\Api\PaymentController;
@@ -83,7 +84,8 @@ Route::get('/vols/airports', [FlightController::class, 'airports']);
 Route::get('/fret/offers/{freightOffer:slug}', [FreightOfferController::class, 'show']);
 
 // Public, no-login shipment tracking by code (DHL-style).
-Route::get('/fret/track/{code}', [ShipmentController::class, 'track']);
+Route::get('/fret/track/{code}', [FreightMarketController::class, 'tracking']);
+Route::get('/fret/shipments/{code}/tracking', [FreightMarketController::class, 'tracking']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
@@ -100,6 +102,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vols/orders/{order:reference}', [FlightController::class, 'show']);
     Route::post('/vols/orders/{order:reference}/cancel', [FlightController::class, 'cancel']);
     Route::post('/vols/orders/{order:reference}/refund', [FlightController::class, 'refund']);
+
+    // Fret & Logistique : devis, commandes (paiement via /bookings/{id}/pay), reclamations, notifications.
+    Route::get('/fret/quote-requests', [FreightMarketController::class, 'requests']);
+    Route::post('/fret/quote-requests', [FreightMarketController::class, 'createRequest'])->middleware('throttle:20,1');
+    Route::get('/fret/quote-requests/{quoteRequest:reference}', [FreightMarketController::class, 'showRequest']);
+    Route::post('/fret/quotes/{quote:reference}/accept', [FreightMarketController::class, 'acceptQuote']);
+    Route::post('/fret/quotes/{quote:reference}/refuse', [FreightMarketController::class, 'refuseQuote']);
+    Route::get('/fret/orders', [FreightMarketController::class, 'orders']);
+    Route::get('/fret/orders/{order:reference}', [FreightMarketController::class, 'showOrder']);
+    Route::post('/fret/orders/{order:reference}/cancel', [FreightMarketController::class, 'cancelOrder']);
+    Route::get('/fret/claims', [FreightMarketController::class, 'claimsIndex']);
+    Route::post('/fret/claims', [FreightMarketController::class, 'openClaim']);
+    Route::post('/fret/claims/{claim}/messages', [FreightMarketController::class, 'claimMessage']);
+    Route::get('/fret/notifications', [FreightMarketController::class, 'notifications']);
+    Route::post('/fret/documents', [\App\Http\Controllers\Fret\FreightDocumentController::class, 'store']);
 
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::post('/voyage/offers/{travelOffer:slug}/book', [BookingController::class, 'store']);

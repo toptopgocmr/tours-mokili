@@ -6,6 +6,8 @@ use App\Http\Controllers\Concerns\HandlesImageUploads;
 use App\Http\Controllers\Concerns\HandlesPublishingIntent;
 use App\Http\Controllers\Controller;
 use App\Models\Fret\FreightOffer;
+use App\Models\Fret\FreightPartnerProfile;
+use App\Services\Fret\FreightPartnerService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -34,6 +36,13 @@ class FreightOfferController extends Controller
         $data['image'] = $this->resolveImagePath($request, null, 'fret');
         $data['status'] = $this->resolveStatus($request);
 
+        // Pas de publication sans partenaire approuve : l'offre reste brouillon.
+        $approved = FreightPartnerProfile::where('user_id', $request->user()->id)->where('status', 'approved')->exists();
+        if ($data['status'] === 'pending' && ! $approved) {
+            $data['status'] = 'draft';
+            session()->flash('error', 'Votre candidature partenaire doit etre approuvee avant de soumettre une offre : offre enregistree comme brouillon.');
+        }
+
         $request->user()->freightOffers()->create($data);
 
         $message = $data['status'] === 'pending'
@@ -59,9 +68,21 @@ class FreightOfferController extends Controller
         $data['status'] = $this->resolveStatus($request, $offer->status);
         $data['rejection_reason'] = $data['status'] === 'pending' ? null : $offer->rejection_reason;
 
-        $offer->update($data);
+        $approved = FreightPartnerProfile::where('user_id', $request->user()->id)->where('status', 'approved')->exists();
+        if ($data['status'] === 'pending' && ! $approved) {
+            $data['status'] = $offer->status === 'pending' ? 'draft' : $offer->status;
+        }
 
-        return redirect()->route('partner.fret.index')->with('success', 'Offre de fret mise a jour.');
+        $offer->fill($data);
+        $changed = $offer->getDirty();
+        $offer->save();
+
+        // Modification sensible (tarif, destination, conditions) d'une offre publiee : nouvelle validation requise.
+        app(FreightPartnerService::class)->resubmitIfSensitive($offer, $changed);
+
+        return redirect()->route('partner.fret.index')->with('success', $offer->status === 'pending' && isset($changed['price_per_kg'])
+            ? 'Offre mise a jour : une modification sensible impose une nouvelle validation avant republication.'
+            : 'Offre de fret mise a jour.');
     }
 
     public function destroy(FreightOffer $offer): RedirectResponse
@@ -87,9 +108,22 @@ class FreightOfferController extends Controller
             'origin_country' => ['required', 'string', 'size:2'],
             'destination_city' => ['required', 'string', 'max:255'],
             'destination_country' => ['required', 'string', 'size:2'],
-            'price_per_kg' => ['required', 'numeric', 'min:0'],
+            'price_per_kg' => ['required', 'numeric', 'min:0'],  // 0 autorise pour une offre sur devis
             'currency' => ['required', 'string', 'size:3'],
             'capacity_kg' => ['nullable', 'integer', 'min:0'],
+            'service_type' => ['required', 'in:colis,marchandises,vehicule,conteneur,groupage'],
+            'pricing_mode' => ['required', 'in:instant,quote'],
+            'price_is_firm' => ['boolean'],
+            'unit' => ['required', 'in:kg,m3,tonne,forfait'],
+            'min_price' => ['nullable', 'numeric', 'min:0'],
+            'valid_until' => ['nullable', 'date', 'after_or_equal:today'],
+            'transit_days_min' => ['nullable', 'integer', 'min:0', 'max:365'],
+            'transit_days_max' => ['nullable', 'integer', 'min:0', 'max:365', 'gte:transit_days_min'],
+            'inclusions' => ['nullable', 'string', 'max:2000'],
+            'exclusions' => ['nullable', 'string', 'max:2000'],
+            'restrictions' => ['nullable', 'string', 'max:2000'],
+            'promo_percent' => ['nullable', 'numeric', 'min:0', 'max:90'],
+            'promo_until' => ['nullable', 'date'],
             'is_active' => ['boolean'],
             'image' => ['nullable', 'image', 'max:4096'],
             'remove_image' => ['boolean'],

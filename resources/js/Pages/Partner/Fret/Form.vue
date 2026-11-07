@@ -19,6 +19,19 @@ const form = useForm({
     price_per_kg: props.offer?.price_per_kg ?? '',
     currency: props.offer?.currency ?? 'XAF',
     capacity_kg: props.offer?.capacity_kg ?? '',
+    service_type: props.offer?.service_type ?? 'colis',
+    pricing_mode: props.offer?.pricing_mode ?? 'instant',
+    price_is_firm: props.offer?.price_is_firm ?? false,
+    unit: props.offer?.unit ?? 'kg',
+    min_price: props.offer?.min_price ?? '',
+    valid_until: props.offer?.valid_until?.slice(0, 10) ?? '',
+    transit_days_min: props.offer?.transit_days_min ?? '',
+    transit_days_max: props.offer?.transit_days_max ?? '',
+    promo_percent: props.offer?.promo_percent ?? '',
+    promo_until: props.offer?.promo_until?.slice(0, 10) ?? '',
+    inclusions: props.offer?.inclusions ?? '',
+    exclusions: props.offer?.exclusions ?? '',
+    restrictions: props.offer?.restrictions ?? '',
     is_active: props.offer?.is_active ?? true,
     intent: 'draft',
     image: null,
@@ -99,13 +112,62 @@ const submit = (intent) => {
             <input v-model="form.destination_country" type="text" maxlength="2" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
-            <label class="text-sm font-medium text-slate-700">Prix / kg</label>
+            <label class="text-sm font-medium text-slate-700">Prix unitaire (0 si sur devis)</label>
             <input v-model.number="form.price_per_kg" type="number" min="0" step="0.01" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Devise</label>
             <input v-model="form.currency" type="text" maxlength="3" class="mt-1 w-full rounded border-slate-300" required />
         </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Type de prestation</label>
+            <select v-model="form.service_type" class="mt-1 w-full rounded border-slate-300">
+                <option value="colis">Colis</option><option value="marchandises">Marchandises</option>
+                <option value="vehicule">Vehicule</option><option value="conteneur">Conteneur</option><option value="groupage">Groupage</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Mode de vente</label>
+            <select v-model="form.pricing_mode" class="mt-1 w-full rounded border-slate-300">
+                <option value="instant">Tarif instantane (grille)</option>
+                <option value="quote">Sur devis personnalise</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Unite de tarification</label>
+            <select v-model="form.unit" class="mt-1 w-full rounded border-slate-300">
+                <option value="kg">Par kg (poids taxable)</option><option value="m3">Par m3</option>
+                <option value="tonne">Par tonne</option><option value="forfait">Forfait</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Facturation minimum</label>
+            <input v-model.number="form.min_price" type="number" min="0" step="0.01" class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div class="flex items-center gap-2 sm:col-span-2">
+            <input v-model="form.price_is_firm" type="checkbox" id="firm" />
+            <label for="firm" class="text-sm text-slate-700">Prix ferme (sinon presente comme estimation au client)</label>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Valide jusqu'au</label>
+            <input v-model="form.valid_until" type="date" class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+            <div><label class="text-sm font-medium text-slate-700">Delai min (j)</label><input v-model.number="form.transit_days_min" type="number" min="0" class="mt-1 w-full rounded border-slate-300" /></div>
+            <div><label class="text-sm font-medium text-slate-700">Delai max (j)</label><input v-model.number="form.transit_days_max" type="number" min="0" class="mt-1 w-full rounded border-slate-300" /></div>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Promotion (%)</label>
+            <input v-model.number="form.promo_percent" type="number" min="0" max="90" step="0.5" class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Promotion valable jusqu'au</label>
+            <input v-model="form.promo_until" type="date" class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div class="sm:col-span-2"><label class="text-sm font-medium text-slate-700">Services inclus</label><textarea v-model="form.inclusions" rows="2" class="mt-1 w-full rounded border-slate-300"></textarea></div>
+        <div class="sm:col-span-2"><label class="text-sm font-medium text-slate-700">Exclus / frais non inclus (douane, taxes, stockage, livraison...)</label><textarea v-model="form.exclusions" rows="2" class="mt-1 w-full rounded border-slate-300"></textarea></div>
+        <div class="sm:col-span-2"><label class="text-sm font-medium text-slate-700">Marchandises refusees / reglementees</label><textarea v-model="form.restrictions" rows="2" class="mt-1 w-full rounded border-slate-300"></textarea></div>
+        <p class="rounded bg-amber-50 p-2 text-xs text-amber-800 sm:col-span-2">Une modification de tarif, destination ou condition d'une offre publiee la renvoie en validation avant republication.</p>
         <div class="sm:col-span-2">
             <label class="text-sm font-medium text-slate-700">Description</label>
             <textarea v-model="form.description" rows="4" class="mt-1 w-full rounded border-slate-300"></textarea>

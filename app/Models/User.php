@@ -118,4 +118,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\Fret\FreightOffer::class, 'carrier_id');
     }
+
+    public function freightPartnerProfile()
+    {
+        return $this->hasOne(\App\Models\Fret\FreightPartnerProfile::class);
+    }
 }
