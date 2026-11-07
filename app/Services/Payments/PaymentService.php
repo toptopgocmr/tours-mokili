@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Payout;
 use App\Models\User;
+use App\Services\Flights\FlightPaymentBridge;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -73,6 +74,8 @@ class PaymentService
 
             throw $e instanceof PaymentGatewayException ? $e : new PaymentGatewayException('Le service de paiement est indisponible, reessayez.');
         }
+
+        FlightPaymentBridge::initiated($payment); // dossier de vol : PRICE_CONFIRMED -> PAYMENT_PENDING
 
         $this->applyToPayment($payment, $result);
 
@@ -242,6 +245,11 @@ class PaymentService
                 $booking->update(['status' => 'awaiting_payment']);
             }
         });
+
+        // Vols : le paiement confirme / refuse declenche (ou non) la reservation + l'emission.
+        if ($result->status !== GatewayResult::PENDING) {
+            FlightPaymentBridge::settled($payment->fresh(), $result->status === GatewayResult::SUCCESS);
+        }
     }
 
     public function applyToPayout(Payout $payout, GatewayResult $result): void

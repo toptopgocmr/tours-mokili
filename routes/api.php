@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BusinessController;
 use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\FlightController;
 use App\Http\Controllers\Api\FreightOfferController;
 use App\Http\Controllers\Api\LodgingListingController;
 use App\Http\Controllers\Api\PaymentController;
@@ -77,6 +78,8 @@ Route::get('/marketplace/products', [ProductController::class, 'index']);
 Route::get('/marketplace/products/{product:slug}', [ProductController::class, 'show']);
 
 Route::get('/fret/offers', [FreightOfferController::class, 'index']);
+Route::get('/vols/airports', [FlightController::class, 'airports']);
+
 Route::get('/fret/offers/{freightOffer:slug}', [FreightOfferController::class, 'show']);
 
 // Public, no-login shipment tracking by code (DHL-style).
@@ -89,6 +92,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn (Request $request) => $request->user());
 
     Route::post('/wallet/verify', [WalletVerificationController::class, 'store']);
+
+    // Vols : le paiement passe ensuite par POST /bookings/{booking_id}/pay.
+    Route::post('/vols/search', [FlightController::class, 'search'])->middleware('throttle:30,1');
+    Route::post('/vols/offers/{offer}/order', [FlightController::class, 'order'])->middleware('throttle:10,1');
+    Route::get('/vols/orders', [FlightController::class, 'index']);
+    Route::get('/vols/orders/{order:reference}', [FlightController::class, 'show']);
+    Route::post('/vols/orders/{order:reference}/cancel', [FlightController::class, 'cancel']);
+    Route::post('/vols/orders/{order:reference}/refund', [FlightController::class, 'refund']);
 
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::post('/voyage/offers/{travelOffer:slug}/book', [BookingController::class, 'store']);

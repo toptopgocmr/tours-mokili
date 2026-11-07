@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AuthenticatedSessionController as AdminAuthentica
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\BusinessController as AdminBusinessController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\FlightOrderController as AdminFlightOrderController;
 use App\Http\Controllers\Admin\GatewayController as AdminGatewayController;
 use App\Http\Controllers\Admin\ModerationController as AdminModerationController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
@@ -34,6 +35,7 @@ use App\Http\Controllers\Partner\VehicleController as PartnerVehicleController;
 use App\Http\Controllers\Voiture\VehicleController;
 use App\Http\Controllers\Voyage\BookingController as VoyageBookingController;
 use App\Http\Controllers\Voyage\TravelOfferController;
+use App\Http\Controllers\Vols\FlightController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -62,6 +64,20 @@ Route::get('/__debug-scheme', function () {
         'server_APP_URL' => $_SERVER['APP_URL'] ?? null,
         'getenv_APP_URL' => getenv('APP_URL'),
     ]);
+});
+
+// --- VOLS : billetterie aerienne (recherche, dossier, paiement via checkout commun) ---
+Route::prefix('vols')->name('vols.')->group(function () {
+    Route::get('/', [FlightController::class, 'index'])->middleware('throttle:30,1')->name('index');
+
+    Route::middleware('auth')->group(function () {
+        Route::get('/mes-vols', [FlightController::class, 'mine'])->name('mine');
+        Route::get('/dossier/{order:reference}', [FlightController::class, 'show'])->name('show');
+        Route::post('/dossier/{order:reference}/annuler', [FlightController::class, 'cancel'])->name('cancel');
+        Route::post('/dossier/{order:reference}/remboursement', [FlightController::class, 'refund'])->name('refund');
+        Route::get('/offres/{offer}/passagers', [FlightController::class, 'passengers'])->name('passengers');
+        Route::post('/offres/{offer}/commander', [FlightController::class, 'store'])->middleware('throttle:10,1')->name('order');
+    });
 });
 
 // --- VOYAGE (pilot module - full CRUD + booking + checkout) ---
@@ -193,6 +209,14 @@ Route::middleware(['auth', 'role:admin,agent'])->prefix('admin')->name('admin.')
     Route::post('/decaissements/{payout}/verifier', [AdminPayoutController::class, 'refresh'])->name('payouts.refresh');
     Route::get('/passerelles', [AdminGatewayController::class, 'index'])->name('gateways.index');
     Route::put('/passerelles/{gateway}', [AdminGatewayController::class, 'update'])->name('gateways.update');
+
+    // Vols : dossiers, anomalies, relance, remboursements (journal d'audit en lecture seule).
+    Route::get('/vols', [AdminFlightOrderController::class, 'index'])->name('flights.index');
+    Route::get('/vols/{order:reference}', [AdminFlightOrderController::class, 'show'])->name('flights.show');
+    Route::post('/vols/{order:reference}/relancer', [AdminFlightOrderController::class, 'retry'])->name('flights.retry');
+    Route::post('/vols/{order:reference}/remboursement', [AdminFlightOrderController::class, 'refund'])->name('flights.refund');
+    Route::post('/vols/remboursements/{refund}/rembourser', [AdminFlightOrderController::class, 'markRefunded'])->name('flights.refunded');
+    Route::post('/vols/remboursements/{refund}/rejeter', [AdminFlightOrderController::class, 'rejectRefund'])->name('flights.refund.reject');
 
     Route::get('/moderation', [AdminModerationController::class, 'index'])->name('moderation.index');
     Route::post('/moderation/{module}/{id}/approuver', [AdminModerationController::class, 'approve'])->name('moderation.approve');

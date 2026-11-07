@@ -27,6 +27,7 @@ const currentUrl = computed(() => page.url);
 const links = [
     { href: '/admin', label: 'Tableau de bord', icon: HomeIcon },
     { href: '/admin/voyage', label: 'Offres Voyage', icon: PaperAirplaneIcon },
+    { href: '/admin/vols', label: 'Dossiers de vol', icon: PaperAirplaneIcon },
     { href: '/admin/loisirs', label: 'Loisirs & Parcs', icon: SparklesIcon },
     { href: '/admin/partenaires', label: 'Societes partenaires', icon: BuildingStorefrontIcon },
     { href: '/admin/reservations', label: 'Reservations', icon: CalendarDaysIcon },

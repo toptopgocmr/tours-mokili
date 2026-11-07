@@ -24,6 +24,8 @@ const search = () => router.get('/voyage', { destination: destination.value }, {
         <h1 class="text-3xl font-bold text-navy-900">Voyage</h1>
         <p class="mt-1 text-navy-700">Vols, sejours et circuits vers votre prochaine destination.</p>
 
+        <Link href="/vols" class="btn-gold mt-4 inline-block">Reserver un vol</Link>
+
         <form class="mt-6 flex max-w-lg gap-2" @submit.prevent="search">
             <input v-model="destination" type="text" placeholder="Destination (ex: Paris)" class="flex-1 rounded-lg border-gray-300" />
             <button type="submit" class="btn-gold">Rechercher</button>
