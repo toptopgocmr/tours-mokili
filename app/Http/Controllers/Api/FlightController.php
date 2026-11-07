@@ -48,7 +48,7 @@ class FlightController extends Controller
         $search = $this->searches->search($request->user('sanctum'), $request->validated());
 
         return response()->json([
-            'search' => $search->only(['id', 'origin', 'destination', 'depart_date', 'return_date', 'adults', 'children', 'infants', 'cabin', 'results_count', 'supplier_errors']),
+            'search' => $search->only(['id', 'origin', 'destination', 'depart_date', 'return_date', 'legs', 'direct_only', 'adults', 'children', 'infants', 'cabin', 'results_count', 'supplier_errors']),
             'offers' => $search->offers()->orderBy('price_total')->get(),
         ]);
     }

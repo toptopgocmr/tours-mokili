@@ -39,11 +39,9 @@ class FlightController extends Controller
         $search = null;
         $offers = [];
 
-        if ($request->filled('origin')) {
+        if ($request->filled('origin') || $request->filled('legs')) {
             $rules = new FlightSearchRequest;
-            $input = $request->query();
-            $input['origin'] = strtoupper((string) ($input['origin'] ?? ''));
-            $input['destination'] = strtoupper((string) ($input['destination'] ?? ''));
+            $input = FlightSearchRequest::normalize($request->query());
             $data = Validator::make($input, $rules->rules(), $rules->messages())->validate();
 
             $search = $this->searches->search($request->user(), $data);
@@ -52,7 +50,7 @@ class FlightController extends Controller
 
         return Inertia::render('Vols/Index', [
             'airports' => Airport::query()->orderBy('city')->get(['iata', 'city', 'name', 'country']),
-            'filters' => $request->only(['origin', 'destination', 'depart_date', 'return_date', 'adults', 'children', 'infants', 'cabin']),
+            'filters' => $request->only(['origin', 'destination', 'depart_date', 'return_date', 'adults', 'children', 'infants', 'cabin', 'legs', 'direct_only']),
             'search' => $search,
             'offers' => $offers,
         ]);

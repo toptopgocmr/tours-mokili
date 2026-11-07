@@ -14,6 +14,8 @@ class FlightSearch extends Model
             'depart_date' => 'date',
             'return_date' => 'date',
             'supplier_errors' => 'array',
+            'legs' => 'array',
+            'direct_only' => 'boolean',
         ];
     }
 

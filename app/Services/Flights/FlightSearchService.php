@@ -6,6 +6,7 @@ use App\Models\Flights\FlightOffer;
 use App\Models\Flights\FlightSearch;
 use App\Models\User;
 use App\Services\Flights\Suppliers\FlightSupplierManager;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class FlightSearchService
@@ -20,12 +21,34 @@ class FlightSearchService
 
     public function search(?User $user, array $criteria): FlightSearch
     {
+        $legs = null;
+        if (! empty($criteria['legs']) && is_array($criteria['legs'])) {
+            $legs = array_values(array_map(fn ($l) => [
+                'origin' => strtoupper((string) $l['origin']),
+                'destination' => strtoupper((string) $l['destination']),
+                'date' => (string) $l['date'],
+            ], $criteria['legs']));
+
+            for ($i = 1; $i < count($legs); $i++) {
+                if ($legs[$i]['date'] < $legs[$i - 1]['date']) {
+                    throw ValidationException::withMessages(['legs' => 'Les dates des vols doivent etre dans l\'ordre chronologique.']);
+                }
+            }
+            $criteria['origin'] = $legs[0]['origin'];
+            $criteria['destination'] = $legs[0]['destination'];
+            $criteria['depart_date'] = $legs[0]['date'];
+            $criteria['return_date'] = null;
+        }
+        $direct = (bool) ($criteria['direct_only'] ?? false);
+
         $search = FlightSearch::create([
             'user_id' => $user?->id,
             'origin' => strtoupper($criteria['origin']),
             'destination' => strtoupper($criteria['destination']),
             'depart_date' => $criteria['depart_date'],
             'return_date' => $criteria['return_date'] ?? null,
+            'legs' => $legs,
+            'direct_only' => $direct,
             'adults' => (int) ($criteria['adults'] ?? 1),
             'children' => (int) ($criteria['children'] ?? 0),
             'infants' => (int) ($criteria['infants'] ?? 0),
@@ -40,6 +63,10 @@ class FlightSearchService
                 $driver = $this->suppliers->driver($supplier);
 
                 foreach ($driver->search($search) as $offer) {
+                    if ($direct && ! self::isDirect($offer['itinerary'])) {
+                        continue; // "Vols directs uniquement"
+                    }
+
                     FlightOffer::create([
                         'flight_search_id' => $search->id,
                         'flight_supplier_id' => $supplier->id,
@@ -72,5 +99,19 @@ class FlightSearchService
         ], $user ? 'user:'.$user->id : 'guest');
 
         return $search;
+    }
+
+    /** Vrai si aucun trajet de l'itineraire n'a d'escale (un seul segment, 0 escale). */
+    public static function isDirect(array $itinerary): bool
+    {
+        $legs = $itinerary['legs'] ?? array_values(array_filter([$itinerary['outbound'] ?? [], $itinerary['inbound'] ?? []]));
+
+        foreach ($legs as $segments) {
+            if (count($segments) !== 1 || (int) ($segments[0]['stops'] ?? 0) > 0) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

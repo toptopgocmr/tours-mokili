@@ -16,6 +16,7 @@ const props = defineProps({
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
 
+const legsOf = (o) => o.itinerary.legs ?? [o.itinerary.outbound, o.itinerary.inbound].filter((l) => l && l.length);
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const fmtDur = (m) => `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`;
 const price = (v, c) => `${Number(v).toLocaleString('fr-FR')} ${c}`;
@@ -42,7 +43,7 @@ const orderUrl = (o) => (user.value ? `/vols/offres/${o.id}/passagers` : '/login
         <div v-if="page.props.flash?.error" class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ page.props.flash.error }}</div>
 
         <template v-if="search">
-            <p class="mb-4 text-sm text-navy-500">{{ offers.length }} offre(s) {{ search.origin }} &rarr; {{ search.destination }}</p>
+            <p class="mb-4 text-sm text-navy-500">{{ offers.length }} offre(s) {{ search.legs ? 'multi-destinations (' + search.legs.length + ' vols)' : search.origin + ' → ' + search.destination }}{{ search.direct_only ? ' - vols directs' : '' }}</p>
             <p v-if="search.supplier_errors && search.supplier_errors.length" class="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
                 Certains fournisseurs n'ont pas repondu : les resultats peuvent etre partiels.
             </p>
@@ -51,15 +52,13 @@ const orderUrl = (o) => (user.value ? `/vols/offres/${o.id}/passagers` : '/login
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="flex-1">
                         <p class="text-xs font-semibold uppercase text-navy-500">{{ o.airline_name }}</p>
-                        <div v-for="(seg, i) in o.itinerary.outbound" :key="'o' + i" class="mt-1 text-sm text-navy-900">
-                            <span class="font-semibold">{{ fmtTime(seg.departure) }}</span> {{ seg.from }}
-                            &rarr; <span class="font-semibold">{{ fmtTime(seg.arrival) }}</span> {{ seg.to }}
-                            <span class="text-xs text-navy-500">({{ fmtDur(seg.duration_minutes) }}, {{ seg.stops ? seg.stops + ' escale(s)' : 'direct' }})</span>
-                        </div>
-                        <div v-for="(seg, i) in o.itinerary.inbound" :key="'i' + i" class="mt-1 text-sm text-navy-900">
-                            <span class="font-semibold">{{ fmtTime(seg.departure) }}</span> {{ seg.from }}
-                            &rarr; <span class="font-semibold">{{ fmtTime(seg.arrival) }}</span> {{ seg.to }}
-                            <span class="text-xs text-navy-500">(retour, {{ fmtDur(seg.duration_minutes) }})</span>
+                        <div v-for="(leg, n) in legsOf(o)" :key="'l' + n" class="mt-2">
+                            <p v-if="legsOf(o).length > 1" class="text-[11px] font-bold uppercase text-navy-500">{{ search.legs ? 'Vol ' + (n + 1) : (n === 0 ? 'Aller' : 'Retour') }}</p>
+                            <div v-for="(seg, i) in leg" :key="'s' + i" class="text-sm text-navy-900">
+                                <span class="font-semibold">{{ fmtTime(seg.departure) }}</span> {{ seg.from }}
+                                &rarr; <span class="font-semibold">{{ fmtTime(seg.arrival) }}</span> {{ seg.to }}
+                                <span class="text-xs text-navy-500">({{ fmtDur(seg.duration_minutes) }}, {{ seg.stops ? seg.stops + ' escale(s)' : 'direct' }})</span>
+                            </div>
                         </div>
                         <p v-if="o.fare_rules" class="mt-2 text-xs text-navy-500">
                             {{ o.fare_rules.baggage }} - {{ o.fare_rules.changes }} - {{ o.fare_rules.refund }}

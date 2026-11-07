@@ -28,11 +28,21 @@ class AmadeusFlightSupplier implements FlightSupplierDriver, SyncsBooking
 
     public function search(FlightSearch $search): array
     {
-        $origins = [[
-            'id' => '1', 'originLocationCode' => $search->origin, 'destinationLocationCode' => $search->destination,
-            'departureDateTimeRange' => ['date' => $search->depart_date->format('Y-m-d')],
-        ]];
-        if ($search->return_date) {
+        if (! empty($search->legs)) {
+            $origins = [];
+            foreach ($search->legs as $n => $leg) {
+                $origins[] = [
+                    'id' => (string) ($n + 1), 'originLocationCode' => $leg['origin'], 'destinationLocationCode' => $leg['destination'],
+                    'departureDateTimeRange' => ['date' => $leg['date']],
+                ];
+            }
+        } else {
+            $origins = [[
+                'id' => '1', 'originLocationCode' => $search->origin, 'destinationLocationCode' => $search->destination,
+                'departureDateTimeRange' => ['date' => $search->depart_date->format('Y-m-d')],
+            ]];
+        }
+        if (empty($search->legs) && $search->return_date) {
             $origins[] = [
                 'id' => '2', 'originLocationCode' => $search->destination, 'destinationLocationCode' => $search->origin,
                 'departureDateTimeRange' => ['date' => $search->return_date->format('Y-m-d')],
@@ -46,11 +56,14 @@ class AmadeusFlightSupplier implements FlightSupplierDriver, SyncsBooking
             'sources' => ['GDS'],
             'searchCriteria' => [
                 'maxFlightOffers' => (int) config('flights.amadeus.max_offers', 20),
-                'flightFilters' => ['cabinRestrictions' => [[
-                    'cabin' => self::CABINS[$search->cabin] ?? 'ECONOMY',
-                    'coverage' => 'MOST_SEGMENTS',
-                    'originDestinationIds' => array_column($origins, 'id'),
-                ]]],
+                'flightFilters' => array_filter([
+                    'cabinRestrictions' => [[
+                        'cabin' => self::CABINS[$search->cabin] ?? 'ECONOMY',
+                        'coverage' => 'MOST_SEGMENTS',
+                        'originDestinationIds' => array_column($origins, 'id'),
+                    ]],
+                    'connectionRestriction' => $search->direct_only ? ['maxNumberOfConnections' => 0] : null,
+                ]),
             ],
         ]]);
 
@@ -69,10 +82,11 @@ class AmadeusFlightSupplier implements FlightSupplierDriver, SyncsBooking
 
             $offers[] = [
                 'external_id' => (string) $o['id'],
-                'itinerary' => [
+                'itinerary' => array_filter([
                     'outbound' => $this->segments($o['itineraries'][0]['segments'] ?? []),
-                    'inbound' => $this->segments($o['itineraries'][1]['segments'] ?? []),
-                ],
+                    'inbound' => empty($search->legs) ? $this->segments($o['itineraries'][1]['segments'] ?? []) : [],
+                    'legs' => empty($search->legs) ? null : array_map(fn ($it) => $this->segments($it['segments'] ?? []), $o['itineraries'] ?? []),
+                ], fn ($v) => $v !== null),
                 'airline_code' => $code,
                 'airline_name' => $carriers[$code] ?? $code,
                 'cost' => (float) $o['price']['grandTotal'],

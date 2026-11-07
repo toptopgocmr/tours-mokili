@@ -47,7 +47,10 @@ class FlightTrackingService
         $window = (int) config('flights.tracking.window_hours', 72);
         $updated = 0;
 
-        foreach ($order->offer->itinerary as $leg) {
+        $itinerary = $order->offer->itinerary;
+        $legs = $itinerary['legs'] ?? [$itinerary['outbound'] ?? [], $itinerary['inbound'] ?? []];
+
+        foreach ($legs as $leg) {
             foreach ($leg as $seg) {
                 $departure = Carbon::parse($seg['departure']);
                 if ($departure->lt(now()->subHours(12)) || $departure->gt(now()->addHours($window))) {

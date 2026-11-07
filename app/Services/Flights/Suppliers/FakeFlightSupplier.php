@@ -25,6 +25,10 @@ class FakeFlightSupplier implements FlightSupplierDriver
 
     public function search(FlightSearch $search): array
     {
+        if (! empty($search->legs)) {
+            return $this->searchMulti($search);
+        }
+
         $offers = [];
         $seed = crc32($search->origin.$search->destination.$search->depart_date->format('Y-m-d'));
         $base = 90000 + ($seed % 400000); // XAF par adulte
@@ -74,6 +78,66 @@ class FakeFlightSupplier implements FlightSupplierDriver
             $offers[] = [
                 'external_id' => 'FAKE-'.Str::upper(Str::random(10)),
                 'itinerary' => $itinerary,
+                'airline_code' => $code,
+                'airline_name' => $name,
+                'cost' => round(max($cost, 30000), 0),
+                'currency' => 'XAF',
+                'fare_rules' => [
+                    'baggage' => $i % 2 === 0 ? '1 bagage 23 kg' : '2 bagages 23 kg',
+                    'changes' => $i % 2 === 0 ? 'Modification payante' : 'Modification gratuite',
+                    'refund' => $i % 3 === 0 ? 'Non remboursable' : 'Remboursable avec frais',
+                ],
+                'expires_at' => now()->addMinutes((int) config('flights.offer_ttl_minutes', 20)),
+            ];
+        }
+
+        return $offers;
+    }
+
+    /** Multi-destinations : un seul dossier, une offre par compagnie couvrant tous les vols. */
+    private function searchMulti(FlightSearch $search): array
+    {
+        $offers = [];
+
+        foreach (self::AIRLINES as $i => [$code, $name]) {
+            $itineraryLegs = [];
+            $cost = 0.0;
+            $skip = false;
+
+            foreach ($search->legs as $n => $leg) {
+                $date = \Illuminate\Support\Carbon::parse($leg['date']);
+                $seed = crc32($leg['origin'].$leg['destination'].$date->format('Y-m-d'));
+                if (($seed + $i) % 6 === 0) {
+                    $skip = true; // la compagnie ne dessert pas ce vol
+                    break;
+                }
+                $base = 90000 + ($seed % 400000);
+                $depHour = 5 + (($seed >> $i) % 16);
+                $duration = 120 + (($seed + $i * 37) % 600);
+                $stops = ($seed + $i) % 3 === 0 ? 1 : 0;
+                $depart = $date->copy()->setTime($depHour, ($i * 15 + $n * 10) % 60);
+
+                $itineraryLegs[] = [[
+                    'from' => $leg['origin'],
+                    'to' => $leg['destination'],
+                    'flight_number' => $code.(100 + (($seed + $i * 13) % 800)),
+                    'departure' => $depart->toIso8601String(),
+                    'arrival' => $depart->copy()->addMinutes($duration + $stops * 90)->toIso8601String(),
+                    'duration_minutes' => $duration + $stops * 90,
+                    'stops' => $stops,
+                ]];
+
+                $perAdult = $base + $i * 9500 + $stops * -20000;
+                $cost += ($perAdult * $search->adults) + ($perAdult * 0.75 * $search->children) + ($perAdult * 0.10 * $search->infants);
+            }
+
+            if ($skip) {
+                continue;
+            }
+
+            $offers[] = [
+                'external_id' => 'FAKE-'.Str::upper(Str::random(10)),
+                'itinerary' => ['outbound' => $itineraryLegs[0], 'inbound' => [], 'legs' => $itineraryLegs],
                 'airline_code' => $code,
                 'airline_name' => $name,
                 'cost' => round(max($cost, 30000), 0),

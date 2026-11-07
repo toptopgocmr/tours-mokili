@@ -111,4 +111,44 @@ class FlightFlowTest extends TestCase
             ['email' => 'jean@example.com', 'phone' => null], (float) $offer->price_total,
         );
     }
+
+    public function test_multi_city_search_builds_one_offer_covering_all_legs(): void
+    {
+        $search = app(FlightSearchService::class)->search(null, [
+            'legs' => [
+                ['origin' => 'BZV', 'destination' => 'CDG', 'date' => now()->addDays(20)->toDateString()],
+                ['origin' => 'CDG', 'destination' => 'DXB', 'date' => now()->addDays(25)->toDateString()],
+                ['origin' => 'DXB', 'destination' => 'BZV', 'date' => now()->addDays(30)->toDateString()],
+            ],
+            'adults' => 1,
+        ]);
+
+        $this->assertGreaterThan(0, $search->offers()->count());
+        $offer = $search->offers()->first();
+        $this->assertCount(3, $offer->itinerary['legs']);
+        $this->assertSame('BZV', $offer->itinerary['legs'][0][0]['from']);
+    }
+
+    public function test_multi_city_dates_must_be_chronological(): void
+    {
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+        app(FlightSearchService::class)->search(null, [
+            'legs' => [
+                ['origin' => 'BZV', 'destination' => 'CDG', 'date' => now()->addDays(30)->toDateString()],
+                ['origin' => 'CDG', 'destination' => 'BZV', 'date' => now()->addDays(20)->toDateString()],
+            ],
+        ]);
+    }
+
+    public function test_direct_only_keeps_only_nonstop_offers(): void
+    {
+        $search = app(FlightSearchService::class)->search(null, [
+            'origin' => 'BZV', 'destination' => 'CDG', 'depart_date' => now()->addDays(20)->toDateString(), 'direct_only' => true,
+        ]);
+
+        foreach ($search->offers as $offer) {
+            $this->assertTrue(FlightSearchService::isDirect($offer->itinerary));
+        }
+    }
 }
