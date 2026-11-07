@@ -18,19 +18,22 @@ class LodgingListingController extends Controller
 {
     public function index(Request $request): Response
     {
-        $filters = $request->only(['city', 'check_in', 'check_out', 'guests', 'price_min', 'price_max']);
+        $filters = $request->only(['city', 'check_in', 'check_out', 'guests', 'price_min', 'price_max', 'type']);
 
         return Inertia::render('Logement/Index', [
             'listings' => LodgingListing::query()
                 ->active()
                 ->when($request->filled('city'), fn ($q) => $q->where('city', 'like', '%'.$request->string('city').'%'))
+                // Villa, hotel, appartement.
+                ->when($request->filled('type'), fn ($q) => $q->where('property_type', $request->string('type')))
                 ->when($request->filled('guests'), fn ($q) => $q->where('max_guests', '>=', $request->integer('guests')))
                 ->when($request->filled('price_min'), fn ($q) => $q->where('price_per_night', '>=', $request->float('price_min')))
                 ->when($request->filled('price_max'), fn ($q) => $q->where('price_per_night', '<=', $request->float('price_max')))
                 ->latest()
                 ->paginate(9)
                 ->withQueryString(),
-            'filters' => $filters,
+            'filters' => (object) $filters,
+            'propertyTypes' => config('catalogue.logement.property_types'),
         ]);
     }
 

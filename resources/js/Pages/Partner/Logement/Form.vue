@@ -10,6 +10,7 @@ const isEdit = computed(() => !!props.listing);
 
 const form = useForm({
     title: props.listing?.title ?? '',
+    property_type: props.listing?.property_type ?? 'appartement',
     description: props.listing?.description ?? '',
     city: props.listing?.city ?? '',
     country: props.listing?.country ?? '',
@@ -67,6 +68,15 @@ const submit = (intent) => {
         <div class="sm:col-span-2">
             <label class="text-sm font-medium text-slate-700">Titre</label>
             <input v-model="form.title" type="text" class="mt-1 w-full rounded border-slate-300" required />
+        </div>
+        <div class="sm:col-span-2">
+            <label class="text-sm font-medium text-slate-700">Type de logement</label>
+            <div class="mt-1 flex flex-wrap gap-2">
+                <label v-for="(label, key) in $page.props.catalogue.logement.property_types" :key="key" class="flex items-center gap-1.5 rounded border border-slate-300 px-3 py-1.5 text-sm">
+                    <input v-model="form.property_type" type="radio" :value="key" /> {{ label }}
+                </label>
+            </div>
+            <p v-if="form.errors.property_type" class="mt-1 text-xs text-red-600">{{ form.errors.property_type }}</p>
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Ville</label>

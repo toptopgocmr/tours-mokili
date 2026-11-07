@@ -27,8 +27,8 @@ class ModerationController extends Controller
     private const MODULES = [
         'logement' => ['model' => LodgingListing::class, 'owner' => 'owner', 'label' => 'Logement'],
         'voiture' => ['model' => Vehicle::class, 'owner' => 'owner', 'label' => 'Voiture'],
-        'divertissement' => ['model' => Event::class, 'owner' => 'organizer', 'label' => 'Divertissement'],
-        'marketplace' => ['model' => Product::class, 'owner' => 'seller', 'label' => 'Marketplace'],
+        'divertissement' => ['model' => Event::class, 'owner' => 'organizer', 'label' => 'Tourisme'],
+        'marketplace' => ['model' => Product::class, 'owner' => 'seller', 'label' => 'Marketplace (annonces)'],
         'fret' => ['model' => FreightOffer::class, 'owner' => 'carrier', 'label' => 'Fret'],
     ];
 

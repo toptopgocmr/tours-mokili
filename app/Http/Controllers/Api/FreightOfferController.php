@@ -29,6 +29,9 @@ class FreightOfferController extends Controller
                 'destination_city', 'like', '%'.$request->string('destination').'%'
             ))
             ->when($request->filled('mode'), fn ($q) => $q->where('mode', $request->string('mode')))
+            ->forScope($request->string('scope')->toString() ?: null)
+            ->when($request->filled('package_type'), fn ($q) => $q->where(fn ($w) => $w
+                ->whereNull('package_types')->orWhereJsonContains('package_types', (string) $request->string('package_type'))))
             ->when($request->filled('service_type'), fn ($q) => $q->where('service_type', $request->string('service_type')))
             ->with('partnerProfile:user_id,company_name,trade_name')
             ->latest()

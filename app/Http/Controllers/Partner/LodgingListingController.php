@@ -81,6 +81,7 @@ class LodgingListingController extends Controller
     {
         return $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'property_type' => ['required', 'in:'.implode(',', array_keys(config('catalogue.logement.property_types')))],
             'description' => ['nullable', 'string'],
             'city' => ['required', 'string', 'max:255'],
             'country' => ['required', 'string', 'size:2'],

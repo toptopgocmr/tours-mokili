@@ -1,8 +1,13 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import PhoneInput from '@/Components/PhoneInput.vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 defineOptions({ layout: MainLayout });
+
+const page = usePage();
+const socialError = computed(() => page.props.errors?.social);
 
 const form = useForm({ name: '', email: '', phone: '', password: '', password_confirmation: '' });
 
@@ -16,7 +21,21 @@ const submit = () => form.post('/register', { onFinish: () => form.reset('passwo
         <h1 class="text-2xl font-bold text-navy-900">Creer un compte</h1>
         <p class="mt-1 text-sm text-navy-700">Rejoignez MOKILI TOUR en quelques secondes.</p>
 
-        <form class="mt-8 space-y-4" @submit.prevent="submit">
+        <p v-if="socialError" class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ socialError }}</p>
+
+        <div class="mt-6 space-y-2">
+            <a href="/auth/google/redirect" class="btn-outline w-full !justify-center">Continuer avec Google</a>
+            <a href="/auth/facebook/redirect" class="btn-outline w-full !justify-center">Continuer avec Facebook</a>
+            <a href="/auth/instagram/redirect" class="btn-outline w-full !justify-center">Continuer avec Instagram</a>
+        </div>
+
+        <div class="my-6 flex items-center gap-3">
+            <div class="h-px flex-1 bg-gray-200" />
+            <span class="text-xs font-medium uppercase text-navy-500">ou</span>
+            <div class="h-px flex-1 bg-gray-200" />
+        </div>
+
+        <form class="space-y-4" @submit.prevent="submit">
             <div>
                 <label class="text-sm font-medium text-navy-900">Nom complet</label>
                 <input v-model="form.name" type="text" class="mt-1 w-full rounded-lg border-gray-300" required />
@@ -29,7 +48,8 @@ const submit = () => form.post('/register', { onFinish: () => form.reset('passwo
             </div>
             <div>
                 <label class="text-sm font-medium text-navy-900">Telephone</label>
-                <input v-model="form.phone" type="tel" class="mt-1 w-full rounded-lg border-gray-300" placeholder="+243..." />
+                <PhoneInput v-model="form.phone" />
+                <p v-if="form.errors.phone" class="mt-1 text-xs text-red-600">{{ form.errors.phone }}</p>
             </div>
             <div>
                 <label class="text-sm font-medium text-navy-900">Mot de passe</label>

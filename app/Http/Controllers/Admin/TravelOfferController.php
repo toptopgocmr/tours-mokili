@@ -35,7 +35,7 @@ class TravelOfferController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Voyage/Form');
+        return Inertia::render('Admin/Voyage/Form', ['transportModes' => TravelOffer::TRANSPORT_MODES, 'tripScopes' => config('catalogue.voyage.trip_scopes'), 'departments' => config('catalogue.departments')]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -50,7 +50,7 @@ class TravelOfferController extends Controller
 
     public function edit(TravelOffer $travelOffer): Response
     {
-        return Inertia::render('Admin/Voyage/Form', ['offer' => $travelOffer]);
+        return Inertia::render('Admin/Voyage/Form', ['offer' => $travelOffer, 'transportModes' => TravelOffer::TRANSPORT_MODES, 'tripScopes' => config('catalogue.voyage.trip_scopes'), 'departments' => config('catalogue.departments')]);
     }
 
     public function update(Request $request, TravelOffer $travelOffer): RedirectResponse
@@ -72,9 +72,19 @@ class TravelOfferController extends Controller
 
     protected function validated(Request $request): array
     {
+        if ($request->input('type') === 'vol') {
+            $request->merge(['transport_mode' => 'avion']);
+        }
+
         return $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', 'in:vol,sejour,circuit'],
+            'transport_mode' => ['nullable', 'required_if:type,circuit', 'in:'.implode(',', array_keys(TravelOffer::TRANSPORT_MODES))],
+            'departure_point' => ['nullable', 'string', 'max:255'],
+            'duration_label' => ['nullable', 'string', 'max:60'],
+            'trip_scope' => ['nullable', 'in:'.implode(',', array_keys(config('catalogue.voyage.trip_scopes')))],
+            'origin_department' => ['nullable', 'in:'.implode(',', config('catalogue.departments'))],
+            'destination_department' => ['nullable', 'in:'.implode(',', config('catalogue.departments'))],
             'description' => ['nullable', 'string'],
             'origin_city' => ['nullable', 'string', 'max:255'],
             'origin_country' => ['nullable', 'string', 'size:2'],

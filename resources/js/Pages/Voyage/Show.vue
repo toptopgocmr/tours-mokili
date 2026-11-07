@@ -1,11 +1,13 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
 import DestinationImage from '@/Components/DestinationImage.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 
 defineOptions({ layout: MainLayout });
 
-const props = defineProps({ offer: { type: Object, required: true } });
+const props = defineProps({
+    offer: { type: Object, required: true },
+});
 
 const form = useForm({ quantity: 1, notes: '' });
 
@@ -27,7 +29,10 @@ const submit = () => form.post(`/voyage/${props.offer.slug}/reserver`);
 
             <dl class="mt-6 grid grid-cols-2 gap-4 text-sm">
                 <div><dt class="text-navy-500">Type</dt><dd class="font-medium capitalize">{{ offer.type }}</dd></div>
-                <div><dt class="text-navy-500">Compagnie</dt><dd class="font-medium">{{ offer.airline }}</dd></div>
+                <div v-if="offer.transport_mode_label && offer.type !== 'vol'"><dt class="text-navy-500">Transport</dt><dd class="font-medium">{{ offer.transport_mode_label }}</dd></div>
+                <div v-if="offer.airline"><dt class="text-navy-500">Compagnie / transporteur</dt><dd class="font-medium">{{ offer.airline }}</dd></div>
+                <div v-if="offer.departure_point"><dt class="text-navy-500">Embarquement</dt><dd class="font-medium">{{ offer.departure_point }}</dd></div>
+                <div v-if="offer.duration_label"><dt class="text-navy-500">Duree</dt><dd class="font-medium">{{ offer.duration_label }}</dd></div>
                 <div><dt class="text-navy-500">Depart</dt><dd class="font-medium">{{ offer.origin_city }}</dd></div>
                 <div><dt class="text-navy-500">Destination</dt><dd class="font-medium">{{ offer.destination_city }}</dd></div>
                 <div><dt class="text-navy-500">Places disponibles</dt><dd class="font-medium">{{ offer.seats_available }}</dd></div>
@@ -40,9 +45,16 @@ const submit = () => form.post(`/voyage/${props.offer.slug}/reserver`);
                 <span class="text-sm font-normal text-navy-500">/ personne</span>
             </p>
 
-            <form class="mt-6 space-y-4" @submit.prevent="submit">
+            <div v-if="offer.type === 'vol'" class="mt-6 space-y-3">
+                <p class="text-sm text-navy-700">
+                    Le billet d'avion se reserve via notre billetterie : choix des horaires, saisie des passagers
+                    (nom comme sur le passeport), prix confirme aupres de la compagnie puis emission du billet electronique.
+                </p>
+                <Link href="/vols" class="btn-gold block w-full text-center">Rechercher un vol</Link>
+            </div>
+            <form v-else class="mt-6 space-y-4" @submit.prevent="submit">
                 <div>
-                    <label class="text-sm font-medium text-navy-900">Nombre de passagers</label>
+                    <label class="text-sm font-medium text-navy-900">Nombre de voyageurs</label>
                     <input v-model.number="form.quantity" type="number" min="1" max="20" class="mt-1 w-full rounded-lg border-gray-300" />
                 </div>
                 <div>

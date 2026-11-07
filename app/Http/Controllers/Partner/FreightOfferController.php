@@ -111,6 +111,9 @@ class FreightOfferController extends Controller
             'price_per_kg' => ['required', 'numeric', 'min:0'],  // 0 autorise pour une offre sur devis
             'currency' => ['required', 'string', 'size:3'],
             'capacity_kg' => ['nullable', 'integer', 'min:0'],
+            'package_types' => ['required', 'array', 'min:1'],
+            'package_types.*' => ['in:'.implode(',', array_keys(config('catalogue.fret.package_types')))],
+            'transit_time' => ['nullable', 'string', 'max:60'],
             'service_type' => ['required', 'in:colis,marchandises,vehicule,conteneur,groupage'],
             'pricing_mode' => ['required', 'in:instant,quote'],
             'price_is_firm' => ['boolean'],

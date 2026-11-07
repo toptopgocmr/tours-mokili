@@ -13,7 +13,7 @@ const props = defineProps({
     modules: { type: Object, default: () => ({}) },
 });
 
-const MODULE_LABELS = { logement: 'Logement', voyage: 'Voyage', voiture: 'Voiture', divertissement: 'Divertissement', marketplace: 'Marketplace' };
+const MODULE_LABELS = { logement: 'Logement', voyage: 'Voyage', voiture: 'Voiture', divertissement: 'Tourisme', marketplace: 'Marketplace' };
 
 const search = ref(props.filters.search ?? '');
 const category = ref(props.filters.category ?? '');
@@ -30,7 +30,7 @@ const remove = (b) => {
     <div class="mb-5 flex items-center justify-between">
         <div>
             <h1 class="text-xl font-bold text-slate-900">Societes partenaires</h1>
-            <p class="text-sm text-slate-500">Chaque societe apparait dans la rubrique de son activite : hotels → Logement, compagnies / bus / canots → Voyage, taxis → Voiture, restaurants / bars → Divertissement, supermarches / e-commerce → Marketplace.</p>
+            <p class="text-sm text-slate-500">Chaque societe apparait dans la rubrique de son activite : hotels → Logement, compagnies / bus / canots → Voyage, taxis → Voiture, restaurants / bars / night clubs / visites → Tourisme, garages → Voiture, supermarches / e-commerce → Marketplace.</p>
         </div>
         <Link href="/admin/partenaires/creer" class="btn-console-primary">+ Nouvelle societe</Link>
     </div>

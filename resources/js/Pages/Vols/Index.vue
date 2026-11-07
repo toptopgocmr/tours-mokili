@@ -1,7 +1,8 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
+import FlightSearchForm from '@/Components/FlightSearchForm.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, reactive } from 'vue';
+import { computed } from 'vue';
 
 defineOptions({ layout: MainLayout });
 
@@ -14,22 +15,6 @@ const props = defineProps({
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
-
-const form = reactive({
-    origin: props.filters.origin ?? '',
-    destination: props.filters.destination ?? '',
-    depart_date: props.filters.depart_date ?? '',
-    return_date: props.filters.return_date ?? '',
-    adults: props.filters.adults ?? 1,
-    children: props.filters.children ?? 0,
-    infants: props.filters.infants ?? 0,
-    cabin: props.filters.cabin ?? 'economy',
-});
-
-const submit = () => {
-    const q = Object.fromEntries(Object.entries(form).filter(([, v]) => v !== '' && v !== null));
-    router.get('/vols', q, { preserveScroll: true });
-};
 
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const fmtDur = (m) => `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`;
@@ -45,32 +30,9 @@ const orderUrl = (o) => (user.value ? `/vols/offres/${o.id}/passagers` : '/login
             <h1 class="text-2xl font-extrabold text-white">Reservez votre vol</h1>
             <p class="mt-1 text-sm text-white/80">Le billet est emis uniquement apres paiement confirme et reservation compagnie.</p>
 
-            <form class="mt-5 grid gap-3 rounded-2xl bg-white p-4 sm:grid-cols-4" @submit.prevent="submit">
-                <datalist id="airports">
-                    <option v-for="a in airports" :key="a.iata" :value="a.iata">{{ a.city }} - {{ a.name }}</option>
-                </datalist>
-                <input v-model="form.origin" list="airports" maxlength="3" placeholder="Depart (ex: BZV)" class="rounded-lg border-gray-200 text-sm uppercase" required />
-                <input v-model="form.destination" list="airports" maxlength="3" placeholder="Arrivee (ex: CDG)" class="rounded-lg border-gray-200 text-sm uppercase" required />
-                <input v-model="form.depart_date" type="date" class="rounded-lg border-gray-200 text-sm" required />
-                <input v-model="form.return_date" type="date" class="rounded-lg border-gray-200 text-sm" placeholder="Retour" />
-                <label class="text-xs text-navy-700">Adultes
-                    <input v-model.number="form.adults" type="number" min="1" max="9" class="mt-1 w-full rounded-lg border-gray-200 text-sm" />
-                </label>
-                <label class="text-xs text-navy-700">Enfants
-                    <input v-model.number="form.children" type="number" min="0" max="8" class="mt-1 w-full rounded-lg border-gray-200 text-sm" />
-                </label>
-                <label class="text-xs text-navy-700">Bebes
-                    <input v-model.number="form.infants" type="number" min="0" max="4" class="mt-1 w-full rounded-lg border-gray-200 text-sm" />
-                </label>
-                <label class="text-xs text-navy-700">Classe
-                    <select v-model="form.cabin" class="mt-1 w-full rounded-lg border-gray-200 text-sm">
-                        <option value="economy">Economique</option>
-                        <option value="premium">Premium</option>
-                        <option value="business">Affaires</option>
-                    </select>
-                </label>
-                <button type="submit" class="btn-gold sm:col-span-4">Rechercher des vols</button>
-            </form>
+            <div class="mt-5 rounded-2xl bg-white p-4 sm:p-5">
+                <FlightSearchForm :airports="airports" :initial="filters" />
+            </div>
 
             <Link v-if="user" href="/vols/mes-vols" class="mt-3 inline-block text-sm font-semibold text-gold-600">Mes vols &rarr;</Link>
         </div>

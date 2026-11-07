@@ -5,7 +5,6 @@ namespace App\Models\Logement;
 use App\Models\Booking;
 use App\Models\Concerns\HasPublishingStatus;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -14,15 +13,20 @@ use Illuminate\Support\Str;
 // Voyage\TravelOffer pattern).
 class LodgingListing extends Model
 {
-    use HasFactory, HasPublishingStatus;
+    use HasPublishingStatus;
 
     protected $fillable = [
-        'owner_id', 'title', 'slug', 'description', 'city', 'country', 'address',
+        'owner_id', 'title', 'property_type', 'slug', 'description', 'city', 'country', 'address',
         'price_per_night', 'currency', 'bedrooms', 'bathrooms', 'max_guests',
         'amenities', 'image', 'is_active', 'status', 'rejection_reason',
     ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'property_type_label'];
+
+    public function getPropertyTypeLabelAttribute(): ?string
+    {
+        return $this->property_type ? (config('catalogue.logement.property_types')[$this->property_type] ?? $this->property_type) : null;
+    }
 
     protected function casts(): array
     {
@@ -52,6 +56,14 @@ class LodgingListing extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? Storage::disk('public')->url($this->image) : null;
+        if (! $this->image) {
+            return null;
+        }
+
+        // Demo listings store a full external photo URL directly; real
+        // partner uploads store a Storage-disk-relative path.
+        return str_starts_with($this->image, 'http')
+            ? $this->image
+            : Storage::disk('public')->url($this->image);
     }
 }

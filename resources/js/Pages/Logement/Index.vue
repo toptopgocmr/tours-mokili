@@ -10,6 +10,7 @@ defineOptions({ layout: MainLayout });
 const props = defineProps({
     listings: { type: Object, required: true },
     filters: { type: Object, default: () => ({}) },
+    propertyTypes: { type: Object, default: () => ({}) },
 });
 
 const search = reactive({
@@ -19,7 +20,14 @@ const search = reactive({
     guests: props.filters.guests ?? '',
     price_min: props.filters.price_min ?? '',
     price_max: props.filters.price_max ?? '',
+    type: props.filters.type ?? '',
 });
+
+const TYPE_ICONS = { villa: '🏡', hotel: '🏨', appartement: '🏢' };
+const setType = (value) => {
+    search.type = value;
+    submitSearch();
+};
 
 const submitSearch = () => {
     const query = Object.fromEntries(Object.entries(search).filter(([, v]) => v !== '' && v !== null));
@@ -33,6 +41,7 @@ const resetFilters = () => {
     search.guests = '';
     search.price_min = '';
     search.price_max = '';
+    search.type = '';
     router.get('/logement', {}, { preserveState: true, preserveScroll: true, replace: true });
 };
 
@@ -48,47 +57,77 @@ const bookingHref = (l) => {
 
 <template>
     <Head title="Logement" />
-    <div class="bg-navy-900 py-8">
-        <div class="mx-auto max-w-7xl px-6">
-            <h1 class="text-2xl font-bold text-white">Trouvez votre logement</h1>
-            <p class="mt-1 text-sm text-navy-200">Appartements, maisons et residences a louer partout au Congo.</p>
 
-            <form
-                class="mt-5 grid gap-3 rounded-2xl bg-white p-4 shadow-lg sm:grid-cols-2 lg:grid-cols-5"
-                @submit.prevent="submitSearch"
-            >
-                <div class="lg:col-span-2">
-                    <label class="text-xs font-semibold uppercase text-navy-500">Destination</label>
-                    <input
-                        v-model="search.city"
-                        type="text"
-                        placeholder="Ville (ex. Brazzaville)"
-                        class="mt-1 w-full rounded-lg border-gray-300 text-sm"
-                    />
-                </div>
-                <div>
-                    <label class="text-xs font-semibold uppercase text-navy-500">Arrivee</label>
-                    <input v-model="search.check_in" type="date" class="mt-1 w-full rounded-lg border-gray-300 text-sm" />
-                </div>
-                <div>
-                    <label class="text-xs font-semibold uppercase text-navy-500">Depart</label>
-                    <input v-model="search.check_out" type="date" class="mt-1 w-full rounded-lg border-gray-300 text-sm" />
-                </div>
-                <div>
-                    <label class="text-xs font-semibold uppercase text-navy-500">Voyageurs</label>
-                    <input
-                        v-model.number="search.guests"
-                        type="number"
-                        min="1"
-                        placeholder="2"
-                        class="mt-1 w-full rounded-lg border-gray-300 text-sm"
-                    />
-                </div>
-                <div class="flex items-end lg:col-span-5">
-                    <button type="submit" class="btn-gold w-full lg:w-auto lg:px-10">Rechercher</button>
-                </div>
-            </form>
+    <!-- Hero + search: style Booking.com (barre de recherche flottante
+         par-dessus la photo, a cheval sur le bord bas). -->
+    <section class="relative h-[260px] overflow-hidden sm:h-[300px]">
+        <img src="/images/hero.jpg" alt="Logement" class="h-full w-full object-cover object-[center_30%]" />
+        <div class="absolute inset-0 bg-gradient-to-b from-navy-900/70 via-navy-900/30 to-navy-900/10" />
+        <div class="relative flex h-full max-w-3xl flex-col justify-start px-6 pt-14 text-left sm:px-10 sm:pt-16">
+            <p class="text-sm font-semibold uppercase tracking-widest text-gold-600">Logement</p>
+            <h1 class="mt-2 text-2xl font-extrabold text-white drop-shadow sm:text-3xl">Trouvez votre logement</h1>
+            <p class="mt-1 max-w-lg text-sm text-white/90 drop-shadow">
+                Villas, hotels et appartements partout au Congo.
+            </p>
         </div>
+    </section>
+
+    <div class="relative z-10 -mt-10 px-6 sm:-mt-12">
+        <div class="mx-auto mb-2 flex max-w-5xl flex-wrap gap-2">
+            <button
+                type="button"
+                class="rounded-full px-4 py-1.5 text-sm font-semibold shadow transition"
+                :class="!search.type ? 'bg-navy-900 text-white' : 'bg-white text-navy-700 hover:bg-navy-50'"
+                @click="setType('')"
+            >
+                Tous
+            </button>
+            <button
+                v-for="(label, key) in propertyTypes"
+                :key="key"
+                type="button"
+                class="rounded-full px-4 py-1.5 text-sm font-semibold shadow transition"
+                :class="search.type === key ? 'bg-navy-900 text-white' : 'bg-white text-navy-700 hover:bg-navy-50'"
+                @click="setType(key)"
+            >
+                {{ TYPE_ICONS[key] }} {{ label }}
+            </button>
+        </div>
+        <form
+            class="mx-auto grid max-w-5xl gap-3 rounded-2xl bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.15)] sm:grid-cols-2 lg:grid-cols-5"
+            @submit.prevent="submitSearch"
+        >
+            <div class="lg:col-span-2">
+                <label class="text-xs font-semibold uppercase text-navy-500">Destination</label>
+                <input
+                    v-model="search.city"
+                    type="text"
+                    placeholder="Ville (ex. Brazzaville)"
+                    class="mt-1 w-full rounded-lg border-gray-300 text-sm"
+                />
+            </div>
+            <div>
+                <label class="text-xs font-semibold uppercase text-navy-500">Arrivee</label>
+                <input v-model="search.check_in" type="date" class="mt-1 w-full rounded-lg border-gray-300 text-sm" />
+            </div>
+            <div>
+                <label class="text-xs font-semibold uppercase text-navy-500">Depart</label>
+                <input v-model="search.check_out" type="date" class="mt-1 w-full rounded-lg border-gray-300 text-sm" />
+            </div>
+            <div>
+                <label class="text-xs font-semibold uppercase text-navy-500">Voyageurs</label>
+                <input
+                    v-model.number="search.guests"
+                    type="number"
+                    min="1"
+                    placeholder="2"
+                    class="mt-1 w-full rounded-lg border-gray-300 text-sm"
+                />
+            </div>
+            <div class="flex items-end lg:col-span-5">
+                <button type="submit" class="btn-gold w-full lg:w-auto lg:px-10">Rechercher</button>
+            </div>
+        </form>
     </div>
 
     <div class="mx-auto max-w-7xl px-6 py-10">
@@ -118,7 +157,7 @@ const bookingHref = (l) => {
                         <ListingImage :src="l.image_url" fallback-class="bg-green-700">{{ l.city }}</ListingImage>
                         <div class="p-4">
                             <p class="font-semibold text-navy-900">{{ l.title }}</p>
-                            <p class="text-xs text-navy-500">{{ l.city }} - jusqu'a {{ l.max_guests }} voyageurs</p>
+                            <p class="text-xs text-navy-500"><span v-if="l.property_type_label" class="font-semibold text-green-700">{{ l.property_type_label }} · </span>{{ l.city }} - jusqu'a {{ l.max_guests }} voyageurs</p>
                             <p class="mt-1 text-sm font-semibold text-gold-600">
                                 {{ Number(l.price_per_night).toLocaleString('fr-FR') }} {{ l.currency }} / nuit
                             </p>

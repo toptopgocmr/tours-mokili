@@ -2,30 +2,39 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\BooksListings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBookingRequest;
-use App\Models\Booking;
 use App\Models\Marketplace\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 /**
- * JSON API for the Flutter app - MARKETPLACE module (follows the
- * Voyage pilot module pattern, see TravelOfferController).
+ * JSON API for the Flutter app - MARKETPLACE module (style Amazon:
+ * grille de produits, fiche detail, commande).
  */
 class ProductController extends Controller
 {
+    use BooksListings;
+
     public function index(Request $request): JsonResponse
     {
         $products = Product::query()
             ->active()
-            ->when($request->filled('q'), fn ($q) => $q->where(
+            ->when($request->string('category')->isNotEmpty(), fn ($q) => $q->where(
+                'category', $request->string('category')
+            ))
+            ->when($request->string('q')->isNotEmpty(), fn ($q) => $q->where(
                 'title', 'like', '%'.$request->string('q').'%'
             ))
-            ->when($request->filled('category'), fn ($q) => $q->where('category', $request->string('category')))
-            ->latest()
+            // Petites annonces : je vends / je recherche, ville, etat, prix.
+            ->whereNull('sold_at')
+            ->when($request->string('listing_type')->isNotEmpty(), fn ($q) => $q->where('listing_type', $request->string('listing_type')))
+            ->when($request->string('city')->isNotEmpty(), fn ($q) => $q->where('city', 'like', '%'.$request->string('city').'%'))
+            ->when($request->string('condition')->isNotEmpty(), fn ($q) => $q->where('condition', $request->string('condition')))
+            ->when($request->filled('price_min'), fn ($q) => $q->where('price', '>=', $request->float('price_min')))
+            ->when($request->filled('price_max'), fn ($q) => $q->where('price', '<=', $request->float('price_max')))
+            ->orderByDesc('created_at')
             ->paginate(12);
 
         return response()->json($products);
@@ -33,30 +42,30 @@ class ProductController extends Controller
 
     public function show(Product $product): JsonResponse
     {
-        abort_unless($product->is_active && $product->status === 'published', 404);
-
         return response()->json($product);
     }
 
     public function book(StoreBookingRequest $request, Product $product): JsonResponse
     {
-        $booking = DB::transaction(function () use ($request, $product) {
-            $quantity = $request->integer('quantity');
-            $unitPrice = $product->price;
+        abort_unless($product->is_active && $product->status === 'published', 404);
 
-            return Booking::create([
-                'user_id' => Auth::id(),
-                'bookable_type' => Product::class,
-                'bookable_id' => $product->id,
-                'quantity' => $quantity,
-                'unit_price' => $unitPrice,
-                'total_amount' => $unitPrice * $quantity,
-                'currency' => $product->currency,
-                'status' => 'awaiting_payment',
-                'meta' => ['category' => $product->category],
-                'notes' => $request->string('notes'),
-            ]);
-        });
+        $quantity = max(1, (int) $request->integer('quantity', 1));
+
+        if ($product->stock < $quantity) {
+            return response()->json([
+                'message' => 'Stock insuffisant pour la quantite demandee.',
+            ], 422);
+        }
+
+        $booking = $this->createBooking(
+            $request,
+            $product,
+            Product::class,
+            (float) $product->price,
+            $product->currency,
+        );
+
+        $product->decrement('stock', $quantity);
 
         return response()->json($booking, 201);
     }

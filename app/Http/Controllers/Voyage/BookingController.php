@@ -17,6 +17,12 @@ class BookingController extends Controller
 {
     public function store(StoreBookingRequest $request, TravelOffer $travelOffer)
     {
+        // Les billets d'avion passent par la billetterie (passagers, prix
+        // revalide, PNR, emission) : pas de reservation "panier" pour un vol.
+        if ($travelOffer->type === 'vol') {
+            return redirect('/voyage?type=vol')->with('error', 'Recherchez votre vol pour reserver votre billet.');
+        }
+
         $booking = DB::transaction(function () use ($request, $travelOffer) {
             $quantity = $request->integer('quantity');
             $unitPrice = $travelOffer->discounted_price;

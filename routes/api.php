@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AttractionParkController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\CatalogueController;
 use App\Http\Controllers\Api\BusinessController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\FlightController;
@@ -50,6 +51,10 @@ Route::post('/auth/phone/send-code', [PhoneOtpController::class, 'send']);
 Route::post('/auth/phone/verify-code', [PhoneOtpController::class, 'verify']);
 
 // VOYAGE catalogue is public (browse without login, like the web site).
+// Rubriques et filtres (Tourisme, Logement, Voiture, Marketplace, Fret, circuits).
+Route::get('/catalogue', [CatalogueController::class, 'index']);
+Route::get('/tourisme', [CatalogueController::class, 'tourisme']);
+Route::get('/voyage/transport-modes', [TravelOfferController::class, 'modes']);
 Route::get('/voyage/offers', [TravelOfferController::class, 'index']);
 Route::get('/voyage/offers/{travelOffer:slug}', [TravelOfferController::class, 'show']);
 
@@ -58,7 +63,7 @@ Route::get('/voyage/offers/{travelOffer:slug}', [TravelOfferController::class, '
 // routes/web.php and app/Http/Controllers/Api/{LodgingListingController,
 // VehicleController,EventController,ProductController,FreightOfferController}.
 Route::get('/logement/listings', [LodgingListingController::class, 'index']);
-Route::get('/logement/listings/{lodgingListing:slug}', [LodgingListingController::class, 'show']);
+Route::get('/logement/listings/{listing:slug}', [LodgingListingController::class, 'show']);
 
 Route::get('/voiture/vehicles', [VehicleController::class, 'index']);
 Route::get('/voiture/vehicles/{vehicle:slug}', [VehicleController::class, 'show']);
@@ -124,7 +129,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/{booking}/pay', [PaymentController::class, 'pay']);
     Route::get('/payments/{payment}', [PaymentController::class, 'show']);
 
-    Route::post('/logement/listings/{lodgingListing:slug}/book', [LodgingListingController::class, 'book']);
+    Route::post('/logement/listings/{listing:slug}/book', [LodgingListingController::class, 'book']);
     Route::post('/voiture/vehicles/{vehicle:slug}/book', [VehicleController::class, 'book']);
     Route::post('/divertissement/events/{event:slug}/book', [EventController::class, 'book']);
     Route::post('/marketplace/products/{product:slug}/book', [ProductController::class, 'book']);

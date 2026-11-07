@@ -11,6 +11,8 @@ const props = defineProps({
     module: { type: String, required: true },
     title: { type: String, default: 'Nos partenaires' },
     subtitle: { type: String, default: '' },
+    // Filtre initial (ex. "transport_routier" quand on choisit les circuits en bus).
+    category: { type: String, default: '' },
 });
 
 const items = ref([]);
@@ -20,6 +22,7 @@ onMounted(async () => {
     try {
         const { data } = await axios.get('/api/partners', { params: { module: props.module } });
         items.value = data.data ?? [];
+        if (props.category && items.value.some((b) => b.category === props.category)) active.value = props.category;
     } catch {
         items.value = [];
     }

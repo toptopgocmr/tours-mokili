@@ -35,6 +35,7 @@ const remove = (offer) => {
             <thead>
                 <tr>
                     <th>Titre</th>
+                    <th>Type</th>
                     <th>Destination</th>
                     <th>Prix</th>
                     <th>Statut</th>
@@ -44,6 +45,7 @@ const remove = (offer) => {
             <tbody>
                 <tr v-for="o in offers.data" :key="o.id">
                     <td class="font-medium text-slate-900">{{ o.title }}</td>
+                    <td class="capitalize">{{ o.type }}<span v-if="o.type === 'circuit' && o.transport_mode_label" class="text-slate-500"> · {{ o.transport_mode_label }}</span></td>
                     <td>{{ o.destination_city }}</td>
                     <td>{{ Number(o.price).toLocaleString('fr-FR') }} {{ o.currency }}</td>
                     <td>
@@ -54,7 +56,7 @@ const remove = (offer) => {
                         <button class="font-semibold text-red-600 hover:underline" @click="remove(o)">Supprimer</button>
                     </td>
                 </tr>
-                <tr v-if="!offers.data.length"><td colspan="5" class="py-6 text-center text-slate-400">Aucune offre.</td></tr>
+                <tr v-if="!offers.data.length"><td colspan="6" class="py-6 text-center text-slate-400">Aucune offre.</td></tr>
             </tbody>
         </table>
     </div>

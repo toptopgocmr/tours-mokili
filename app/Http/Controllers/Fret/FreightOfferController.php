@@ -15,19 +15,25 @@ class FreightOfferController extends Controller
 {
     public function index(Request $request): Response
     {
+        $c = config('catalogue.fret');
+        $mode = isset($c['modes'][$request->string('mode')->toString()]) ? $request->string('mode')->toString() : null;
+        $scope = isset($c['scopes'][$request->string('scope')->toString()]) ? $request->string('scope')->toString() : null;
+        $package = isset($c['package_types'][$request->string('colis')->toString()]) ? $request->string('colis')->toString() : null;
+
         $offers = FreightOffer::query()->active()
-            ->when($request->filled('mode'), fn ($q) => $q->where('mode', $request->string('mode')))
+            ->forScope($scope)
+            ->when($mode, fn ($q) => $q->where('mode', $mode))
+            ->when($package, fn ($q) => $q->where(fn ($w) => $w->whereNull('package_types')->orWhereJsonContains('package_types', $package)))
             ->when($request->filled('origin'), fn ($q) => $q->where('origin_city', 'like', '%'.$request->string('origin').'%'))
             ->when($request->filled('destination'), fn ($q) => $q->where('destination_city', 'like', '%'.$request->string('destination').'%'))
             ->when($request->filled('service_type'), fn ($q) => $q->where('service_type', $request->string('service_type')))
-            ->when($request->input('scope') === 'national', fn ($q) => $q->whereColumn('origin_country', 'destination_country'))
-            ->when($request->input('scope') === 'international', fn ($q) => $q->whereColumn('origin_country', '!=', 'destination_country'))
             ->with('partnerProfile:user_id,company_name,trade_name')
             ->latest()->paginate(9)->withQueryString();
 
         return Inertia::render('Fret/Index', [
             'offers' => $offers,
-            'filters' => $request->only(['mode', 'scope', 'origin', 'destination', 'service_type']),
+            'filters' => (object) array_filter(['mode' => $mode, 'scope' => $scope, 'colis' => $package] + $request->only('origin', 'destination')),
+            'packageTypes' => $c['package_types'],
         ]);
     }
 

@@ -119,6 +119,7 @@ class FreightOrderService
             'mode' => $offer->mode, 'origin_city' => $offer->origin_city, 'origin_country' => $offer->origin_country,
             'destination_city' => $offer->destination_city, 'destination_country' => $offer->destination_country,
             'weight_kg' => $measures['weight_kg'] ?? 1, 'dimensions' => $measures['dimensions'] ?? null,
+            'package_type' => $measures['package_type'] ?? null, 'package_description' => $measures['package_description'] ?? null,
         ]));
     }
 

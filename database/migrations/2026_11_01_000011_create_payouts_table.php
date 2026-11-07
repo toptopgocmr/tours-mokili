@@ -11,14 +11,23 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Deploiement precedent interrompu (MySQL ne fait pas de rollback des
+        // CREATE TABLE) : table presente sans trace dans `migrations`.
+        if (Schema::hasTable('payouts')) {
+            if (\Illuminate\Support\Facades\DB::table('payouts')->exists()) {
+                return; // deja creee et utilisee : on la garde
+            }
+            Schema::drop('payouts');
+        }
+
         Schema::create('payouts', function (Blueprint $table) {
             $table->id();
             $table->uuid('reference')->unique();
             $table->string('gateway', 32);
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();      // beneficiaire (si compte MOKILI)
-            $table->foreignId('booking_id')->nullable()->constrained()->nullOnDelete();   // ex. remboursement
-            $table->foreignId('payment_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->index();      // beneficiaire (si compte MOKILI)
+            $table->foreignId('booking_id')->nullable()->index();   // ex. remboursement
+            $table->foreignId('payment_id')->nullable()->index();
+            $table->foreignId('created_by')->nullable()->index();
             $table->string('beneficiary_name');
             $table->string('phone', 32);
             $table->string('country_code', 2);

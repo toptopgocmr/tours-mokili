@@ -2,65 +2,55 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Concerns\BooksListings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBookingRequest;
-use App\Models\Booking;
 use App\Models\Logement\LodgingListing;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 /**
- * JSON API for the Flutter app - LOGEMENT module (follows the Voyage
- * pilot module pattern, see TravelOfferController).
+ * JSON API for the Flutter app - LOGEMENT module (style Booking.com:
+ * recherche par ville, liste avec prix/nuit, fiche detail, reservation).
  */
 class LodgingListingController extends Controller
 {
+    use BooksListings;
+
     public function index(Request $request): JsonResponse
     {
         $listings = LodgingListing::query()
             ->active()
-            ->when($request->filled('city'), fn ($q) => $q->where(
+            ->when($request->string('city')->isNotEmpty(), fn ($q) => $q->where(
                 'city', 'like', '%'.$request->string('city').'%'
             ))
-            ->when($request->filled('guests'), fn ($q) => $q->where(
+            ->when($request->integer('guests') > 0, fn ($q) => $q->where(
                 'max_guests', '>=', $request->integer('guests')
             ))
-            ->latest()
+            // Villa, hotel, appartement.
+            ->when($request->string('property_type')->isNotEmpty(), fn ($q) => $q->where('property_type', $request->string('property_type')))
+            ->orderByDesc('created_at')
             ->paginate(10);
 
         return response()->json($listings);
     }
 
-    public function show(LodgingListing $lodgingListing): JsonResponse
+    public function show(LodgingListing $listing): JsonResponse
     {
-        abort_unless($lodgingListing->is_active && $lodgingListing->status === 'published', 404);
-
-        return response()->json($lodgingListing);
+        return response()->json($listing);
     }
 
-    public function book(StoreBookingRequest $request, LodgingListing $lodgingListing): JsonResponse
+    public function book(StoreBookingRequest $request, LodgingListing $listing): JsonResponse
     {
-        $booking = DB::transaction(function () use ($request, $lodgingListing) {
-            $nights = $request->integer('quantity');
-            $unitPrice = $lodgingListing->price_per_night;
+        abort_unless($listing->is_active && $listing->status === 'published', 404);
 
-            return Booking::create([
-                'user_id' => Auth::id(),
-                'bookable_type' => LodgingListing::class,
-                'bookable_id' => $lodgingListing->id,
-                'quantity' => $nights,
-                'unit_price' => $unitPrice,
-                'total_amount' => $unitPrice * $nights,
-                'currency' => $lodgingListing->currency,
-                'starts_at' => $request->input('starts_at'),
-                'ends_at' => $request->input('ends_at'),
-                'status' => 'awaiting_payment',
-                'meta' => ['city' => $lodgingListing->city],
-                'notes' => $request->string('notes'),
-            ]);
-        });
+        $booking = $this->createBooking(
+            $request,
+            $listing,
+            LodgingListing::class,
+            (float) $listing->price_per_night,
+            $listing->currency,
+        );
 
         return response()->json($booking, 201);
     }

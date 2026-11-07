@@ -2,7 +2,7 @@
 import MainLayout from '@/Layouts/MainLayout.vue';
 import OperatorBadge from '@/Components/OperatorBadge.vue';
 import { bankCards, detectCardBrand } from '@/data/cemac';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 
@@ -65,6 +65,8 @@ const OPERATOR_STYLE = {
 };
 const asOperator = (n) => ({ key: n.key, name: n.label, ...(OPERATOR_STYLE[n.key] ?? { color: '#0B2A5B', text: '#FFFFFF', logo: null }) });
 
+// Billetterie aerienne : paiement confirme ne veut pas dire billet emis.
+const isFlight = computed(() => props.booking.bookable_type?.endsWith('FlightOrder') && !!props.booking.bookable);
 const isPaid = computed(() => ['confirmed', 'completed'].includes(props.booking.status) || props.lastPayment?.status === 'paid');
 const isPending = computed(() => ['pending', 'processing'].includes(props.lastPayment?.status) && !isPaid.value);
 
@@ -113,12 +115,17 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
             <div class="mt-4 space-y-2 rounded-2xl border p-5 text-sm">
                 <p><span class="text-navy-500">Reference :</span> <span class="font-semibold">{{ booking.reference }}</span></p>
                 <p><span class="text-navy-500">Statut :</span> <span class="font-semibold capitalize">{{ booking.status }}</span></p>
+                <template v-if="isFlight">
+                    <p><span class="text-navy-500">Dossier billetterie :</span> <span class="font-semibold">{{ booking.bookable.reference }}</span></p>
+                    <p><span class="text-navy-500">Statut du dossier :</span> {{ booking.bookable.status_label || booking.bookable.status }}</p>
+                    <p class="rounded-lg bg-navy-50/60 p-2 text-xs text-navy-700">Le prix a ete confirme aupres de la compagnie. Apres le paiement, la reservation puis l'emission du billet sont suivies dans votre dossier.</p>
+                </template>
                 <p v-if="booking.meta?.park"><span class="text-navy-500">Parc :</span> {{ booking.meta.park }} ({{ booking.meta.city }})</p>
                 <p v-if="booking.meta?.park && booking.starts_at"><span class="text-navy-500">Visite le :</span> {{ new Date(booking.starts_at).toLocaleDateString('fr-FR') }}</p>
                 <p v-if="booking.meta?.adults !== undefined">
                     <span class="text-navy-500">Billets :</span> {{ booking.meta.adults }} adulte(s), {{ booking.meta.children ?? 0 }} enfant(s)
                 </p>
-                <p v-else><span class="text-navy-500">Quantite :</span> {{ booking.quantity }}</p>
+                <p v-else-if="!isFlight"><span class="text-navy-500">Quantite :</span> {{ booking.quantity }}</p>
                 <p class="text-lg font-bold text-gold-600">
                     Total : {{ Number(booking.total_amount).toLocaleString('fr-FR') }} {{ booking.currency }}
                 </p>
@@ -150,7 +157,12 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
             <template v-if="method === 'mobile_money'">
                 <div v-if="isPaid" class="rounded-2xl border border-green-200 bg-green-50 p-5 text-green-800">
                     <p class="font-semibold">Paiement recu ✓</p>
-                    <p class="mt-1 text-sm">Votre reservation {{ booking.reference }} est confirmee. Merci d'avoir choisi MOKILI TOUR !</p>
+                    <p v-if="isFlight" class="mt-1 text-sm">
+                        Votre paiement est confirme. La reservation de votre vol et l'emission du billet sont en cours :
+                        votre billet electronique vous sera envoye des son emission.
+                        <Link :href="`/vols/dossier/${booking.bookable.reference}`" class="font-semibold underline">Suivre mon dossier</Link>
+                    </p>
+                    <p v-else class="mt-1 text-sm">Votre reservation {{ booking.reference }} est confirmee. Merci d'avoir choisi MOKILI TOUR !</p>
                 </div>
 
                 <div v-else-if="isPending" class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">

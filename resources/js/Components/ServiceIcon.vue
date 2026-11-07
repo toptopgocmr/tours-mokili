@@ -69,23 +69,32 @@ const props = defineProps({
         <circle cx="16.5" cy="16.3" r="1.6" :fill="accent" stroke="currentColor" stroke-width="1" />
     </svg>
 
-    <!-- Divertissement: flat horizontal ticket, matching Material's "confirmation_number" -->
+    <!-- Divertissement: ticket tilted like a boarding pass (matches the
+         diagonal "billet" look in the reference mockup), same shape as
+         Material's "confirmation_number" underneath the rotation. -->
     <svg v-else-if="slug === 'divertissement'" :class="props.class" viewBox="0 0 24 24">
-        <path
-            fill="currentColor"
-            d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-3a2 2 0 0 0 0-4Z"
-        />
-        <g :fill="accent">
-            <rect x="11.2" y="7" width="1.6" height="1.8" />
-            <rect x="11.2" y="10.6" width="1.6" height="1.8" />
-            <rect x="11.2" y="14.2" width="1.6" height="1.8" />
+        <g transform="rotate(45 12 12)">
+            <path
+                fill="currentColor"
+                d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-3a2 2 0 0 0 0-4Z"
+            />
+            <g :fill="accent">
+                <rect x="11.2" y="7" width="1.6" height="1.8" />
+                <rect x="11.2" y="10.6" width="1.6" height="1.8" />
+                <rect x="11.2" y="14.2" width="1.6" height="1.8" />
+            </g>
         </g>
     </svg>
 
-    <!-- Marketplace: shopping bag, matching Material's "shopping_bag" -->
+    <!-- Marketplace: shopping bag - the EXACT Material Icons "shopping_bag"
+         glyph (previous version was a hand-drawn trapezoid + thin handle
+         stroke that read as a shapeless blob at tile size; this is the
+         real, well-tested icon path so it's unmistakably a bag). -->
     <svg v-else-if="slug === 'marketplace'" :class="props.class" viewBox="0 0 24 24">
-        <path fill="currentColor" d="M6 8h12l-1.2 12.3a1 1 0 0 1-1 .7H8.2a1 1 0 0 1-1-.7L6 8Z" />
-        <path fill="none" :stroke="accent" stroke-width="1.6" d="M9 8V6a3 3 0 0 1 6 0v2" />
+        <path
+            fill="currentColor"
+            d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z"
+        />
     </svg>
 
     <!-- Fret: delivery truck, matching Material's "local_shipping" -->

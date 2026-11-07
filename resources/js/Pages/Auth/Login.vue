@@ -1,8 +1,12 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 defineOptions({ layout: MainLayout });
+
+const page = usePage();
+const socialError = computed(() => page.props.errors?.social);
 
 const form = useForm({ email: '', password: '', remember: false });
 
@@ -16,7 +20,21 @@ const submit = () => form.post('/login', { onFinish: () => form.reset('password'
         <h1 class="text-2xl font-bold text-navy-900">Connexion</h1>
         <p class="mt-1 text-sm text-navy-700">Accedez a votre compte MOKILI TOUR.</p>
 
-        <form class="mt-8 space-y-4" @submit.prevent="submit">
+        <p v-if="socialError" class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ socialError }}</p>
+
+        <div class="mt-6 space-y-2">
+            <a href="/auth/google/redirect" class="btn-outline w-full !justify-center">Continuer avec Google</a>
+            <a href="/auth/facebook/redirect" class="btn-outline w-full !justify-center">Continuer avec Facebook</a>
+            <a href="/auth/instagram/redirect" class="btn-outline w-full !justify-center">Continuer avec Instagram</a>
+        </div>
+
+        <div class="my-6 flex items-center gap-3">
+            <div class="h-px flex-1 bg-gray-200" />
+            <span class="text-xs font-medium uppercase text-navy-500">ou</span>
+            <div class="h-px flex-1 bg-gray-200" />
+        </div>
+
+        <form class="space-y-4" @submit.prevent="submit">
             <div>
                 <label class="text-sm font-medium text-navy-900">Email</label>
                 <input v-model="form.email" type="email" class="mt-1 w-full rounded-lg border-gray-300" required />

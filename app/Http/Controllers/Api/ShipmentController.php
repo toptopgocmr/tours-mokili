@@ -7,23 +7,18 @@ use App\Models\Fret\Shipment;
 use Illuminate\Http\JsonResponse;
 
 /**
- * JSON API for the Flutter app - public, no-login tracking lookup by
- * tracking_code (DHL-style), mirrors the web
- * Fret\ShipmentController::trackPublic.
+ * "Suivre un colis" (style DHL) - lookup by tracking code, public
+ * (no login needed, matching how DHL/UPS tracking pages work).
  */
 class ShipmentController extends Controller
 {
     public function track(string $code): JsonResponse
     {
-        $shipment = Shipment::query()
-            ->where('tracking_code', strtoupper(trim($code)))
-            ->first([
-                'id', 'tracking_code', 'origin_city', 'origin_country',
-                'destination_city', 'destination_country', 'mode', 'status',
-                'weight_kg', 'picked_up_at', 'delivered_at', 'created_at',
-            ]);
+        $shipment = Shipment::where('tracking_code', $code)->first();
 
-        abort_unless($shipment, 404, 'Aucun envoi trouve pour ce code de suivi.');
+        if (! $shipment) {
+            return response()->json(['message' => 'Aucun colis trouve pour ce numero de suivi.'], 404);
+        }
 
         return response()->json($shipment);
     }

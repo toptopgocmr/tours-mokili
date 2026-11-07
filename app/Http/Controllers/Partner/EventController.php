@@ -81,7 +81,7 @@ class EventController extends Controller
     {
         return $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'category' => ['nullable', 'string', 'max:255'],
+            'category' => ['required', 'in:'.implode(',', array_keys(config('catalogue.tourisme.event_categories')))],
             'description' => ['nullable', 'string'],
             'venue' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],

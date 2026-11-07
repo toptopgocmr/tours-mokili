@@ -16,7 +16,7 @@ const submit = () => form.post('/partner/login', { onFinish: () => form.reset('p
                 <LogoMark size="h-16" />
             </div>
             <h1 class="mt-6 text-center text-lg font-bold text-navy-900">Espace partenaire</h1>
-            <p class="mt-1 text-center text-xs text-navy-500">Gerez vos annonces Logement, Voiture, Divertissement, Marketplace.</p>
+            <p class="mt-1 text-center text-xs text-navy-500">Gerez vos annonces Logement, Voiture, Tourisme, Marketplace, Fret.</p>
 
             <form class="mt-6 space-y-4" @submit.prevent="submit">
                 <div>

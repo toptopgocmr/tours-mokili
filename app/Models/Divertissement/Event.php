@@ -5,7 +5,6 @@ namespace App\Models\Divertissement;
 use App\Models\Booking;
 use App\Models\Concerns\HasPublishingStatus;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -13,7 +12,7 @@ use Illuminate\Support\Str;
 // DIVERTISSEMENT module (skeleton) - billetterie evenements.
 class Event extends Model
 {
-    use HasFactory, HasPublishingStatus;
+    use HasPublishingStatus;
 
     protected $fillable = [
         'organizer_id', 'title', 'slug', 'category', 'description', 'venue',
@@ -52,6 +51,14 @@ class Event extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? Storage::disk('public')->url($this->image) : null;
+        if (! $this->image) {
+            return null;
+        }
+
+        // Demo listings store a full external photo URL directly; real
+        // partner uploads store a Storage-disk-relative path.
+        return str_starts_with($this->image, 'http')
+            ? $this->image
+            : Storage::disk('public')->url($this->image);
     }
 }

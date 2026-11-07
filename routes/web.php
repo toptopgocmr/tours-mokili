@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\BusinessController as AdminBusinessController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\FlightOrderController as AdminFlightOrderController;
+use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Admin\GatewayController as AdminGatewayController;
 use App\Http\Controllers\Admin\ModerationController as AdminModerationController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
@@ -116,14 +117,22 @@ Route::prefix('voiture')->name('voiture.')->group(function () {
 
 Route::prefix('divertissement')->name('divertissement.')->group(function () {
     Route::get('/', [EventController::class, 'index'])->name('index');
+
+    // Parcs d'attractions, parcs aquatiques, zoos, sites naturels du Congo
+    // (anciennement rubrique "Loisirs") - avant le joker {event:slug}.
+    Route::get('/parcs/{attractionPark:slug}', [AttractionParkController::class, 'show'])->name('parks.show');
+    Route::middleware('auth')->post('/parcs/{attractionPark:slug}/reserver', [AttractionParkController::class, 'book'])->name('parks.book');
+
     Route::get('/{event:slug}', [EventController::class, 'show'])->name('show');
 });
 
-// --- LOISIRS : parcs d'attractions, parcs aquatiques, zoos, sites naturels du Congo ---
-Route::prefix('loisirs')->name('loisirs.')->group(function () {
-    Route::get('/', [AttractionParkController::class, 'index'])->name('index');
-    Route::get('/{attractionPark:slug}', [AttractionParkController::class, 'show'])->name('show');
+// TOURISME = rubrique Divertissement renommee (adresses /divertissement conservees).
+Route::get('/tourisme', fn (\Illuminate\Http\Request $r) => redirect('/divertissement'.($r->getQueryString() ? '?'.$r->getQueryString() : '')))->name('tourisme');
 
+// Anciennes adresses "Loisirs" : redirigees vers Tourisme > Parcs.
+Route::prefix('loisirs')->name('loisirs.')->group(function () {
+    Route::get('/', fn () => redirect('/divertissement?tab=parcs', 301))->name('index');
+    Route::get('/{slug}', fn (string $slug) => redirect('/divertissement/parcs/'.$slug, 301))->name('show');
     Route::middleware('auth')->post('/{attractionPark:slug}/reserver', [AttractionParkController::class, 'book'])->name('book');
 });
 
@@ -133,6 +142,18 @@ Route::get('/partenaires/{business:slug}', [BusinessController::class, 'show'])-
 
 Route::prefix('marketplace')->name('marketplace.')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('index');
+
+    // Avant le joker {product:slug}.
+    Route::middleware('auth')->group(function () {
+        Route::get('/deposer', [ProductController::class, 'create'])->name('create');
+        Route::post('/deposer', [ProductController::class, 'store'])->middleware('throttle:10,1')->name('store');
+        Route::get('/mes-annonces', [ProductController::class, 'mine'])->name('mine');
+        Route::get('/annonce/{product}/modifier', [ProductController::class, 'edit'])->name('edit');
+        Route::put('/annonce/{product}', [ProductController::class, 'update'])->name('update');
+        Route::post('/annonce/{product}/vendu', [ProductController::class, 'markSold'])->name('sold');
+        Route::delete('/annonce/{product}', [ProductController::class, 'destroy'])->name('destroy');
+    });
+
     Route::get('/{product:slug}', [ProductController::class, 'show'])->name('show');
 });
 
@@ -335,6 +356,16 @@ Route::middleware('guest')->group(function () {
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    // "Continuer avec Google / Facebook / Instagram" - session login,
+    // see SocialLoginController docblock (web counterpart of
+    // Api\SocialAuthController, which the mobile app uses instead).
+    Route::get('/auth/{provider}/redirect', [SocialLoginController::class, 'redirect'])
+        ->whereIn('provider', ['google', 'facebook', 'instagram'])
+        ->name('social.redirect');
+    Route::get('/auth/{provider}/callback', [SocialLoginController::class, 'callback'])
+        ->whereIn('provider', ['google', 'facebook', 'instagram'])
+        ->name('social.callback');
 });
 
 Route::middleware('auth')->post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
