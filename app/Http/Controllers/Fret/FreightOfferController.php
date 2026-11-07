@@ -20,12 +20,14 @@ class FreightOfferController extends Controller
             ->when($request->filled('origin'), fn ($q) => $q->where('origin_city', 'like', '%'.$request->string('origin').'%'))
             ->when($request->filled('destination'), fn ($q) => $q->where('destination_city', 'like', '%'.$request->string('destination').'%'))
             ->when($request->filled('service_type'), fn ($q) => $q->where('service_type', $request->string('service_type')))
+            ->when($request->input('scope') === 'national', fn ($q) => $q->whereColumn('origin_country', 'destination_country'))
+            ->when($request->input('scope') === 'international', fn ($q) => $q->whereColumn('origin_country', '!=', 'destination_country'))
             ->with('partnerProfile:user_id,company_name,trade_name')
             ->latest()->paginate(9)->withQueryString();
 
         return Inertia::render('Fret/Index', [
             'offers' => $offers,
-            'filters' => $request->only(['mode', 'origin', 'destination', 'service_type']),
+            'filters' => $request->only(['mode', 'scope', 'origin', 'destination', 'service_type']),
         ]);
     }
 
