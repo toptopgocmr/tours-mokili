@@ -2,7 +2,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, reactive } from 'vue';
-import { dayLabel, hhmm, money, PAX_LABELS, STATE_LABELS, STATE_STYLES, STATUS_STYLES } from '@/utils/flights';
+import { dayLabel, hhmm, money, PAX_LABELS, sliceLabel, STATE_LABELS, STATE_STYLES, STATUS_STYLES } from '@/utils/flights';
 
 defineOptions({ layout: AdminLayout });
 
@@ -77,7 +77,7 @@ const showReconcile = computed(() => ['BOOKING_PENDING', 'TICKETING_PENDING', 'F
                 <h2 class="mb-2 font-semibold">Itineraire</h2>
                 <template v-for="(s, i) in d.itinerary ?? []" :key="i">
                     <p v-for="seg in s.segments" :key="seg.departure_at + seg.flight_number" class="text-sm">
-                        <strong>{{ i === 0 ? 'Aller' : 'Retour' }}</strong> · {{ seg.airline_name }} {{ seg.flight_number }} · {{ seg.origin }} {{ dayLabel(seg.departure_at) }} {{ hhmm(seg.departure_at) }} → {{ seg.destination }} {{ hhmm(seg.arrival_at) }}
+                        <strong>{{ sliceLabel(d.itinerary, i) }}</strong> · {{ seg.airline_name }} {{ seg.flight_number }} · {{ seg.origin }} {{ dayLabel(seg.departure_at) }} {{ hhmm(seg.departure_at) }} → {{ seg.destination }} {{ hhmm(seg.arrival_at) }}
                     </p>
                 </template>
                 <p class="mt-2 text-xs text-slate-500">{{ d.fare_rules?.cabin }} · {{ d.fare_rules?.baggage }} · {{ d.fare_rules?.refundable ? 'remboursable' : 'non remboursable' }}</p>

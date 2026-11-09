@@ -132,6 +132,14 @@ class FlightBooking extends Model
 
     public function getTitleAttribute(): string
     {
+        if ($this->trip_type === 'multicity' && is_array($this->itinerary) && $this->itinerary) {
+            $itinerary = array_values($this->itinerary);
+            $stops = array_map(fn ($s) => $s['origin'] ?? '?', $itinerary);
+            $stops[] = $itinerary[count($itinerary) - 1]['destination'] ?? '?';
+
+            return 'Vol '.implode(' -> ', $stops);
+        }
+
         $arrow = $this->trip_type === 'roundtrip' ? ' <-> ' : ' -> ';
 
         return 'Vol '.$this->origin.$arrow.$this->destination;

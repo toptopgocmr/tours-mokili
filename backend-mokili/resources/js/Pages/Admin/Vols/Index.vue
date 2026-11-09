@@ -54,7 +54,7 @@ const quick = (status, attention = '') => { f.status = status; f.attention = att
                 <tr v-for="d in dossiers.data" :key="d.id" :class="d.needs_attention && 'bg-red-50/60'">
                     <td class="font-mono text-xs">{{ d.reference }}<span v-if="d.pnr" class="block text-slate-500">PNR {{ d.pnr }}</span></td>
                     <td>{{ d.contact_name ?? d.user?.name }}<span class="block text-xs text-slate-500">{{ d.contact_phone }}</span></td>
-                    <td>{{ d.origin }} {{ d.trip_type === 'roundtrip' ? '⇄' : '→' }} {{ d.destination }} <span class="text-xs text-slate-500">({{ d.passenger_count }} pax)</span></td>
+                    <td>{{ d.origin }} {{ d.trip_type === 'roundtrip' ? '⇄' : d.trip_type === 'multicity' ? '→ … →' : '→' }} {{ d.destination }} <span class="text-xs text-slate-500">({{ d.passenger_count }} pax)</span></td>
                     <td>{{ d.depart_date ? new Date(d.depart_date).toLocaleDateString('fr-FR') : '' }}</td>
                     <td>{{ money(d.total_amount, d.currency) }}</td>
                     <td>

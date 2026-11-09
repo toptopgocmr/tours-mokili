@@ -35,6 +35,24 @@ export const dayOffset = (dep, arr) => {
     return Math.round((b - a) / 86400000);
 };
 
+// Libelle d'un trajet : "Aller" / "Retour" pour un aller-retour,
+// "Vol 1", "Vol 2"... pour un voyage multi-destinations.
+export const sliceLabel = (slices, i) => {
+    const list = slices ?? [];
+    if (list.length === 1) return 'Aller';
+    const isReturn =
+        list.length === 2 && list[1]?.origin === list[0]?.destination && list[1]?.destination === list[0]?.origin;
+    if (isReturn) return i === 0 ? 'Aller' : 'Retour';
+    return `Vol ${i + 1}`;
+};
+
+// Parcours complet : "Brazzaville → Paris → Dubai".
+export const routeLabel = (slices, city = (c) => c) => {
+    const list = slices ?? [];
+    if (!list.length) return '';
+    return [...list.map((s) => city(s.origin)), city(list[list.length - 1].destination)].join(' → ');
+};
+
 export const PAX_LABELS = { ADT: 'Adulte', CHD: 'Enfant', INF: 'Bebe' };
 
 // Couleurs des statuts du dossier (machine a etats du cahier des charges).

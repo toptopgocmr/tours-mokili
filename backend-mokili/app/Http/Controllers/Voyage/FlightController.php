@@ -68,7 +68,7 @@ class FlightController extends Controller
 
         return Inertia::render('Voyage/Vols/Results', [
             'search' => $search,
-            'airports' => Airport::whereIn('iata_code', [$search->origin, $search->destination])->get()->keyBy('iata_code'),
+            'airports' => Airport::whereIn('iata_code', $search->airportCodes())->get()->keyBy('iata_code'),
             'offers' => $offers->values(),
             'airlines' => $search->offers()->get()->unique('validating_airline')
                 ->map(fn ($o) => ['code' => $o->validating_airline, 'name' => $o->airline_name])->values(),
@@ -92,8 +92,8 @@ class FlightController extends Controller
         return Inertia::render('Voyage/Vols/Book', [
             'offer' => $flightOffer,
             'search' => $search,
-            'airports' => Airport::whereIn('iata_code', [$search->origin, $search->destination])->get()->keyBy('iata_code'),
-            'international' => Airport::whereIn('iata_code', [$search->origin, $search->destination])->distinct()->count('country_code') > 1,
+            'airports' => Airport::whereIn('iata_code', $search->airportCodes())->get()->keyBy('iata_code'),
+            'international' => Airport::whereIn('iata_code', $search->airportCodes())->distinct()->count('country_code') > 1,
             'contact' => ['name' => $user->name, 'email' => $user->email, 'phone' => $user->phone],
             'cabins' => config('flights.cabins'),
         ]);

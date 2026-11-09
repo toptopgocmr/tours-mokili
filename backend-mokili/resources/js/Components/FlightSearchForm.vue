@@ -1,16 +1,20 @@
 <script setup>
-// Formulaire de recherche de vols (aller simple / aller-retour, passagers,
-// classe). Soumis en GET -> le serveur interroge les fournisseurs puis
-// redirige vers la page de resultats.
+// Formulaire de recherche de vols (aller-retour / aller simple /
+// multi-destinations, passagers, classe). Soumis en GET -> le serveur
+// interroge les fournisseurs puis redirige vers la page de resultats.
 import AirportInput from '@/Components/AirportInput.vue';
 import { router, usePage } from '@inertiajs/vue3';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
+
+const MAX_LEGS = 6;
 
 const props = defineProps({
     initial: { type: Object, default: () => ({}) },
     labels: { type: Object, default: () => ({}) },
     cabins: { type: Object, default: () => ({ economy: 'Economique', business: 'Affaires' }) },
     suggestions: { type: Array, default: () => [] },
+    // Aeroports connus, indexes par code IATA (pour afficher les villes des trajets).
+    airports: { type: Object, default: () => ({}) },
 });
 
 const page = usePage();
@@ -29,8 +33,70 @@ const form = reactive({
     cabin: props.initial.cabin ?? 'economy',
 });
 
+// --- Multi-destinations : liste des vols (De -> Vers + date) ---
+let legSeq = 0;
+const airportLabel = (code) => {
+    if (!code) return '';
+    const a = props.airports?.[code];
+    return a?.city ? `${a.city} (${code})` : code;
+};
+const makeLeg = (origin = '', destination = '', date = '', originLabel = '', destinationLabel = '') => ({
+    key: ++legSeq,
+    origin,
+    destination,
+    date,
+    originLabel: originLabel || airportLabel(origin),
+    destinationLabel: destinationLabel || airportLabel(destination),
+});
+
+const legs = reactive(
+    Array.isArray(props.initial.legs) && props.initial.legs.length >= 2
+        ? props.initial.legs.map((l) => makeLeg(l.origin, l.destination, String(l.date ?? '').slice(0, 10)))
+        : [
+              makeLeg(form.origin, form.destination, form.depart_date, props.labels.origin ?? (form.origin === 'BZV' ? 'Brazzaville (BZV)' : ''), props.labels.destination ?? ''),
+              makeLeg(form.destination, '', '', props.labels.destination ?? ''),
+          ],
+);
+
+const addLeg = () => {
+    if (legs.length >= MAX_LEGS) return;
+    const last = legs[legs.length - 1];
+    // Le vol suivant part de la ville d'arrivee du precedent.
+    legs.push(makeLeg(last.destination, '', '', last.destinationLabel));
+};
+const removeLeg = (i) => {
+    if (legs.length > 2) legs.splice(i, 1);
+};
+const pickedLeg = (leg, side, a) => {
+    leg[`${side}Label`] = `${a.city} (${a.iata_code})`;
+};
+const legMin = (i) => (i > 0 && legs[i - 1].date ? legs[i - 1].date : today);
+const legError = (i, field) => errors.value[`legs.${i}.${field}`];
+
 const originRef = ref(null);
 const destRef = ref(null);
+
+// En passant en multi-destinations, on reprend le trajet deja saisi comme premier vol.
+watch(
+    () => form.trip_type,
+    (type, previous) => {
+        if (type !== 'multicity' || previous === 'multicity') return;
+        const first = legs[0];
+        if (form.origin && !first.destination) {
+            first.origin = form.origin;
+            first.originLabel = originRef.value?.text || airportLabel(form.origin);
+        }
+        if (form.destination && !first.destination) {
+            first.destination = form.destination;
+            first.destinationLabel = destRef.value?.text || airportLabel(form.destination);
+            if (!legs[1].origin) {
+                legs[1].origin = form.destination;
+                legs[1].originLabel = first.destinationLabel;
+            }
+        }
+        if (form.depart_date && !first.date) first.date = form.depart_date;
+    },
+);
 const paxOpen = ref(false);
 const loading = ref(false);
 const localError = ref('');
@@ -61,8 +127,44 @@ const swap = () => {
     destRef.value?.setText(ot ?? '');
 };
 
+const send = (params) =>
+    router.get('/voyage/vols/recherche', params, {
+        onStart: () => (loading.value = true),
+        onFinish: () => (loading.value = false),
+    });
+
 const submit = () => {
     localError.value = '';
+    const pax = { adults: form.adults, children: form.children, infants: form.infants, cabin: form.cabin };
+
+    if (form.trip_type === 'multicity') {
+        for (let i = 0; i < legs.length; i++) {
+            const l = legs[i];
+            if (!l.origin || !l.destination) {
+                localError.value = `Vol ${i + 1} : choisissez les aeroports de depart et d'arrivee dans la liste.`;
+                return;
+            }
+            if (l.origin === l.destination) {
+                localError.value = `Vol ${i + 1} : le depart et l'arrivee doivent etre differents.`;
+                return;
+            }
+            if (!l.date) {
+                localError.value = `Vol ${i + 1} : indiquez la date.`;
+                return;
+            }
+            if (i > 0 && legs[i - 1].date && l.date < legs[i - 1].date) {
+                localError.value = `Vol ${i + 1} : la date doit etre posterieure a celle du vol ${i}.`;
+                return;
+            }
+        }
+        send({
+            trip_type: 'multicity',
+            legs: legs.map((l) => ({ origin: l.origin, destination: l.destination, date: l.date })),
+            ...pax,
+        });
+        return;
+    }
+
     if (!form.origin || !form.destination) {
         localError.value = 'Choisissez les aeroports de depart et d\'arrivee dans la liste.';
         return;
@@ -71,12 +173,15 @@ const submit = () => {
         localError.value = 'Indiquez la date de retour.';
         return;
     }
-    const params = { ...form };
-    if (form.trip_type === 'oneway') delete params.return_date;
-    router.get('/voyage/vols/recherche', params, {
-        onStart: () => (loading.value = true),
-        onFinish: () => (loading.value = false),
-    });
+    const params = {
+        trip_type: form.trip_type,
+        origin: form.origin,
+        destination: form.destination,
+        depart_date: form.depart_date,
+        ...pax,
+    };
+    if (form.trip_type === 'roundtrip') params.return_date = form.return_date;
+    send(params);
 };
 </script>
 
@@ -89,34 +194,92 @@ const submit = () => {
             <label class="flex items-center gap-1.5 font-medium text-navy-700">
                 <input v-model="form.trip_type" type="radio" value="oneway" class="text-navy-900 focus:ring-gold-600" /> Aller simple
             </label>
+            <label class="flex items-center gap-1.5 font-medium text-navy-700">
+                <input v-model="form.trip_type" type="radio" value="multicity" class="text-navy-900 focus:ring-gold-600" /> Multi-destinations
+            </label>
             <select v-model="form.cabin" class="ml-auto rounded-full border-gray-200 py-1 text-sm focus:border-gold-600 focus:ring-gold-600">
                 <option v-for="(label, key) in cabins" :key="key" :value="key">{{ label }}</option>
             </select>
         </div>
 
-        <div class="grid gap-2 md:grid-cols-[1fr_auto_1fr]">
-            <AirportInput ref="originRef" v-model="form.origin" label="De" :initial-label="labels.origin ?? 'Brazzaville (BZV)'" :suggestions="suggestions" :error="errors.origin" />
-            <button type="button" class="mx-auto mt-5 hidden h-9 w-9 items-center justify-center rounded-full border text-navy-700 hover:bg-navy-50 md:flex" title="Inverser" @click="swap">⇄</button>
-            <AirportInput ref="destRef" v-model="form.destination" label="Vers" placeholder="Paris, Dubai, Douala..." :initial-label="labels.destination ?? ''" :suggestions="suggestions" :error="errors.destination" />
-        </div>
+        <!-- ALLER-RETOUR / ALLER SIMPLE -->
+        <template v-if="form.trip_type !== 'multicity'">
+            <div class="grid gap-2 md:grid-cols-[1fr_auto_1fr]">
+                <AirportInput ref="originRef" v-model="form.origin" label="De" :initial-label="labels.origin ?? 'Brazzaville (BZV)'" :suggestions="suggestions" :error="errors.origin" />
+                <button type="button" class="mx-auto mt-5 hidden h-9 w-9 items-center justify-center rounded-full border text-navy-700 hover:bg-navy-50 md:flex" title="Inverser" @click="swap">⇄</button>
+                <AirportInput ref="destRef" v-model="form.destination" label="Vers" placeholder="Paris, Dubai, Douala..." :initial-label="labels.destination ?? ''" :suggestions="suggestions" :error="errors.destination" />
+            </div>
+        </template>
 
-        <div class="grid gap-2 sm:grid-cols-2 md:grid-cols-[1fr_1fr_1.3fr_auto]">
-            <div>
-                <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Depart</label>
-                <input v-model="form.depart_date" type="date" :min="today" required class="w-full rounded-xl border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600" />
-                <p v-if="errors.depart_date" class="mt-1 text-xs text-red-600">{{ errors.depart_date }}</p>
-            </div>
-            <div>
-                <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Retour</label>
-                <input
-                    v-model="form.return_date"
-                    type="date"
-                    :min="form.depart_date || today"
-                    :disabled="form.trip_type === 'oneway'"
-                    class="w-full rounded-xl border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600 disabled:bg-gray-50 disabled:text-gray-400"
+        <!-- MULTI-DESTINATIONS -->
+        <template v-else>
+            <div v-for="(leg, i) in legs" :key="leg.key" class="grid gap-2 rounded-xl border border-gray-100 bg-navy-50/30 p-3 md:grid-cols-[auto_1fr_1fr_0.8fr_auto] md:items-start">
+                <p class="text-xs font-bold uppercase tracking-wide text-navy-900 md:mt-8 md:w-12">Vol {{ i + 1 }}</p>
+                <AirportInput
+                    v-model="leg.origin"
+                    label="De"
+                    :initial-label="leg.originLabel"
+                    :suggestions="suggestions"
+                    :error="legError(i, 'origin')"
+                    @picked="(a) => pickedLeg(leg, 'origin', a)"
                 />
-                <p v-if="errors.return_date" class="mt-1 text-xs text-red-600">{{ errors.return_date }}</p>
+                <AirportInput
+                    v-model="leg.destination"
+                    label="Vers"
+                    placeholder="Paris, Dubai, Douala..."
+                    :initial-label="leg.destinationLabel"
+                    :suggestions="suggestions"
+                    :error="legError(i, 'destination')"
+                    @picked="(a) => pickedLeg(leg, 'destination', a)"
+                />
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Date</label>
+                    <input v-model="leg.date" type="date" :min="legMin(i)" class="w-full rounded-xl border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600" />
+                    <p v-if="legError(i, 'date')" class="mt-1 text-xs text-red-600">{{ legError(i, 'date') }}</p>
+                </div>
+                <button
+                    type="button"
+                    class="h-9 w-9 justify-self-end rounded-full text-lg leading-none text-navy-500 hover:bg-red-50 hover:text-red-600 disabled:invisible md:mt-6"
+                    :disabled="legs.length <= 2"
+                    title="Supprimer ce vol"
+                    @click="removeLeg(i)"
+                >
+                    ✕
+                </button>
             </div>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <button
+                    v-if="legs.length < MAX_LEGS"
+                    type="button"
+                    class="rounded-full border border-dashed border-navy-300 px-4 py-1.5 text-sm font-semibold text-navy-900 hover:bg-navy-50"
+                    @click="addLeg"
+                >
+                    + Ajouter un vol
+                </button>
+                <p class="text-xs text-navy-500">{{ legs.length }} / {{ MAX_LEGS }} vols</p>
+            </div>
+            <p v-if="errors.legs" class="text-xs text-red-600">{{ errors.legs }}</p>
+        </template>
+
+        <div class="grid gap-2 sm:grid-cols-2" :class="form.trip_type === 'multicity' ? 'md:grid-cols-[1.3fr_auto]' : 'md:grid-cols-[1fr_1fr_1.3fr_auto]'">
+            <template v-if="form.trip_type !== 'multicity'">
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Depart</label>
+                    <input v-model="form.depart_date" type="date" :min="today" required class="w-full rounded-xl border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600" />
+                    <p v-if="errors.depart_date" class="mt-1 text-xs text-red-600">{{ errors.depart_date }}</p>
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Retour</label>
+                    <input
+                        v-model="form.return_date"
+                        type="date"
+                        :min="form.depart_date || today"
+                        :disabled="form.trip_type === 'oneway'"
+                        class="w-full rounded-xl border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600 disabled:bg-gray-50 disabled:text-gray-400"
+                    />
+                    <p v-if="errors.return_date" class="mt-1 text-xs text-red-600">{{ errors.return_date }}</p>
+                </div>
+            </template>
             <div class="relative">
                 <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Passagers</label>
                 <button type="button" class="w-full truncate rounded-xl border border-gray-200 px-3 py-2 text-left text-sm" @click="paxOpen = !paxOpen">{{ paxSummary }}</button>

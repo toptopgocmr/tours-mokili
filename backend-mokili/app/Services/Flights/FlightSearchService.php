@@ -25,7 +25,11 @@ class FlightSearchService
     {
         $criteria = SearchCriteria::fromArray($params);
 
-        $search = FlightSearch::create($criteria->toArray() + ['user_id' => $user?->id]);
+        $attributes = $criteria->toArray();
+        if ($attributes['legs'] === null) {
+            unset($attributes['legs']); // colonne remplie seulement en multi-destinations
+        }
+        $search = FlightSearch::create($attributes + ['user_id' => $user?->id]);
 
         $errors = [];
         $count = 0;

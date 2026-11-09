@@ -22,41 +22,56 @@ class ManualFareSupplier extends AbstractSupplier
 {
     public function search(SearchCriteria $c): array
     {
-        $outbound = $this->faresFor($c->origin, $c->destination, $c->departDate, $c);
-        if ($outbound->isEmpty()) {
-            return [];
-        }
+        $legs = $c->itinerary();
 
-        if (! $c->isRoundTrip()) {
-            return $outbound->map(fn (FlightFare $f) => $this->buildOffer($c, $f))->all();
-        }
-
-        $inbound = $this->faresFor($c->destination, $c->origin, $c->returnDate, $c);
-        $offers = [];
-        foreach ($outbound as $out) {
-            foreach ($inbound as $in) {
-                $offers[] = $this->buildOffer($c, $out, $in);
+        // Tarifs disponibles pour chaque trajet (aller, retour ou chaque vol multi-destinations).
+        $candidates = [];
+        foreach ($legs as $leg) {
+            $fares = $this->faresFor($leg['origin'], $leg['destination'], $leg['date'], $c);
+            if ($fares->isEmpty()) {
+                return [];
             }
+            $candidates[] = $fares->all();
         }
 
-        return $offers;
+        // Combinaisons des tarifs, plafonnees pour ne pas exploser en multi-destinations.
+        $max = (int) config('flights.max_offers', 60);
+        $combos = [[]];
+        foreach ($candidates as $fares) {
+            $next = [];
+            foreach ($combos as $combo) {
+                foreach ($fares as $fare) {
+                    $next[] = array_merge($combo, [$fare]);
+                    if (count($next) >= $max) {
+                        break 2;
+                    }
+                }
+            }
+            $combos = $next;
+        }
+
+        return array_map(fn (array $fares) => $this->buildOffer($c, $fares), $combos);
     }
 
     public function price(FlightOffer $offer, SearchCriteria $c): ?OfferData
     {
-        [$outId, $inId] = $this->parseOfferId($offer->supplier_offer_id);
+        $ids = $this->parseOfferId($offer->supplier_offer_id);
+        $legs = $c->itinerary();
 
-        $out = FlightFare::find($outId);
-        $in = $inId ? FlightFare::find($inId) : null;
-
-        if (! $out || ! $this->isSellable($out, $c->departDate, $c)) {
-            return null;
-        }
-        if ($inId && (! $in || ! $c->returnDate || ! $this->isSellable($in, $c->returnDate, $c))) {
+        if (count($ids) !== count($legs)) {
             return null;
         }
 
-        return $this->buildOffer($c, $out, $in);
+        $fares = [];
+        foreach ($ids as $i => $id) {
+            $fare = FlightFare::find($id);
+            if (! $fare || ! $this->isSellable($fare, $legs[$i]['date'], $c)) {
+                return null;
+            }
+            $fares[] = $fare;
+        }
+
+        return $this->buildOffer($c, $fares);
     }
 
     public function book(FlightBooking $booking, string $idempotencyKey): SupplierResult
@@ -118,46 +133,47 @@ class ManualFareSupplier extends AbstractSupplier
         return $departure->gt(now()->addHours(max(2, (int) $f->ticketing_delay_hours)));
     }
 
-    protected function buildOffer(SearchCriteria $c, FlightFare $out, ?FlightFare $in = null): OfferData
+    /** @param FlightFare[] $fares un tarif par trajet, dans l'ordre du voyage */
+    protected function buildOffer(SearchCriteria $c, array $fares): OfferData
     {
-        $fares = array_filter([$out, $in]);
+        $legs = $c->itinerary();
+        $first = $fares[0];
         $adult = $child = $infant = 0.0;
-        foreach ($fares as $f) {
+        $slices = [];
+        foreach ($fares as $i => $f) {
             $base = (float) $f->base_fare;
             $tax = (float) $f->taxes;
             $adult += $base + $tax;
             $child += round($base * $f->child_percent / 100) + $tax;
             $infant += round(($base + $tax) * $f->infant_percent / 100);
+            $slices[] = $this->slice($f, $legs[$i]['date']);
         }
 
         $lines = $this->passengerLines($c, $adult, $child, $infant);
-        $slices = [$this->slice($out, $c->departDate)];
-        if ($in) {
-            $slices[] = $this->slice($in, $c->returnDate);
-        }
-
-        $id = 'fare:'.$out->id.($in ? ':'.$in->id : '');
+        $fees = fn (string $key) => $first->{$key} === null
+            ? null
+            : (float) collect($fares)->sum(fn ($f) => (float) ($f->{$key} ?? 0));
 
         return new OfferData(
-            supplierOfferId: $id,
-            validatingAirline: $out->airline_code,
-            airlineName: $out->airline_name,
+            supplierOfferId: 'fare:'.implode(':', array_map(fn ($f) => $f->id, $fares)),
+            validatingAirline: $first->airline_code,
+            airlineName: $first->airline_name,
             slices: $slices,
             passengers: $lines,
             supplierAmount: $this->linesTotal($lines),
-            currency: $out->currency,
+            currency: $first->currency,
             fareRules: [
-                'cabin' => $out->cabin,
-                'fare_family' => $out->fare_family,
-                'baggage' => $out->baggage,
-                'cabin_baggage' => $out->cabin_baggage,
-                'refundable' => $out->refundable && (! $in || $in->refundable),
-                'changeable' => $out->changeable && (! $in || $in->changeable),
-                'change_fee' => $out->change_fee !== null ? (float) $out->change_fee + (float) ($in?->change_fee ?? 0) : null,
-                'cancel_fee' => $out->cancel_fee !== null ? (float) $out->cancel_fee + (float) ($in?->cancel_fee ?? 0) : null,
-                'conditions' => trim(($out->conditions ?? '')."\n".($in?->conditions ?? '')) ?: null,
+                'cabin' => $first->cabin,
+                'fare_family' => $first->fare_family,
+                'baggage' => $first->baggage,
+                'cabin_baggage' => $first->cabin_baggage,
+                'refundable' => collect($fares)->every(fn ($f) => (bool) $f->refundable),
+                'changeable' => collect($fares)->every(fn ($f) => (bool) $f->changeable),
+                'change_fee' => $fees('change_fee'),
+                'cancel_fee' => $fees('cancel_fee'),
+                'conditions' => trim(implode("\n", array_filter(array_map(fn ($f) => $f->conditions, $fares)))) ?: null,
             ],
-            ticketingDeadline: now()->addHours((int) $out->ticketing_delay_hours)->toIso8601String(),
+            ticketingDeadline: now()->addHours((int) $first->ticketing_delay_hours)->toIso8601String(),
             raw: ['fares' => array_map(fn ($f) => $f->id, $fares)],
         );
     }
@@ -188,11 +204,13 @@ class ManualFareSupplier extends AbstractSupplier
         ];
     }
 
+    /** "fare:12" / "fare:12:34" / "fare:12:34:56..." -> [12, 34, 56] */
     protected function parseOfferId(?string $id): array
     {
         $parts = explode(':', (string) $id);
+        array_shift($parts);
 
-        return [(int) ($parts[1] ?? 0), isset($parts[2]) ? (int) $parts[2] : null];
+        return array_values(array_filter(array_map('intval', $parts)));
     }
 
     protected function timezone(string $iata): string

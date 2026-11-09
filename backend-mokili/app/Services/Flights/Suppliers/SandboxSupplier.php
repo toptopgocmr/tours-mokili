@@ -99,11 +99,11 @@ class SandboxSupplier extends AbstractSupplier
 
     protected function offer(SearchCriteria $c, string $code, ?string $airline, ?string $name, int $stops, float $base): OfferData
     {
-        $slices = [$this->slice($c->origin, $c->destination, $c->departDate, $airline, $name, $stops)];
-        if ($c->isRoundTrip()) {
-            $slices[] = $this->slice($c->destination, $c->origin, $c->returnDate, $airline, $name, $stops);
-        }
-        $mult = $c->isRoundTrip() ? 2 : 1;
+        $slices = array_map(
+            fn ($leg) => $this->slice($leg['origin'], $leg['destination'], $leg['date'], $airline, $name, $stops),
+            $c->itinerary(),
+        );
+        $mult = count($slices);
         $lines = $this->passengerLines($c, $base * $mult, $base * 0.75 * $mult, $base * 0.1 * $mult);
 
         return new OfferData(

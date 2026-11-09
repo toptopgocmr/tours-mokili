@@ -115,8 +115,7 @@ class FlightBookingService
     public function revalidateOffer(FlightOffer $offer, ?int $flightBookingId = null): bool
     {
         $search = $offer->search;
-        $criteria = SearchCriteria::fromArray($search->only(['origin', 'destination', 'trip_type', 'adults', 'children', 'infants', 'cabin'])
-            + ['depart_date' => $search->depart_date->toDateString(), 'return_date' => $search->return_date?->toDateString()]);
+        $criteria = SearchCriteria::fromArray($search->criteriaArray());
 
         $started = microtime(true);
         try {
@@ -274,11 +273,11 @@ class FlightBookingService
     protected function assertDocuments(array $passengers, FlightOffer $offer): void
     {
         $search = $offer->search;
-        $countries = \App\Models\Flights\Airport::whereIn('iata_code', [$search->origin, $search->destination])->pluck('country_code')->unique();
+        $countries = \App\Models\Flights\Airport::whereIn('iata_code', $search->airportCodes())->pluck('country_code')->unique();
         if ($countries->count() < 2) {
             return; // vol domestique
         }
-        $lastDate = ($search->return_date ?? $search->depart_date)->copy();
+        $lastDate = $search->lastTravelDate();
         foreach ($passengers as $p) {
             if (empty($p['document_number']) || empty($p['document_expiry'])) {
                 throw new FlightException('Vol international : numero et date d\'expiration du passeport obligatoires pour '.$p['first_name'].'.', 'documents');

@@ -144,6 +144,68 @@ class FlightTicketingTest extends TestCase
             ->assertSessionHasErrors('destination');
     }
 
+    public function test_multicity_search_combines_one_fare_per_leg_and_books(): void
+    {
+        $this->manualFare();
+        $this->manualFare(['origin' => 'CDG', 'destination' => 'DXB', 'flight_number' => 'EK 74', 'base_fare' => 200000, 'taxes' => 50000, 'arrival_day_offset' => 0, 'arrival_time' => '22:30', 'departure_time' => '14:00']);
+        $this->manualFare(['origin' => 'DXB', 'destination' => 'BZV', 'flight_number' => 'EK 781', 'base_fare' => 300000, 'taxes' => 100000, 'arrival_day_offset' => 0, 'arrival_time' => '15:00', 'departure_time' => '08:00']);
+
+        $legs = [
+            ['origin' => 'bzv', 'destination' => 'cdg', 'date' => now()->addDays(20)->toDateString()],
+            ['origin' => 'CDG', 'destination' => 'DXB', 'date' => now()->addDays(27)->toDateString()],
+            ['origin' => 'DXB', 'destination' => 'BZV', 'date' => now()->addDays(34)->toDateString()],
+        ];
+        $this->get('/voyage/vols/recherche?'.http_build_query(['trip_type' => 'multicity', 'legs' => $legs, 'adults' => 1, 'cabin' => 'economy']))->assertRedirect();
+        $search = FlightSearch::latest('id')->firstOrFail();
+
+        $this->assertSame('multicity', $search->trip_type);
+        $this->assertCount(3, $search->legs);
+        $this->assertSame(['BZV', 'BZV'], [$search->origin, $search->destination]);
+        $this->assertSame(1, $search->results_count);
+
+        $offer = $search->offers()->firstOrFail();
+        $this->assertSame(['BZV', 'CDG', 'DXB'], array_column($offer->slices, 'origin'));
+        $this->assertEquals(550000 + 250000 + 400000, (float) $offer->total_amount);
+
+        $this->get("/voyage/vols/resultats/{$search->uuid}")->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Voyage/Vols/Results')->has('offers', 1)->has('airports', 3));
+
+        // La revalidation du prix relit les 3 tarifs : le dossier s'ouvre normalement.
+        $flight = $this->bookDossier($offer);
+        $this->assertSame(FlightStatus::PRICE_CONFIRMED, $flight->status);
+        $this->assertSame('multicity', $flight->trip_type);
+        $this->assertCount(3, $flight->itinerary);
+        $this->assertSame('Vol BZV -> CDG -> DXB -> BZV', $flight->title);
+    }
+
+    public function test_multicity_search_is_validated(): void
+    {
+        $date = now()->addDays(20)->toDateString();
+        $url = fn (array $legs) => '/voyage/vols/recherche?'.http_build_query(['trip_type' => 'multicity', 'legs' => $legs, 'adults' => 1, 'cabin' => 'economy']);
+
+        $this->get($url([['origin' => 'BZV', 'destination' => 'CDG', 'date' => $date]]))->assertSessionHasErrors('legs');
+        $this->get($url([
+            ['origin' => 'BZV', 'destination' => 'CDG', 'date' => $date],
+            ['origin' => 'CDG', 'destination' => 'CDG', 'date' => $date],
+        ]))->assertSessionHasErrors('legs.1.destination');
+        $this->get($url([
+            ['origin' => 'BZV', 'destination' => 'CDG', 'date' => $date],
+            ['origin' => 'CDG', 'destination' => 'DXB', 'date' => now()->addDays(10)->toDateString()],
+        ]))->assertSessionHasErrors('legs.1.date');
+        $this->assertSame(0, FlightSearch::count());
+    }
+
+    public function test_multicity_sandbox_offers_have_one_slice_per_leg(): void
+    {
+        $this->useSandbox();
+        $legs = [
+            ['origin' => 'BZV', 'destination' => 'CDG', 'date' => now()->addDays(20)->toDateString()],
+            ['origin' => 'CDG', 'destination' => 'DXB', 'date' => now()->addDays(25)->toDateString()],
+        ];
+        $res = $this->postJson('/api/flights/search', ['trip_type' => 'multicity', 'legs' => $legs, 'adults' => 1, 'cabin' => 'economy'])->assertCreated();
+        $this->assertCount(2, $res->json('offers.0.slices'));
+    }
+
     public function test_markup_and_service_fee_are_added_to_the_supplier_price(): void
     {
         config(['flights.markup_percent' => 5, 'flights.service_fee_per_passenger' => 10000]);

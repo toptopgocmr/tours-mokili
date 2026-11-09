@@ -2,7 +2,7 @@
 import MainLayout from '@/Layouts/MainLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { dayLabel, duration, hhmm, longDate, money, PAX_LABELS, STATE_LABELS, STATE_STYLES, STATUS_STYLES, stopsLabel } from '@/utils/flights';
+import { dayLabel, duration, hhmm, longDate, money, PAX_LABELS, sliceLabel, STATE_LABELS, STATE_STYLES, STATUS_STYLES, stopsLabel } from '@/utils/flights';
 
 defineOptions({ layout: MainLayout });
 
@@ -73,7 +73,7 @@ const cancel = () => {
                 <section class="rounded-2xl border p-5">
                     <h2 class="font-semibold text-navy-900">Itineraire</h2>
                     <div v-for="(s, i) in d.itinerary ?? []" :key="i" class="mt-4 border-t pt-4 first:mt-2 first:border-0 first:pt-0">
-                        <p class="text-xs font-semibold uppercase text-navy-500">{{ i === 0 ? 'Aller' : 'Retour' }} · {{ dayLabel(s.departure_at) }}</p>
+                        <p class="text-xs font-semibold uppercase text-navy-500">{{ sliceLabel(d.itinerary, i) }} · {{ dayLabel(s.departure_at) }}</p>
                         <p class="mt-1 text-navy-900">
                             <strong>{{ hhmm(s.departure_at) }}</strong> {{ s.origin }} → <strong>{{ hhmm(s.arrival_at) }}</strong> {{ s.destination }}
                             <span class="text-sm text-navy-500">· {{ duration(s.duration_minutes) }} · {{ stopsLabel(s.stops, s.via) }}</span>

@@ -1,7 +1,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import { dayLabel, dayOffset, duration, hhmm, money, stopsLabel } from '@/utils/flights';
+import { dayLabel, dayOffset, duration, hhmm, money, sliceLabel, stopsLabel } from '@/utils/flights';
 
 const props = defineProps({
     offer: { type: Object, required: true },
@@ -21,7 +21,7 @@ const city = (code) => props.airports?.[code]?.city ?? code;
             <div class="space-y-4">
                 <div v-for="(s, i) in offer.slices" :key="i" class="flex items-center gap-4">
                     <div class="w-24 shrink-0">
-                        <p class="text-xs font-semibold uppercase text-navy-500">{{ i === 0 ? 'Aller' : 'Retour' }}</p>
+                        <p class="text-xs font-semibold uppercase text-navy-500">{{ sliceLabel(offer.slices, i) }}</p>
                         <p class="text-xs text-navy-500">{{ dayLabel(s.departure_at) }}</p>
                     </div>
                     <div class="text-right">

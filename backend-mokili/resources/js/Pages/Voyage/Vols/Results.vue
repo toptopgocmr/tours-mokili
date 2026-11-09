@@ -4,7 +4,7 @@ import FlightSearchForm from '@/Components/FlightSearchForm.vue';
 import FlightOfferCard from '@/Components/FlightOfferCard.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
-import { longDate } from '@/utils/flights';
+import { longDate, routeLabel } from '@/utils/flights';
 
 defineOptions({ layout: MainLayout });
 
@@ -37,32 +37,44 @@ const paxText = computed(() => {
     const s = props.search;
     return [`${s.adults} adulte(s)`, s.children ? `${s.children} enfant(s)` : null, s.infants ? `${s.infants} bebe(s)` : null].filter(Boolean).join(', ');
 });
+const isMulti = computed(() => props.search.trip_type === 'multicity' && (props.search.legs ?? []).length >= 2);
+const title = computed(() =>
+    isMulti.value
+        ? routeLabel(props.search.legs, city)
+        : `${city(props.search.origin)} ${props.search.trip_type === 'roundtrip' ? '⇄' : '→'} ${city(props.search.destination)}`,
+);
 const refresh = () => router.get('/voyage/vols/recherche', {
-    trip_type: props.search.trip_type, origin: props.search.origin, destination: props.search.destination,
-    depart_date: props.search.depart_date?.slice(0, 10), return_date: props.search.return_date?.slice(0, 10) ?? undefined,
+    trip_type: props.search.trip_type,
+    ...(isMulti.value
+        ? { legs: props.search.legs }
+        : {
+              origin: props.search.origin, destination: props.search.destination,
+              depart_date: props.search.depart_date?.slice(0, 10), return_date: props.search.return_date?.slice(0, 10) ?? undefined,
+          }),
     adults: props.search.adults, children: props.search.children, infants: props.search.infants, cabin: props.search.cabin,
 });
 </script>
 
 <template>
-    <Head :title="`Vols ${city(search.origin)} - ${city(search.destination)}`" />
+    <Head :title="`Vols ${title}`" />
 
     <section class="bg-navy-900 px-6 py-6 text-white">
         <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-widest text-gold-600">Billets d'avion</p>
                 <h1 class="text-xl font-bold sm:text-2xl">
-                    {{ city(search.origin) }} {{ search.trip_type === 'roundtrip' ? '⇄' : '→' }} {{ city(search.destination) }}
+                    {{ title }}
                 </h1>
                 <p class="text-sm text-white/80">
-                    {{ longDate(search.depart_date) }}<span v-if="search.return_date"> · retour {{ longDate(search.return_date) }}</span>
+                    <template v-if="isMulti">{{ search.legs.length }} vols · du {{ longDate(search.legs[0].date) }} au {{ longDate(search.legs[search.legs.length - 1].date) }}</template>
+                    <template v-else>{{ longDate(search.depart_date) }}<span v-if="search.return_date"> · retour {{ longDate(search.return_date) }}</span></template>
                     · {{ paxText }} · {{ cabins[search.cabin] ?? search.cabin }}
                 </p>
             </div>
             <button type="button" class="btn-outline !border-white !text-white hover:!bg-white/10" @click="showForm = !showForm">Modifier la recherche</button>
         </div>
         <div v-if="showForm" class="mx-auto mt-4 max-w-6xl rounded-2xl bg-white p-4 text-navy-900">
-            <FlightSearchForm :initial="search" :labels="labels" :cabins="cabins" />
+            <FlightSearchForm :initial="search" :labels="labels" :cabins="cabins" :airports="airports" />
         </div>
     </section>
 
