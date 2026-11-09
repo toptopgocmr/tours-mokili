@@ -168,7 +168,7 @@ class FlightTicketingTest extends TestCase
         $this->assertEquals(550000 + 250000 + 400000, (float) $offer->total_amount);
 
         $this->get("/voyage/vols/resultats/{$search->uuid}")->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Voyage/Vols/Results')->has('offers', 1)->has('airports', 3));
+            ->assertInertia(fn ($page) => $page->component('Voyage/Vols/Results')->has('offers', 1)->has('airports', 4)->has('airports.ADD')); // + escale Addis-Abeba
 
         // La revalidation du prix relit les 3 tarifs : le dossier s'ouvre normalement.
         $flight = $this->bookDossier($offer);
@@ -204,6 +204,27 @@ class FlightTicketingTest extends TestCase
         ];
         $res = $this->postJson('/api/flights/search', ['trip_type' => 'multicity', 'legs' => $legs, 'adults' => 1, 'cabin' => 'economy'])->assertCreated();
         $this->assertCount(2, $res->json('offers.0.slices'));
+    }
+
+    public function test_direct_only_opens_results_filtered_and_tabs_sort_offers(): void
+    {
+        $this->manualFare(); // 1 escale
+        $this->manualFare(['flight_number' => 'AF 889', 'airline_code' => 'AF', 'airline_name' => 'Air France', 'stops' => 0, 'via' => null, 'base_fare' => 600000, 'duration_minutes' => 480]);
+
+        $this->get('/voyage/vols/recherche?'.http_build_query($this->searchParams(['direct_only' => 1])))
+            ->assertRedirect()
+            ->assertRedirectContains('stops=0');
+        $search = FlightSearch::latest('id')->firstOrFail();
+
+        $this->get("/voyage/vols/resultats/{$search->uuid}?stops=0")->assertOk()
+            ->assertInertia(fn ($page) => $page->has('offers', 1)->where('offers.0.validating_airline', 'AF')->where('totalCount', 2));
+
+        // Les moins chers / les plus rapides
+        $this->get("/voyage/vols/resultats/{$search->uuid}?sort=price")
+            ->assertInertia(fn ($page) => $page->where('offers.0.validating_airline', 'ET'));
+        $this->get("/voyage/vols/resultats/{$search->uuid}?sort=duration")
+            ->assertInertia(fn ($page) => $page->where('offers.0.validating_airline', 'AF'));
+        $this->get("/voyage/vols/resultats/{$search->uuid}")->assertOk()->assertInertia(fn ($page) => $page->has('offers', 2));
     }
 
     public function test_markup_and_service_fee_are_added_to_the_supplier_price(): void

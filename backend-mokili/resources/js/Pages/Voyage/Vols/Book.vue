@@ -1,6 +1,6 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
-import FlightOfferCard from '@/Components/FlightOfferCard.vue';
+import FlightItinerary from '@/Components/FlightItinerary.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { money, PAX_LABELS } from '@/utils/flights';
@@ -74,7 +74,7 @@ const rules = computed(() => props.offer.fare_rules ?? {});
         <p class="mt-1 text-sm text-navy-600">Saisissez les noms exactement comme sur le passeport ou la piece d'identite.</p>
 
         <div class="mt-6">
-            <FlightOfferCard :offer="offer" :airports="airports" :selectable="false" />
+            <FlightItinerary :offer="offer" :search="search" :airports="airports" :cabins="cabins" />
         </div>
 
         <div v-if="priceChanged" class="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">

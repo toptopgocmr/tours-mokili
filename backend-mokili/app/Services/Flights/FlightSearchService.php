@@ -103,10 +103,21 @@ class FlightSearchService
             $offers = $offers->where('validating_airline', $filters['airline']);
         }
 
-        $sort = $filters['sort'] ?? 'price';
+        $sort = $filters['sort'] ?? 'best';
+        $duration = fn (FlightOffer $o) => (int) collect($o->slices)->sum('duration_minutes');
+
+        if ($sort === 'best') {
+            // "Les meilleurs" (comme Skyscanner) : equilibre prix / duree / escales.
+            $minPrice = max(1.0, (float) $offers->min(fn ($o) => (float) $o->total_amount));
+            $minDuration = max(1, (int) $offers->min($duration));
+
+            return $offers->sortBy(fn (FlightOffer $o) => (float) $o->total_amount / $minPrice
+                + 0.7 * $duration($o) / $minDuration
+                + 0.05 * collect($o->slices)->sum('stops'))->values();
+        }
 
         return $offers->sortBy(fn (FlightOffer $o) => match ($sort) {
-            'duration' => collect($o->slices)->sum('duration_minutes'),
+            'duration' => $duration($o),
             'departure' => $o->slices[0]['departure_at'] ?? '',
             default => (float) $o->total_amount,
         })->values();

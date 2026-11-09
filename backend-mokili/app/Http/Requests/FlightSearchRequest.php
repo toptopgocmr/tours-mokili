@@ -62,6 +62,7 @@ class FlightSearchRequest extends FormRequest
             'children' => ['integer', 'min:0', 'max:'.$max],
             'infants' => ['integer', 'min:0', 'lte:adults'],
             'cabin' => ['required', 'in:'.implode(',', array_keys(config('flights.cabins')))],
+            'direct_only' => ['nullable', 'boolean'],
         ];
 
         if ($this->isMultiCity()) {

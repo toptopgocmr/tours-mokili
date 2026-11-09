@@ -57,7 +57,11 @@ class FlightController extends Controller
     {
         $search = $this->searchService->search($request->validated(), $request->user());
 
-        return redirect()->route('voyage.vols.results', $search->uuid);
+        // "Vols directs uniquement" : les resultats s'ouvrent filtres sur 0 escale.
+        return redirect()->route('voyage.vols.results', array_filter([
+            'uuid' => $search->uuid,
+            'stops' => $request->boolean('direct_only') ? '0' : null,
+        ], fn ($v) => $v !== null));
     }
 
     public function results(Request $request, string $uuid): Response
@@ -68,13 +72,14 @@ class FlightController extends Controller
 
         return Inertia::render('Voyage/Vols/Results', [
             'search' => $search,
-            'airports' => Airport::whereIn('iata_code', $search->airportCodes())->get()->keyBy('iata_code'),
+            'airports' => $this->airportsFor($search, $offers),
             'offers' => $offers->values(),
             'airlines' => $search->offers()->get()->unique('validating_airline')
                 ->map(fn ($o) => ['code' => $o->validating_airline, 'name' => $o->airline_name])->values(),
             'filters' => (object) $filters,
             'expired' => $search->created_at->lt(now()->subMinutes((int) config('flights.offer_ttl_minutes', 30))),
             'supplierErrors' => $search->supplier_errors,
+            'totalCount' => (int) $search->results_count,
             'cabins' => config('flights.cabins'),
         ]);
     }
@@ -92,7 +97,7 @@ class FlightController extends Controller
         return Inertia::render('Voyage/Vols/Book', [
             'offer' => $flightOffer,
             'search' => $search,
-            'airports' => Airport::whereIn('iata_code', $search->airportCodes())->get()->keyBy('iata_code'),
+            'airports' => $this->airportsFor($search, [$flightOffer]),
             'international' => Airport::whereIn('iata_code', $search->airportCodes())->distinct()->count('country_code') > 1,
             'contact' => ['name' => $user->name, 'email' => $user->email, 'phone' => $user->phone],
             'cabins' => config('flights.cabins'),
@@ -226,5 +231,22 @@ class FlightController extends Controller
     {
         $visible = FlightBooking::query()->visibleTo($request->user())->whereKey($flight->id)->exists();
         abort_unless($visible, 403);
+    }
+
+    /** Aeroports a afficher : voyage + escales et correspondances des offres. */
+    protected function airportsFor(FlightSearch $search, iterable $offers)
+    {
+        $codes = $search->airportCodes();
+        foreach ($offers as $offer) {
+            foreach ($offer->slices ?? [] as $slice) {
+                $codes[] = $slice['via'] ?? null;
+                foreach ($slice['segments'] ?? [] as $seg) {
+                    $codes[] = $seg['origin'] ?? null;
+                    $codes[] = $seg['destination'] ?? null;
+                }
+            }
+        }
+
+        return Airport::whereIn('iata_code', array_unique(array_filter($codes)))->get()->keyBy('iata_code');
     }
 }

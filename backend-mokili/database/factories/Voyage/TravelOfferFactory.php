@@ -25,7 +25,11 @@ class TravelOfferFactory extends Factory
         $departure = $this->faker->dateTimeBetween('+1 week', '+3 months');
 
         return [
-            'title' => 'Sejour a '.$destination['city'],
+            'title' => fn (array $a) => match ($a['type']) {
+                'vol' => 'Vol '.$a['origin_city'].' - '.$a['destination_city'],
+                'circuit' => 'Circuit '.$a['destination_city'],
+                default => 'Sejour a '.$a['destination_city'],
+            },
             'type' => $this->faker->randomElement(['vol', 'sejour', 'circuit']),
             'description' => $this->faker->paragraph(),
             'origin_city' => 'Kinshasa',

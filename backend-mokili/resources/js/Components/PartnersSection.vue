@@ -13,6 +13,8 @@ const props = defineProps({
     subtitle: { type: String, default: '' },
     // Filtre initial (ex. "transport_routier" quand on choisit les circuits en bus).
     category: { type: String, default: '' },
+    // Ne montrer QUE cette categorie (ex. "compagnie_aerienne" sous l'onglet Vols).
+    only: { type: String, default: '' },
 });
 
 const items = ref([]);
@@ -21,7 +23,7 @@ const active = ref('');
 onMounted(async () => {
     try {
         const { data } = await axios.get('/api/partners', { params: { module: props.module } });
-        items.value = data.data ?? [];
+        items.value = (data.data ?? []).filter((b) => !props.only || b.category === props.only);
         if (props.category && items.value.some((b) => b.category === props.category)) active.value = props.category;
     } catch {
         items.value = [];

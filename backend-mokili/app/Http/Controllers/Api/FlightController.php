@@ -36,10 +36,11 @@ class FlightController extends Controller
     public function search(FlightSearchRequest $request): JsonResponse
     {
         $search = $this->searchService->search($request->validated(), $request->user('sanctum'));
+        $filters = $request->only('stops', 'airline', 'sort') + ($request->boolean('direct_only') ? ['stops' => '0'] : []);
 
         return response()->json([
             'search' => $search,
-            'offers' => $this->searchService->offersFor($search, $request->only('stops', 'airline', 'sort')),
+            'offers' => $this->searchService->offersFor($search, $filters),
         ], 201);
     }
 

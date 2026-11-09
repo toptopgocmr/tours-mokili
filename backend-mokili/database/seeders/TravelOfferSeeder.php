@@ -24,7 +24,6 @@ class TravelOfferSeeder extends Seeder
             ->sequence(fn ($sequence) => $sequence->index < 4
                 ? [
                     'is_featured' => true,
-                    'title' => 'Sejour a '.$featured[$sequence->index]['city'],
                     'destination_city' => $featured[$sequence->index]['city'],
                     'destination_country' => $featured[$sequence->index]['country'],
                 ]

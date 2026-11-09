@@ -77,7 +77,18 @@ const setScope = (value) => {
     search();
 };
 
+const isFlight = (offer) => offer.type === 'vol';
+const cardTitle = (offer) => {
+    if (!isFlight(offer)) return offer.title;
+    const from = offer.origin_city || 'Brazzaville';
+    return from === offer.destination_city ? `Vol vers ${offer.destination_city}` : `${from} → ${offer.destination_city}`;
+};
+const discounted = (offer) => (Number(offer.discount_percent) > 0 ? Math.round(Number(offer.discounted_price)) : null);
+
 const cardSubtitle = (offer) => {
+    if (isFlight(offer)) {
+        return [offer.airline, offer.return_at ? 'Aller-retour' : 'Aller simple'].filter(Boolean).join(' · ');
+    }
     if (offer.type === 'circuit' && offer.transport_mode_label) {
         return [offer.transport_mode_label, offer.trip_scope_label, offer.airline].filter(Boolean).join(' - ');
     }
@@ -184,15 +195,19 @@ const cardSubtitle = (offer) => {
                     <DestinationImage :city="offer.destination_city" :image="offer.image_url" class="h-full w-full" />
                     <div class="absolute inset-0 bg-gradient-to-t from-navy-900/70 to-transparent" />
                     <span class="absolute bottom-2 left-3 font-semibold text-white drop-shadow">{{ offer.destination_city }}</span>
+                    <span v-if="isFlight(offer)" class="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[11px] font-bold uppercase text-navy-900 shadow">✈ Vol</span>
+                    <span v-if="discounted(offer)" class="absolute right-3 top-3 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-bold text-white shadow">-{{ offer.discount_percent }}%</span>
                 </div>
                 <div class="p-4">
-                    <p class="font-semibold text-navy-900">{{ offer.title }}</p>
+                    <p class="font-semibold text-navy-900">{{ cardTitle(offer) }}</p>
                     <p class="text-xs uppercase text-navy-500">
                         <span v-if="offer.type === 'circuit' && MODE_ICONS[offer.transport_mode]" class="mr-1">{{ MODE_ICONS[offer.transport_mode] }}</span>{{ cardSubtitle(offer) }}
                     </p>
                     <p v-if="offer.duration_label" class="text-xs text-navy-500">{{ offer.duration_label }}</p>
                     <p class="mt-2 text-sm font-semibold text-gold-600">
-                        {{ Number(offer.price).toLocaleString('fr-FR') }} {{ offer.currency }}
+                        <span v-if="isFlight(offer)" class="mr-1 text-xs font-normal text-navy-500">a partir de</span>
+                        <span v-if="discounted(offer)" class="mr-1 text-xs font-normal text-navy-400 line-through">{{ Number(offer.price).toLocaleString('fr-FR') }}</span>
+                        {{ Number(discounted(offer) ?? offer.price).toLocaleString('fr-FR') }} {{ offer.currency }}
                     </p>
                 </div>
             </Link>
@@ -201,6 +216,14 @@ const cardSubtitle = (offer) => {
         <p v-if="!offers.data.length" class="mt-10 text-center text-navy-500">
             {{ type === 'circuit' && mode ? `Aucun circuit en ${(transportModes[mode] ?? mode).toLowerCase()} pour le moment : contactez nos transporteurs partenaires ci-dessous.` : 'Aucune offre pour le moment.' }}
         </p>
-        <PartnersSection :key="mode" module="voyage" title="Compagnies & transport" :subtitle="partnersSubtitle" :category="{ bus: 'transport_routier', bateau: 'canot_rapide', canot: 'canot_rapide', train: 'transport_ferroviaire', avion: 'compagnie_aerienne' }[mode] ?? ''" />
+        <PartnersSection
+            v-if="type === 'vol'"
+            key="vol"
+            module="voyage"
+            only="compagnie_aerienne"
+            title="Compagnies aeriennes"
+            subtitle="Les compagnies partenaires de notre billetterie."
+        />
+        <PartnersSection v-else :key="mode" module="voyage" title="Compagnies & transport" :subtitle="partnersSubtitle" :category="{ bus: 'transport_routier', bateau: 'canot_rapide', canot: 'canot_rapide', train: 'transport_ferroviaire', avion: 'compagnie_aerienne' }[mode] ?? ''" />
     </div>
 </template>

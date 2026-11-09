@@ -31,6 +31,7 @@ const form = reactive({
     children: Number(props.initial.children ?? 0),
     infants: Number(props.initial.infants ?? 0),
     cabin: props.initial.cabin ?? 'economy',
+    direct_only: ['1', 1, true, 'true'].includes(props.initial.direct_only),
 });
 
 // --- Multi-destinations : liste des vols (De -> Vers + date) ---
@@ -135,7 +136,10 @@ const send = (params) =>
 
 const submit = () => {
     localError.value = '';
-    const pax = { adults: form.adults, children: form.children, infants: form.infants, cabin: form.cabin };
+    const pax = {
+        adults: form.adults, children: form.children, infants: form.infants, cabin: form.cabin,
+        ...(form.direct_only ? { direct_only: 1 } : {}),
+    };
 
     if (form.trip_type === 'multicity') {
         for (let i = 0; i < legs.length; i++) {
@@ -309,6 +313,33 @@ const submit = () => {
                 </button>
             </div>
         </div>
+        <!-- Vols directs uniquement -->
+        <label class="inline-flex cursor-pointer select-none items-center gap-3 text-sm font-semibold text-navy-900">
+            <input v-model="form.direct_only" type="checkbox" class="peer sr-only" />
+            <span class="relative inline-flex h-6 w-11 items-center rounded-full border-2 transition" :class="form.direct_only ? 'border-navy-900 bg-navy-900' : 'border-navy-300 bg-white'">
+                <span class="inline-block h-4 w-4 rounded-full shadow transition" :class="form.direct_only ? 'translate-x-5 bg-gold-500' : 'translate-x-0.5 bg-navy-300'" />
+            </span>
+            Vols directs uniquement
+        </label>
+
         <p v-if="localError" class="text-sm text-red-600">{{ localError }}</p>
+
+        <!-- Recherche en cours : ecran d'attente avec cartes fantomes (comme Skyscanner) -->
+        <Teleport to="body">
+            <div v-if="loading" class="fixed inset-0 z-[100] overflow-hidden bg-navy-50/95 backdrop-blur-sm">
+                <div class="h-1 w-full overflow-hidden bg-navy-100"><div class="h-full w-1/3 animate-[mk-progress_1.4s_ease-in-out_infinite] rounded-full bg-gold-500" /></div>
+                <div class="mx-auto max-w-3xl px-4 py-8">
+                    <p class="text-center text-lg font-bold text-navy-900">Recherche des meilleurs vols…</p>
+                    <p class="mb-6 text-center text-sm text-navy-500">Nous comparons les compagnies et les tarifs disponibles.</p>
+                    <div v-for="n in 3" :key="n" class="mb-4 animate-pulse rounded-2xl bg-white p-5 shadow-sm">
+                        <div v-for="m in 2" :key="m" class="flex items-center gap-4 py-2">
+                            <div class="h-10 w-10 rounded-lg bg-navy-100" />
+                            <div class="flex-1 space-y-2"><div class="h-3 w-1/3 rounded bg-navy-100" /><div class="h-3 w-1/5 rounded bg-navy-50" /></div>
+                            <div class="space-y-2"><div class="h-3 w-16 rounded bg-navy-100" /><div class="h-3 w-12 rounded bg-navy-50" /></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </form>
 </template>

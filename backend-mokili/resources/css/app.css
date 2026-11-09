@@ -106,3 +106,9 @@ html {
 .console-nav-link-active {
     @apply bg-blue-50 font-semibold text-[#0972D3];
 }
+
+/* Barre de progression de la recherche de vols */
+@keyframes mk-progress {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(300%); }
+}

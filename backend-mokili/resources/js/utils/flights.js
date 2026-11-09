@@ -53,6 +53,43 @@ export const routeLabel = (slices, city = (c) => c) => {
     return [...list.map((s) => city(s.origin)), city(list[list.length - 1].destination)].join(' → ');
 };
 
+// Date courte : "14 nov."
+export const shortDate = (iso) => {
+    if (!iso) return '';
+    const d = new Date(String(iso).slice(0, 10) + 'T12:00:00');
+    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+};
+
+// Minutes entre deux horaires locaux du meme aeroport (temps de connexion).
+export const minutesBetween = (from, to) => {
+    if (!from || !to) return 0;
+    const a = new Date(String(from).slice(0, 16) + ':00Z');
+    const b = new Date(String(to).slice(0, 16) + ':00Z');
+    return Math.max(0, Math.round((b - a) / 60000));
+};
+
+// Duree "1 h 05 min" / "45 min".
+export const durationLong = (minutes) => {
+    if (!minutes) return '';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return h ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`;
+};
+
+// Au-dela de 4 h d'attente, la connexion est signalee (comme Skyscanner).
+export const LONG_CONNECTION_MINUTES = 240;
+
+export const offerDuration = (offer) => (offer?.slices ?? []).reduce((t, s) => t + (Number(s.duration_minutes) || 0), 0);
+
+// Compagnies d'une offre : "Ethiopian Airlines" / "Ethiopian Airlines et 2 autres".
+export const airlinesLabel = (offer) => {
+    const names = [...new Set((offer?.slices ?? []).flatMap((s) => (s.segments ?? []).map((g) => g.airline_name)).filter(Boolean))];
+    if (!names.length) return offer?.airline_name ?? '';
+    if (names.length === 1) return names[0];
+    if (names.length === 2) return `${names[0]} et ${names[1]}`;
+    return `${names[0]} et ${names.length - 1} autres`;
+};
+
 export const PAX_LABELS = { ADT: 'Adulte', CHD: 'Enfant', INF: 'Bebe' };
 
 // Couleurs des statuts du dossier (machine a etats du cahier des charges).
