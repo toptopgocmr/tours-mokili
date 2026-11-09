@@ -16,6 +16,11 @@ class TravelOfferController extends Controller
     {
         $offers = TravelOffer::query()
             ->active()
+            ->where('type', '!=', 'sejour') // rubrique Sejours retiree
+            ->when($request->string('from')->isNotEmpty(), fn ($q) => $q->where('origin_city', 'like', '%'.$request->string('from').'%'))
+            ->when($request->date('date'), fn ($q) => $q->whereDate('departure_at', $request->date('date')))
+            ->when($request->integer('passengers') > 0, fn ($q) => $q->where('seats_available', '>=', $request->integer('passengers')))
+            ->when($request->string('type')->toString() === 'circuit', fn ($q) => $q->where(fn ($w) => $w->whereNull('departure_at')->orWhere('departure_at', '>=', now())))
             ->when($request->string('destination')->isNotEmpty(), fn ($q) => $q->where(
                 'destination_city', 'like', '%'.$request->string('destination').'%'
             ))

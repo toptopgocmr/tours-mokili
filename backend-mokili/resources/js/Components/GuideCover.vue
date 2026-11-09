@@ -1,7 +1,8 @@
 <script setup>
 // Visuel d'une fiche du Guide Congo : la photo si elle existe (upload ou
 // URL), sinon une illustration aux couleurs de la categorie.
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { airlineLogoUrl, airlinePhoto } from '@/utils/airlines';
 import {
     BuildingOffice2Icon,
     PaperAirplaneIcon,
@@ -43,11 +44,25 @@ const STYLES = {
 
 const style = STYLES[props.category] ?? { icon: BuildingStorefrontIcon, from: '#0B2A5B', to: '#D4A017' };
 const broken = ref(false);
+
+// Compagnies aeriennes sans photo : vraie photo de leur avion + logo.
+const isAirline = computed(() => props.category === 'compagnie_aerienne');
+const plane = computed(() => (isAirline.value ? airlinePhoto(props.alt) : null));
+const logo = computed(() => (isAirline.value ? airlineLogoUrl(props.alt) : null));
+const planeBroken = ref(false);
+const logoBroken = ref(false);
 </script>
 
 <template>
     <div class="relative h-full w-full overflow-hidden">
         <img v-if="src && !broken" :src="src" :alt="alt" class="h-full w-full object-cover" loading="lazy" @error="broken = true" />
+        <template v-else-if="plane && !planeBroken">
+            <img :src="plane.url" :alt="`Avion ${alt}`" class="h-full w-full object-cover" loading="lazy" @error="planeBroken = true" />
+            <span v-if="logo && !logoBroken" class="absolute bottom-2 left-2 flex h-8 max-w-[60%] items-center rounded-md bg-white/95 px-2 shadow">
+                <img :src="logo" :alt="`Logo ${alt}`" class="max-h-6 max-w-full object-contain" loading="lazy" @error="logoBroken = true" />
+            </span>
+            <span class="absolute bottom-0 right-0 max-w-[70%] truncate bg-black/40 px-1 text-[8px] leading-3 text-white/90" :title="plane.credit">{{ plane.credit }}</span>
+        </template>
         <div v-else class="flex h-full w-full items-center justify-center" :style="{ background: `linear-gradient(135deg, ${style.from}, ${style.to})` }">
             <component :is="style.icon" :class="[iconClass, 'text-white/85']" />
         </div>

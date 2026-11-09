@@ -16,11 +16,19 @@ class TravelOfferController extends Controller
 {
     public function index(Request $request): Response
     {
+        $isCircuit = $request->string('type')->toString() === 'circuit';
+
         $offers = TravelOffer::query()
             ->active()
+            ->where('type', '!=', 'sejour') // rubrique Sejours retiree
             ->when($request->string('destination')->isNotEmpty(), fn ($q) => $q->where(
                 'destination_city', 'like', '%'.$request->string('destination').'%'
             ))
+            // Trajets facon BlaBlaCar : depart, date, nombre de passagers.
+            ->when($request->string('from')->isNotEmpty(), fn ($q) => $q->where('origin_city', 'like', '%'.$request->string('from').'%'))
+            ->when($request->date('date'), fn ($q) => $q->whereDate('departure_at', $request->date('date')))
+            ->when($request->integer('passengers') > 0, fn ($q) => $q->where('seats_available', '>=', $request->integer('passengers')))
+            ->when($isCircuit, fn ($q) => $q->where(fn ($w) => $w->whereNull('departure_at')->orWhere('departure_at', '>=', now())))
             ->when($request->string('type')->isNotEmpty(), fn ($q) => $q->where('type', $request->string('type')))
             ->when($request->string('mode')->isNotEmpty(), fn ($q) => $q->where('transport_mode', $request->string('mode')))
             // Circuits : en ville, inter-departements, international + departement.
@@ -28,14 +36,15 @@ class TravelOfferController extends Controller
             ->when($request->string('departement')->isNotEmpty(), fn ($q) => $q->where(fn ($w) => $w
                 ->where('origin_department', $request->string('departement'))
                 ->orWhere('destination_department', $request->string('departement'))))
-            ->orderByDesc('is_featured')
+            ->when(! $isCircuit, fn ($q) => $q->orderByDesc('is_featured'))
+            ->orderByRaw('departure_at is null')
             ->orderBy('departure_at')
-            ->paginate(9)
+            ->paginate($isCircuit ? 20 : 9)
             ->withQueryString();
 
         return Inertia::render('Voyage/Index', [
             'offers' => $offers,
-            'filters' => (object) $request->only(['destination', 'type', 'mode', 'scope', 'departement']),
+            'filters' => (object) $request->only(['destination', 'type', 'mode', 'scope', 'departement', 'from', 'date', 'passengers']),
             'transportModes' => TravelOffer::TRANSPORT_MODES,
             'tripScopes' => config('catalogue.voyage.trip_scopes'),
             'departments' => config('catalogue.departments'),

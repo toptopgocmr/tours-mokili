@@ -247,7 +247,15 @@ class PaymentService
             $booking = $payment->booking;
 
             if ($booking && $result->status === GatewayResult::SUCCESS) {
+                $wasConfirmed = $booking->status === 'confirmed';
                 $booking->update(['status' => 'confirmed']);
+                // Trajets bus / train / taxi : les places payees sont retirees du trajet.
+                if (! $wasConfirmed && $booking->bookable_type === \App\Models\Voyage\TravelOffer::class) {
+                    $offer = \App\Models\Voyage\TravelOffer::query()->lockForUpdate()->find($booking->bookable_id);
+                    if ($offer && $offer->type === 'circuit') {
+                        $offer->update(['seats_available' => max(0, (int) $offer->seats_available - (int) $booking->quantity)]);
+                    }
+                }
                 app(FlightPaymentHooks::class)->paymentConfirmed($booking);
             } elseif ($booking && $result->status === GatewayResult::FAILED && $booking->status !== 'confirmed') {
                 $booking->update(['status' => 'awaiting_payment']);

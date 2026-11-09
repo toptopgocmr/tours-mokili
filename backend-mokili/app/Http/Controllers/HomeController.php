@@ -19,6 +19,7 @@ class HomeController extends Controller
             'categories' => ServiceCategory::query()->orderBy('position')->get(),
             'featuredOffers' => TravelOffer::query()
                 ->active()
+                ->where('type', '!=', 'sejour')
                 ->featured()
                 ->latest()
                 ->take(6)

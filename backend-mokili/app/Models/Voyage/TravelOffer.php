@@ -22,6 +22,7 @@ class TravelOffer extends Model
         'bateau' => 'Bateau',
         'canot' => 'Canot rapide / pirogue',
         'train' => 'Train',
+        'taxi' => 'Taxi interurbain',
         'voiture' => 'Voiture / 4x4',
         'combine' => 'Combine (plusieurs transports)',
     ];
@@ -29,7 +30,7 @@ class TravelOffer extends Model
     protected $fillable = [
         'title', 'slug', 'type', 'transport_mode', 'description', 'origin_city', 'origin_country',
         'departure_point', 'duration_label', 'trip_scope', 'origin_department', 'destination_department',
-        'destination_city', 'destination_country', 'airline', 'departure_at',
+        'destination_city', 'destination_country', 'airline', 'departure_at', 'arrival_at',
         'return_at', 'price', 'discount_percent', 'currency', 'seats_available',
         'image', 'is_featured', 'is_active',
     ];
@@ -42,6 +43,7 @@ class TravelOffer extends Model
     {
         return [
             'departure_at' => 'datetime',
+            'arrival_at' => 'datetime',
             'return_at' => 'datetime',
             'price' => 'decimal:2',
             'is_featured' => 'boolean',

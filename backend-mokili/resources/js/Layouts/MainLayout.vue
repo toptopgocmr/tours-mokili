@@ -23,7 +23,6 @@ const navLinks = [
     { href: '/', label: 'Accueil' },
     { href: '/#services', label: 'Services' },
     { href: '/voyage', label: 'Offres' },
-    { href: '/voyage?type=vol', label: 'Billets d\'avion' },
     { href: '/#apropos', label: 'À propos' },
     { href: '/#contact', label: 'Contact' },
 ];

@@ -23,8 +23,19 @@ class BookingController extends Controller
             return redirect('/voyage?type=vol')->with('error', 'Recherchez votre vol pour reserver votre billet.');
         }
 
-        $booking = DB::transaction(function () use ($request, $travelOffer) {
-            $quantity = $request->integer('quantity');
+        $quantity = $request->integer('quantity');
+        if ($travelOffer->type === 'circuit') {
+            if ($travelOffer->departure_at && $travelOffer->departure_at->isPast()) {
+                return back()->with('error', 'Ce trajet est deja parti.');
+            }
+            if ($quantity > (int) $travelOffer->seats_available) {
+                return back()->withErrors(['quantity' => $travelOffer->seats_available > 0
+                    ? 'Il ne reste que '.$travelOffer->seats_available.' place(s) sur ce trajet.'
+                    : 'Ce trajet est complet.']);
+            }
+        }
+
+        $booking = DB::transaction(function () use ($request, $travelOffer, $quantity) {
             $unitPrice = $travelOffer->discounted_price;
 
             return Booking::create([

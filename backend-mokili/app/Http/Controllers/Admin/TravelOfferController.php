@@ -92,6 +92,7 @@ class TravelOfferController extends Controller
             'destination_country' => ['required', 'string', 'size:2'],
             'airline' => ['nullable', 'string', 'max:255'],
             'departure_at' => ['nullable', 'date'],
+            'arrival_at' => ['nullable', 'date', 'after_or_equal:departure_at'],
             'return_at' => ['nullable', 'date', 'after_or_equal:departure_at'],
             'price' => ['required', 'numeric', 'min:0'],
             'discount_percent' => ['nullable', 'integer', 'min:0', 'max:90'],

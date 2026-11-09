@@ -30,6 +30,7 @@ const form = useForm({
     destination_country: props.offer?.destination_country ?? '',
     airline: props.offer?.airline ?? '',
     departure_at: props.offer?.departure_at?.slice(0, 16) ?? '',
+    arrival_at: props.offer?.arrival_at?.slice(0, 16) ?? '',
     return_at: props.offer?.return_at?.slice(0, 16) ?? '',
     price: props.offer?.price ?? '',
     discount_percent: props.offer?.discount_percent ?? 0,
@@ -88,8 +89,8 @@ const submit = () => {
             <label class="text-sm font-medium text-slate-700">Type</label>
             <select v-model="form.type" class="mt-1 w-full rounded border-slate-300">
                 <option value="vol">Vol</option>
-                <option value="sejour">Sejour</option>
-                <option value="circuit">Circuit (bus, bateau, train...)</option>
+                <option value="circuit">Circuit / trajet (bus, train, taxi...)</option>
+                <option v-if="form.type === 'sejour'" value="sejour">Sejour (ancien)</option>
             </select>
         </div>
         <div>
@@ -152,6 +153,11 @@ const submit = () => {
         <div>
             <label class="text-sm font-medium text-slate-700">Depart le</label>
             <input v-model="form.departure_at" type="datetime-local" class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div v-if="form.type === 'circuit'">
+            <label class="text-sm font-medium text-slate-700">Arrivee prevue le</label>
+            <input v-model="form.arrival_at" type="datetime-local" class="mt-1 w-full rounded border-slate-300" />
+            <p v-if="form.errors.arrival_at" class="mt-1 text-xs text-red-600">{{ form.errors.arrival_at }}</p>
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Retour le</label>
