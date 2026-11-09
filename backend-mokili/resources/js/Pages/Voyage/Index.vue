@@ -4,7 +4,7 @@ import PartnersSection from '@/Components/PartnersSection.vue';
 import DestinationImage from '@/Components/DestinationImage.vue';
 import FlightSearchForm from '@/Components/FlightSearchForm.vue';
 import RideCard from '@/Components/RideCard.vue';
-import { dayHeading, RIDE_MODES } from '@/utils/rides';
+import { dayHeading, RIDE_MODES, RIDE_PAGES, rideHour, rideMinutes, TIME_SLOTS } from '@/utils/rides';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
@@ -33,10 +33,41 @@ const today = new Date().toISOString().slice(0, 10);
 const isRides = computed(() => type.value === 'circuit');
 const swapCities = () => { [from.value, destination.value] = [destination.value, from.value]; };
 
+// Page du moyen choisi (titre, accroche, trajets populaires).
+const ridePage = computed(() => RIDE_PAGES[mode.value] ?? RIDE_PAGES['']);
+
+// Filtres et tri facon BlaBlaCar (sur les trajets affiches).
+const rideSort = ref('departure');
+const rideSlots = ref([]);
+const rideOperators = ref([]);
+const toggleIn = (list, v) => { const i = list.indexOf(v); i >= 0 ? list.splice(i, 1) : list.push(v); };
+const operators = computed(() => [...new Set(props.offers.data.map((o) => o.airline).filter(Boolean))].sort());
+const slotCount = (slot) => props.offers.data.filter((o) => slot.test(rideHour(o.departure_at))).length;
+const filteredRides = computed(() => {
+    const list = props.offers.data.filter((o) =>
+        (!rideSlots.value.length || TIME_SLOTS.some((t) => rideSlots.value.includes(t.key) && t.test(rideHour(o.departure_at))))
+        && (!rideOperators.value.length || rideOperators.value.includes(o.airline)));
+    const price = (o) => Number(o.discounted_price ?? o.price);
+    if (rideSort.value === 'price') return [...list].sort((a, b) => price(a) - price(b));
+    if (rideSort.value === 'duration') return [...list].sort((a, b) => rideMinutes(a) - rideMinutes(b));
+    return list;
+});
+const cheapest = computed(() => (props.offers.data.length ? Math.min(...props.offers.data.map((o) => Number(o.discounted_price ?? o.price))) : null));
+
+// Bandeau des 7 prochains jours.
+const nextDays = computed(() => Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const iso = d.toISOString().slice(0, 10);
+    return { iso, label: i === 0 ? "Aujourd'hui" : i === 1 ? 'Demain' : d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) };
+}));
+const pickDate = (iso) => { date.value = date.value === iso ? '' : iso; search(); };
+const pickRoute = ([a, b]) => { from.value = a; destination.value = b; search(); };
+
 // Trajets regroupes par jour (comme BlaBlaCar).
 const rideDays = computed(() => {
     const groups = [];
-    for (const o of props.offers.data) {
+    for (const o of filteredRides.value) {
         const key = o.departure_at ? new Date(o.departure_at).toISOString().slice(0, 10) : 'tbd';
         let g = groups.find((x) => x.key === key);
         if (!g) groups.push((g = { key, label: dayHeading(o.departure_at), items: [] }));
@@ -215,20 +246,107 @@ const cardSubtitle = (offer) => {
         </div>
 
         <!-- CIRCUITS : trajets du jour, facon BlaBlaCar -->
-        <div v-if="isRides" class="mx-auto max-w-3xl">
-            <p class="mb-4 text-sm text-navy-600">
-                <strong class="text-navy-900">{{ offers.total ?? offers.data.length }} trajet{{ (offers.total ?? offers.data.length) > 1 ? 's' : '' }}</strong>
-                <span v-if="from || destination"> · {{ from || 'Partout' }} → {{ destination || 'Partout' }}</span>
-                <span v-if="passengers > 1"> · {{ passengers }} passagers</span>
-            </p>
-            <section v-for="g in rideDays" :key="g.key" class="mb-6">
-                <h3 class="mb-3 text-lg font-extrabold text-navy-900">{{ g.label }}</h3>
-                <div class="space-y-3">
-                    <RideCard v-for="o in g.items" :key="o.id" :offer="o" :passengers="passengers" />
+        <div v-if="isRides" class="mx-auto max-w-6xl">
+            <!-- En-tete du moyen de transport -->
+            <div class="mb-5">
+                <h2 class="text-2xl font-extrabold text-navy-900 sm:text-3xl">{{ ridePage.title }}</h2>
+                <p class="mt-1 text-navy-600">{{ ridePage.subtitle }}</p>
+            </div>
+
+            <!-- 7 prochains jours -->
+            <div class="mb-6 flex gap-2 overflow-x-auto pb-1">
+                <button
+                    v-for="d in nextDays"
+                    :key="d.iso"
+                    type="button"
+                    class="shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition"
+                    :class="date === d.iso ? 'border-sky-500 bg-sky-500 text-white' : 'border-gray-200 bg-white text-navy-800 hover:border-sky-400'"
+                    @click="pickDate(d.iso)"
+                >
+                    {{ d.label }}
+                </button>
+            </div>
+
+            <div v-if="offers.data.length" class="grid gap-8 lg:grid-cols-[260px_1fr]">
+                <!-- Filtres -->
+                <aside class="space-y-6 text-sm">
+                    <div>
+                        <p class="mb-2 text-base font-extrabold text-navy-900">Trier par</p>
+                        <label v-for="o in [['departure', 'Depart le plus tot', '🕒'], ['price', 'Prix le plus bas', '💰'], ['duration', 'Trajet le plus court', '⏱️']]" :key="o[0]" class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 hover:bg-navy-50">
+                            <span class="flex items-center gap-2 font-medium text-navy-900"><span>{{ o[2] }}</span>{{ o[1] }}</span>
+                            <input v-model="rideSort" type="radio" :value="o[0]" class="text-sky-500 focus:ring-sky-500" />
+                        </label>
+                    </div>
+                    <div class="border-t pt-5">
+                        <p class="mb-2 text-base font-extrabold text-navy-900">Heure de depart</p>
+                        <label v-for="t in TIME_SLOTS" :key="t.key" class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 hover:bg-navy-50" :class="!slotCount(t) && 'opacity-40'">
+                            <span class="font-medium text-navy-900">{{ t.label }}</span>
+                            <span class="flex items-center gap-2 text-xs text-navy-500">{{ slotCount(t) }}
+                                <input type="checkbox" class="rounded text-sky-500 focus:ring-sky-500" :checked="rideSlots.includes(t.key)" :disabled="!slotCount(t)" @change="toggleIn(rideSlots, t.key)" />
+                            </span>
+                        </label>
+                    </div>
+                    <div v-if="operators.length > 1" class="border-t pt-5">
+                        <p class="mb-2 text-base font-extrabold text-navy-900">Transporteurs</p>
+                        <label v-for="op in operators" :key="op" class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 hover:bg-navy-50">
+                            <span class="font-medium text-navy-900">{{ op }}</span>
+                            <input type="checkbox" class="rounded text-sky-500 focus:ring-sky-500" :checked="rideOperators.includes(op)" @change="toggleIn(rideOperators, op)" />
+                        </label>
+                    </div>
+                    <button v-if="rideSlots.length || rideOperators.length" type="button" class="text-sm font-semibold text-sky-600 hover:underline" @click="rideSlots = []; rideOperators = []">Effacer les filtres</button>
+                </aside>
+
+                <!-- Trajets -->
+                <div>
+                    <p class="mb-4 text-sm text-navy-600">
+                        <strong class="text-navy-900">{{ filteredRides.length }} trajet{{ filteredRides.length > 1 ? 's' : '' }} disponible{{ filteredRides.length > 1 ? 's' : '' }}</strong>
+                        <span v-if="from || destination"> · {{ from || 'Partout' }} → {{ destination || 'Partout' }}</span>
+                        <span v-if="cheapest != null"> · a partir de {{ cheapest.toLocaleString('fr-FR') }} XAF</span>
+                    </p>
+                    <section v-for="g in rideDays" :key="g.key" class="mb-6">
+                        <h3 class="mb-3 text-lg font-extrabold text-navy-900">{{ g.label }}</h3>
+                        <div class="space-y-3">
+                            <RideCard v-for="o in g.items" :key="o.id" :offer="o" :passengers="passengers" />
+                        </div>
+                    </section>
+                    <p v-if="!filteredRides.length" class="rounded-2xl bg-navy-50/60 p-6 text-center text-navy-700">Aucun trajet ne correspond a ces filtres.</p>
+                    <div v-if="offers.next_page_url" class="text-center">
+                        <Link :href="offers.next_page_url" preserve-scroll class="inline-block rounded-full border border-navy-200 px-6 py-2 text-sm font-semibold text-navy-900 hover:bg-navy-50">Plus de trajets</Link>
+                    </div>
                 </div>
-            </section>
-            <div v-if="offers.next_page_url" class="text-center">
-                <Link :href="offers.next_page_url" preserve-scroll class="inline-block rounded-full border border-navy-200 px-6 py-2 text-sm font-semibold text-navy-900 hover:bg-navy-50">Plus de trajets</Link>
+            </div>
+
+            <!-- Aucun trajet : message + idees -->
+            <div v-else class="rounded-3xl bg-sky-50 p-8 text-center">
+                <p class="text-4xl">{{ RIDE_MODES.find((m) => m.value === mode)?.icon ?? '🧭' }}</p>
+                <p class="mt-2 text-xl font-extrabold text-navy-900">Aucun trajet disponible pour cette recherche</p>
+                <p class="mt-1 text-navy-600">Essayez un autre jour ou l'un des trajets populaires ci-dessous. De nouveaux departs sont ajoutes chaque jour par nos transporteurs.</p>
+            </div>
+
+            <!-- Trajets populaires -->
+            <div class="mt-10">
+                <h3 class="mb-4 text-xl font-extrabold text-navy-900">Trajets populaires</h3>
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <button
+                        v-for="r in ridePage.routes"
+                        :key="r.join('-')"
+                        type="button"
+                        class="flex items-center justify-between rounded-2xl bg-white px-5 py-4 text-left shadow-[0_1px_6px_rgba(5,15,33,0.12)] transition hover:shadow-[0_4px_14px_rgba(5,15,33,0.18)]"
+                        @click="pickRoute(r)"
+                    >
+                        <span class="font-bold text-navy-900">{{ r[0] }} <span class="text-sky-500">→</span> {{ r[1] }}</span>
+                        <span class="text-xl text-navy-400">›</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Comment ca marche -->
+            <div class="mt-10 grid gap-4 sm:grid-cols-3">
+                <div v-for="(st, i) in [['🔎', 'Cherchez', 'Choisissez le depart, la destination, la date et le nombre de passagers.'], ['🎫', 'Reservez', 'Comparez les horaires et les prix, puis choisissez votre trajet.'], ['📱', 'Payez et partez', 'Payez par Mobile Money : votre place est confirmee aussitot.']]" :key="i" class="rounded-2xl bg-white p-5 shadow-[0_1px_6px_rgba(5,15,33,0.12)]">
+                    <p class="text-3xl">{{ st[0] }}</p>
+                    <p class="mt-2 font-extrabold text-navy-900">{{ i + 1 }}. {{ st[1] }}</p>
+                    <p class="mt-1 text-sm text-navy-600">{{ st[2] }}</p>
+                </div>
             </div>
         </div>
 
@@ -261,7 +379,7 @@ const cardSubtitle = (offer) => {
             </Link>
         </div>
 
-        <div v-if="!offers.data.length" class="mx-auto mt-6 max-w-xl rounded-2xl bg-navy-50/60 p-8 text-center">
+        <div v-if="!offers.data.length && !isRides" class="mx-auto mt-6 max-w-xl rounded-2xl bg-navy-50/60 p-8 text-center">
             <p class="text-lg font-bold text-navy-900">{{ isRides ? 'Aucun trajet pour cette recherche' : 'Aucune offre pour le moment.' }}</p>
             <p v-if="isRides" class="mt-1 text-sm text-navy-600">Essayez une autre date ou un autre moyen de transport, ou contactez nos transporteurs partenaires ci-dessous.</p>
         </div>
@@ -272,6 +390,14 @@ const cardSubtitle = (offer) => {
             only="compagnie_aerienne"
             title="Compagnies aeriennes"
             subtitle="Les compagnies partenaires de notre billetterie."
+        />
+        <PartnersSection
+            v-else-if="isRides"
+            :key="`rides-${mode}`"
+            module="voyage"
+            title="Nos transporteurs"
+            :subtitle="partnersSubtitle"
+            :only="{ bus: 'transport_routier', canot: 'canot_rapide', train: 'transport_ferroviaire', taxi: 'taxi_vtc' }[mode] ?? 'transport_routier,transport_ferroviaire,canot_rapide,taxi_vtc'"
         />
         <PartnersSection v-else :key="mode" module="voyage" title="Compagnies & transport" :subtitle="partnersSubtitle" :category="{ bus: 'transport_routier', bateau: 'canot_rapide', canot: 'canot_rapide', train: 'transport_ferroviaire', taxi: 'taxi_vtc', avion: 'compagnie_aerienne' }[mode] ?? ''" />
     </div>
