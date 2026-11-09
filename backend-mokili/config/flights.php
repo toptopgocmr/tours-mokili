@@ -17,6 +17,24 @@ return [
     'drivers' => [
         'manual' => App\Services\Flights\Suppliers\ManualFareSupplier::class,
         'sandbox' => App\Services\Flights\Suppliers\SandboxSupplier::class,
+        'galileo' => App\Services\Flights\Suppliers\GalileoSupplier::class,
+    ],
+
+    // Travelport GALILEO (1G) via Universal API. Identifiants fournis par
+    // Travelport a l'agence (pas le mot de passe du terminal) : a mettre dans
+    // les variables Railway. Tant qu'ils sont vides, Galileo est ignore.
+    //   Pre-production : https://emea.universal-api.pp.travelport.com/B2BGateway/connect/uAPI/AirService
+    //   Production     : https://emea.universal-api.travelport.com/B2BGateway/connect/uAPI/AirService
+    'galileo' => [
+        'endpoint' => env('GALILEO_ENDPOINT', 'https://emea.universal-api.pp.travelport.com/B2BGateway/connect/uAPI/AirService'),
+        'username' => env('GALILEO_USERNAME'),      // ex. Universal API/uAPI1234567890-abcd1234
+        'password' => env('GALILEO_PASSWORD'),
+        'target_branch' => env('GALILEO_TARGET_BRANCH'), // ex. P7012345
+        'pcc' => env('GALILEO_PCC'),
+        'air_schema' => env('GALILEO_AIR_SCHEMA', 'air_v52_0'),
+        'currency' => env('GALILEO_CURRENCY', 'XAF'),
+        'max_solutions' => (int) env('GALILEO_MAX_SOLUTIONS', 50),
+        'timeout' => (int) env('GALILEO_TIMEOUT', 45),
     ],
 
     // Fournisseur de test (PNR / billets fictifs). Jamais en production.

@@ -90,6 +90,27 @@ export const airlinesLabel = (offer) => {
     return `${names[0]} et ${names.length - 1} autres`;
 };
 
+// Aeroports d'escale d'un trajet : ["PNR", "ADD"].
+export const stopCodes = (slice) => {
+    if (Array.isArray(slice?.stop_airports) && slice.stop_airports.length) return slice.stop_airports;
+    const segs = slice?.segments ?? [];
+    if (segs.length > 1) return segs.slice(0, -1).map((g) => g.destination);
+    return slice?.stops && slice?.via ? [slice.via] : [];
+};
+
+// Nombre max d'escales d'une offre (tous trajets confondus).
+export const offerStops = (offer) => Math.max(0, ...(offer?.slices ?? []).map((s) => Number(s.stops) || 0));
+
+// Score "Les meilleurs" : equilibre prix / duree / escales (meme formule que le serveur).
+export const bestSort = (offers) => {
+    if (!offers.length) return [];
+    const minPrice = Math.max(1, Math.min(...offers.map((o) => Number(o.total_amount))));
+    const minDur = Math.max(1, Math.min(...offers.map((o) => offerDuration(o))));
+    const score = (o) => Number(o.total_amount) / minPrice + 0.7 * offerDuration(o) / minDur
+        + 0.05 * (o.slices ?? []).reduce((t, s) => t + (Number(s.stops) || 0), 0);
+    return [...offers].sort((a, b) => score(a) - score(b));
+};
+
 export const PAX_LABELS = { ADT: 'Adulte', CHD: 'Enfant', INF: 'Bebe' };
 
 // Couleurs des statuts du dossier (machine a etats du cahier des charges).

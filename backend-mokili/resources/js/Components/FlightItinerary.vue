@@ -98,7 +98,7 @@ const legs = (s) =>
                         <div class="flex items-center justify-between gap-3 border-b px-4 py-3">
                             <div>
                                 <p class="font-semibold text-navy-900">{{ l.seg.airline_name ?? offer.airline_name }}</p>
-                                <p class="text-xs text-navy-500">{{ l.seg.flight_number }}</p>
+                                <p class="text-xs text-navy-500">{{ l.seg.flight_number }}<span v-if="l.seg.operated_by"> · Opere par {{ l.seg.operated_by }}</span></p>
                             </div>
                             <AirlineLogo :code="l.seg.airline_code ?? offer.validating_airline" />
                         </div>
@@ -108,8 +108,10 @@ const legs = (s) =>
                             <span class="absolute bottom-[1.1rem] left-4 h-2 w-2 rounded-full bg-navy-900" />
                             <p class="text-sm"><strong>{{ hhmm(l.seg.departure_at) }}</strong> {{ city(l.seg.origin) }} <span class="text-xs text-navy-400">({{ l.seg.origin }})</span></p>
                             <p class="my-2 border-y border-dashed py-2 text-xs text-navy-500">
-                                <template v-if="(s.segments ?? []).length === 1 && s.duration_minutes">🕓 {{ durationLong(s.duration_minutes) }}</template>
+                                <template v-if="l.seg.duration_minutes">🕓 {{ durationLong(l.seg.duration_minutes) }}</template>
+                                <template v-else-if="(s.segments ?? []).length === 1 && s.duration_minutes">🕓 {{ durationLong(s.duration_minutes) }}</template>
                                 <template v-else>✈ Vol {{ l.seg.flight_number }}</template>
+                                <span v-if="l.seg.aircraft" class="ml-2">· Appareil {{ l.seg.aircraft }}</span>
                                 <span v-if="l.seg.cabin || search.cabin" class="ml-2">· {{ cabins[l.seg.cabin ?? search.cabin] ?? '' }}</span>
                                 <span v-if="(s.segments ?? []).length === 1 && s.stops && s.via" class="ml-2">· escale a {{ city(s.via) }}</span>
                             </p>

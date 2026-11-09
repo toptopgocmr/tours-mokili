@@ -27,6 +27,9 @@ class FlightSupplierManager
         if ($s->driver === 'sandbox') {
             return (bool) config('flights.sandbox_enabled');
         }
+        if ($s->driver === 'galileo' && ! \App\Services\Flights\Suppliers\GalileoSupplier::configured()) {
+            return false; // identifiants Travelport absents : on ne l'interroge pas
+        }
 
         return $s->is_active;
     }

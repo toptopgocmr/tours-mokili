@@ -60,14 +60,14 @@ class FlightController extends Controller
         // "Vols directs uniquement" : les resultats s'ouvrent filtres sur 0 escale.
         return redirect()->route('voyage.vols.results', array_filter([
             'uuid' => $search->uuid,
-            'stops' => $request->boolean('direct_only') ? '0' : null,
+            'direct' => $request->boolean('direct_only') ? '1' : null,
         ], fn ($v) => $v !== null));
     }
 
     public function results(Request $request, string $uuid): Response
     {
         $search = FlightSearch::where('uuid', $uuid)->firstOrFail();
-        $filters = $request->only('stops', 'airline', 'sort');
+        $filters = $request->only('stops', 'airline', 'sort', 'direct');
         $offers = $this->searchService->offersFor($search, $filters);
 
         return Inertia::render('Voyage/Vols/Results', [

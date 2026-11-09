@@ -213,11 +213,14 @@ class FlightTicketingTest extends TestCase
 
         $this->get('/voyage/vols/recherche?'.http_build_query($this->searchParams(['direct_only' => 1])))
             ->assertRedirect()
-            ->assertRedirectContains('stops=0');
+            ->assertRedirectContains('direct=1');
         $search = FlightSearch::latest('id')->firstOrFail();
 
+        // Filtre "Direct" coche cote page, toutes les offres restent disponibles pour les compteurs.
+        $this->get("/voyage/vols/resultats/{$search->uuid}?direct=1")->assertOk()
+            ->assertInertia(fn ($page) => $page->has('offers', 2)->where('filters.direct', '1')->where('totalCount', 2));
         $this->get("/voyage/vols/resultats/{$search->uuid}?stops=0")->assertOk()
-            ->assertInertia(fn ($page) => $page->has('offers', 1)->where('offers.0.validating_airline', 'AF')->where('totalCount', 2));
+            ->assertInertia(fn ($page) => $page->has('offers', 1)->where('offers.0.validating_airline', 'AF'));
 
         // Les moins chers / les plus rapides
         $this->get("/voyage/vols/resultats/{$search->uuid}?sort=price")
