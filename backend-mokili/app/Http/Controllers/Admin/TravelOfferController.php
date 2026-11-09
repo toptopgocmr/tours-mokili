@@ -43,9 +43,12 @@ class TravelOfferController extends Controller
         $data = $this->validated($request);
         $data['image'] = $this->resolveImagePath($request, null, 'voyage');
 
-        TravelOffer::create($data);
+        $first = TravelOffer::create($data);
+        $copies = $this->repeatTrip($request, $first);
 
-        return redirect()->route('admin.voyage.index')->with('success', 'Offre creee avec succes.');
+        return redirect()->route('admin.voyage.index')->with('success', $copies
+            ? 'Trajet cree pour '.($copies + 1).' departs.'
+            : 'Offre creee avec succes.');
     }
 
     public function edit(TravelOffer $travelOffer): Response
@@ -68,6 +71,38 @@ class TravelOfferController extends Controller
         $travelOffer->delete();
 
         return back()->with('success', 'Offre supprimee.');
+    }
+
+    /**
+     * Trajets reguliers (bus, train, taxi) : recree le trajet aux jours de la
+     * semaine choisis jusqu'a la date indiquee, aux memes heures.
+     */
+    protected function repeatTrip(Request $request, TravelOffer $first): int
+    {
+        if ($first->type !== 'circuit' || ! $first->departure_at || ! $request->filled('repeat_until')) {
+            return 0;
+        }
+        $rules = $request->validate([
+            'repeat_until' => ['date', 'after:departure_at', 'before:+181 days'],
+            'repeat_days' => ['required', 'array', 'min:1'],
+            'repeat_days.*' => ['integer', 'between:1,7'],
+        ]);
+        $days = array_map('intval', $rules['repeat_days']);
+        $until = \Carbon\Carbon::parse($rules['repeat_until'])->endOfDay();
+        $count = 0;
+        for ($d = $first->departure_at->copy()->addDay(); $d->lte($until) && $count < 180; $d->addDay()) {
+            if (! in_array($d->isoWeekday(), $days, true)) {
+                continue;
+            }
+            $offset = (int) $first->departure_at->copy()->startOfDay()->diffInDays($d->copy()->startOfDay());
+            $copy = $first->replicate(['slug']);
+            $copy->departure_at = $first->departure_at->copy()->addDays($offset);
+            $copy->arrival_at = $first->arrival_at?->copy()->addDays($offset);
+            $copy->save();
+            $count++;
+        }
+
+        return $count;
     }
 
     protected function validated(Request $request): array

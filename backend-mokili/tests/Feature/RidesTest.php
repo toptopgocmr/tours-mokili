@@ -73,4 +73,26 @@ class RidesTest extends TestCase
             ->assertSessionHas('error');
         $this->assertSame(0, Booking::count());
     }
+
+    public function test_admin_can_create_a_regular_trip_on_chosen_weekdays(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-09 10:00')); // lundi
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->post('/admin/voyage', [
+            'title' => 'Ocean du Nord Brazzaville - Pointe-Noire', 'type' => 'circuit', 'transport_mode' => 'bus',
+            'origin_city' => 'Brazzaville', 'destination_city' => 'Pointe-Noire', 'destination_country' => 'CG',
+            'departure_at' => '2026-11-10T06:30', 'arrival_at' => '2026-11-10T15:00', // mardi
+            'price' => 15000, 'currency' => 'XAF', 'seats_available' => 50, 'is_active' => true,
+            'repeat_days' => [2, 5], 'repeat_until' => '2026-11-24', // mardis et vendredis
+        ])->assertRedirect('/admin/voyage');
+
+        $trips = TravelOffer::orderBy('departure_at')->get();
+        $this->assertSame(
+            ['2026-11-10 06:30', '2026-11-13 06:30', '2026-11-17 06:30', '2026-11-20 06:30', '2026-11-24 06:30'],
+            $trips->map(fn ($t) => $t->departure_at->format('Y-m-d H:i'))->all(),
+        );
+        $this->assertSame('2026-11-24 15:00', $trips->last()->arrival_at->format('Y-m-d H:i'));
+        $this->assertCount(5, $trips->pluck('slug')->unique());
+    }
 }

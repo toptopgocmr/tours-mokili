@@ -40,7 +40,15 @@ const form = useForm({
     is_active: props.offer?.is_active ?? true,
     image: null,
     remove_image: false,
+    // Trajets reguliers : recreer ce trajet certains jours jusqu'a une date.
+    repeat_days: [],
+    repeat_until: '',
 });
+const WEEKDAYS = [[1, 'Lun'], [2, 'Mar'], [3, 'Mer'], [4, 'Jeu'], [5, 'Ven'], [6, 'Sam'], [7, 'Dim']];
+const toggleDay = (d) => {
+    const i = form.repeat_days.indexOf(d);
+    i >= 0 ? form.repeat_days.splice(i, 1) : form.repeat_days.push(d);
+};
 
 const imagePreview = ref(props.offer?.image_url ?? null);
 const onImageChange = (e) => {
@@ -158,6 +166,25 @@ const submit = () => {
             <label class="text-sm font-medium text-slate-700">Arrivee prevue le</label>
             <input v-model="form.arrival_at" type="datetime-local" class="mt-1 w-full rounded border-slate-300" />
             <p v-if="form.errors.arrival_at" class="mt-1 text-xs text-red-600">{{ form.errors.arrival_at }}</p>
+        </div>
+        <div v-if="form.type === 'circuit' && !isEdit" class="rounded border border-sky-200 bg-sky-50 p-3 sm:col-span-2">
+            <p class="text-sm font-semibold text-slate-800">Trajet regulier (optionnel)</p>
+            <p class="text-xs text-slate-600">Recree automatiquement ce trajet, aux memes heures, les jours coches jusqu'a la date choisie (6 mois max).</p>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+                <button
+                    v-for="[d, l] in WEEKDAYS"
+                    :key="d"
+                    type="button"
+                    class="rounded-full border px-3 py-1 text-xs font-semibold"
+                    :class="form.repeat_days.includes(d) ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white text-slate-700'"
+                    @click="toggleDay(d)"
+                >
+                    {{ l }}
+                </button>
+                <label class="ml-2 text-xs text-slate-700">jusqu'au</label>
+                <input v-model="form.repeat_until" type="date" class="rounded border-slate-300 text-sm" />
+            </div>
+            <p v-if="form.errors.repeat_until || form.errors.repeat_days" class="mt-1 text-xs text-red-600">{{ form.errors.repeat_until || form.errors.repeat_days }}</p>
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Retour le</label>
