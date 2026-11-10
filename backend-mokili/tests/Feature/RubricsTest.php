@@ -73,14 +73,14 @@ class RubricsTest extends TestCase
         $event('Avant-premiere', 'cinema');
         $event('Match', 'sport');
         Business::create(['name' => 'Le Diplomate', 'category' => 'night_club', 'city' => 'Brazzaville']);
-        Business::create(['name' => 'Basilique Sainte-Anne', 'category' => 'site_touristique', 'city' => 'Brazzaville']);
+        Business::create(['name' => 'Rapides du Djoue (test)', 'category' => 'site_touristique', 'city' => 'Brazzaville']);
 
         $expected = fn (array $cats) => Event::query()->active()->where('starts_at', '>=', now()->subHours(6))->whereIn('category', $cats)->count();
         $this->get('/divertissement?tab=concerts')->assertOk()->assertInertia(fn ($p) => $p->where('cards.total', $expected(['concert', 'spectacle']))
             ->where('cards.data', fn ($items) => collect($items)->every(fn ($e) => $e['tab'] === 'concerts')));
         $this->get('/divertissement?tab=cinema')->assertOk()->assertInertia(fn ($p) => $p->where('cards.total', $expected(['cinema'])));
         $this->get('/divertissement?tab=night_club')->assertOk()->assertInertia(fn ($p) => $p->where('cards.data', fn ($d) => collect($d)->contains('title', 'Le Diplomate')));
-        $this->get('/divertissement?tab=visite&q=basilique')->assertOk()->assertInertia(fn ($p) => $p->where('cards.total', 1)->where('cards.data.0.price', 'Gratuit'));
+        $this->get('/divertissement?tab=visite&q=djoue')->assertOk()->assertInertia(fn ($p) => $p->where('cards.total', 1)->where('cards.data.0.price', 'Gratuit'));
         // TOUT affiche toutes les sorties : la somme des onglets.
         $this->get('/divertissement')->assertOk()->assertInertia(fn ($p) => $p->where('cards.total', fn ($t) => $t >= 4)
             ->where('counts', fn ($c) => collect($c)->sum() === collect($c)->sum() && ($c['concerts'] ?? 0) >= 2 && ($c['visite'] ?? 0) >= 1));

@@ -22,6 +22,8 @@ use App\Http\Controllers\Fret\BookingController as FretBookingController;
 use App\Http\Controllers\Fret\FreightOfferController;
 use App\Http\Controllers\Fret\ShipmentController;
 use App\Http\Controllers\Guide\BusinessController;
+use App\Http\Controllers\Guide\VisitRequestController;
+use App\Http\Controllers\Admin\VisitRequestController as AdminVisitRequestController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Logement\BookingController as LogementBookingController;
 use App\Http\Controllers\Logement\LodgingListingController;
@@ -155,6 +157,7 @@ Route::prefix('loisirs')->name('loisirs.')->group(function () {
 // --- Fiche d'une societe partenaire (hotel, compagnie, taxi, restaurant...),
 // listee dans la rubrique de son activite (Logement, Voyage, Voiture...) ---
 Route::get('/partenaires/{business:slug}', [BusinessController::class, 'show'])->name('partners.show');
+Route::post('/partenaires/{business:slug}/visite', [VisitRequestController::class, 'store'])->middleware('throttle:10,1')->name('partners.visit');
 
 // --- MARKETPLACE : petites annonces achat / vente (Leboncoin, Facebook Marketplace) ---
 Route::prefix('marketplace')->name('marketplace.')->group(function () {
@@ -280,6 +283,8 @@ Route::middleware(['auth', 'role:admin,agent'])->prefix('admin')->name('admin.')
     Route::post('/paiements/{payment}/echec', [AdminPaymentController::class, 'markFailed'])->name('payments.mark-failed');
 
     // Decaissements Mobile Money (PAY-OUT) et reglages des passerelles.
+    Route::get('/visites', [AdminVisitRequestController::class, 'index'])->name('visits.index');
+    Route::patch('/visites/{visit}', [AdminVisitRequestController::class, 'update'])->name('visits.update');
     Route::get('/decaissements', [AdminPayoutController::class, 'index'])->name('payouts.index');
     Route::post('/decaissements', [AdminPayoutController::class, 'store'])->name('payouts.store');
     Route::post('/decaissements/{payout}/verifier', [AdminPayoutController::class, 'refresh'])->name('payouts.refresh');

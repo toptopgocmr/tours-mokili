@@ -33,6 +33,7 @@ const links = [
     { href: '/admin/vols/tarifs', label: 'Tarifs vols', icon: TableCellsIcon },
     { href: '/admin/loisirs', label: 'Parcs (Tourisme)', icon: SparklesIcon },
     { href: '/admin/partenaires', label: 'Societes partenaires', icon: BuildingStorefrontIcon },
+    { href: '/admin/visites', label: 'Demandes de visite', icon: CalendarDaysIcon },
     { href: '/admin/reservations', label: 'Reservations', icon: CalendarDaysIcon },
     { href: '/admin/paiements', label: 'Paiements (collecte)', icon: CreditCardIcon },
     { href: '/admin/decaissements', label: 'Decaissements', icon: BanknotesIcon },

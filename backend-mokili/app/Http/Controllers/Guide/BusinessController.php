@@ -19,9 +19,12 @@ class BusinessController extends Controller
             'similar' => Business::query()->active()
                 ->where('category', $business->category)
                 ->where('id', '!=', $business->id)
+                ->orderByRaw('city = ? desc', [$business->city])
+                ->orderByDesc('is_featured')
                 ->inRandomOrder()
                 ->limit(4)
                 ->get(),
+            'formulas' => \App\Models\Guide\VisitRequest::FORMULAS,
         ]);
     }
 }
