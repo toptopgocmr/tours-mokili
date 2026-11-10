@@ -313,7 +313,8 @@ const submit = () => {
                 </button>
             </div>
         </div>
-        <!-- Vols directs uniquement -->
+        <!-- Vols directs uniquement + lien optionnel a droite (slot "extra") -->
+        <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <label class="inline-flex cursor-pointer select-none items-center gap-3 text-sm font-semibold text-navy-900">
             <input v-model="form.direct_only" type="checkbox" class="peer sr-only" />
             <span class="relative inline-flex h-6 w-11 items-center rounded-full border-2 transition" :class="form.direct_only ? 'border-navy-900 bg-navy-900' : 'border-navy-300 bg-white'">
@@ -321,6 +322,8 @@ const submit = () => {
             </span>
             Vols directs uniquement
         </label>
+        <slot name="extra" />
+        </div>
 
         <p v-if="localError" class="text-sm text-red-600">{{ localError }}</p>
 

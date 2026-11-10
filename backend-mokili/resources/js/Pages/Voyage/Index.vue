@@ -224,10 +224,23 @@ const cardSubtitle = (offer) => {
             </div>
             <!-- VOLS : moteur de billetterie aerienne -->
             <div v-if="type === 'vol'" class="mt-3">
-                <FlightSearchForm :cabins="cabins" :suggestions="popularAirports" />
-                <Link href="/voyage/vols/horaires" class="mt-3 inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-navy-900 shadow hover:bg-gold-50">
-                    🕓 Programme des vols : departs et arrivees en direct →
-                </Link>
+                <FlightSearchForm :cabins="cabins" :suggestions="popularAirports">
+                    <template #extra>
+                        <Link
+                            href="/voyage/vols/horaires"
+                            class="group inline-flex items-center gap-3 rounded-xl border border-navy-100 px-3 py-2 transition hover:border-navy-300 hover:bg-navy-50/60"
+                        >
+                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-900 text-gold-400">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                            </span>
+                            <span class="leading-tight">
+                                <span class="block text-sm font-semibold text-navy-900">Programme des vols</span>
+                                <span class="block text-xs text-navy-500">Departs et arrivees en temps reel</span>
+                            </span>
+                            <svg class="h-4 w-4 text-navy-400 transition group-hover:translate-x-0.5 group-hover:text-navy-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg>
+                        </Link>
+                    </template>
+                </FlightSearchForm>
             </div>
             <!-- CIRCUITS : recherche de trajet facon BlaBlaCar -->
             <form v-else-if="isRides" class="mt-3 space-y-3" @submit.prevent="search">
