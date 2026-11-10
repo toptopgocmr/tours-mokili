@@ -60,6 +60,18 @@ class RidesTest extends TestCase
 
         $this->get('/voyage?type=circuit&from=Brazzaville&date='.$d->toDateString())->assertInertia(fn ($p) => $p->has('offers.data', 2)->has('returnOffers', 0));
         $this->assertNotNull($early);
+
+        // Meme recherche depuis l'application mobile (API).
+        $this->getJson('/api/voyage/offers?type=circuit&from=Brazzaville&destination=Pointe-Noire&date='.$d->toDateString().'&time=16&return_date='.now()->addDays(6)->toDateString())
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $late->id)
+            ->assertJsonCount(1, 'return_offers')->assertJsonPath('return_offers.0.id', $back->id);
+        $this->getJson('/api/voyage/offers?type=circuit')->assertJsonMissing(['transport_mode' => 'avion']);
+
+        // Reservation depuis l'application : places limitees, message au transporteur.
+        \Laravel\Sanctum\Sanctum::actingAs(\App\Models\User::factory()->create(['role' => 'client']));
+        $this->postJson("/api/voyage/offers/{$late->slug}/book", ['quantity' => 9])->assertStatus(422);
+        $this->postJson("/api/voyage/offers/{$late->slug}/book", ['quantity' => 2, 'notes' => 'Deux valises'])->assertCreated()
+            ->assertJsonPath('notes', 'Deux valises')->assertJsonPath('total_amount', fn ($v) => (float) $v === 30000.0);
     }
 
     public function test_booking_is_limited_to_remaining_seats_and_payment_takes_the_seats(): void

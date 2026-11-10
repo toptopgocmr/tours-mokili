@@ -25,6 +25,17 @@ class BookingController extends Controller
         }
 
         $quantity = $request->integer('quantity');
+        // Trajets (train, bus, canot, taxi) : memes regles que le site.
+        if ($travelOffer->type === 'circuit') {
+            if ($travelOffer->departure_at && $travelOffer->departure_at->isPast()) {
+                return response()->json(['message' => 'Ce trajet est deja parti.'], 422);
+            }
+            if ($quantity > (int) $travelOffer->seats_available) {
+                return response()->json(['message' => $travelOffer->seats_available > 0
+                    ? 'Il ne reste que '.$travelOffer->seats_available.' place(s) sur ce trajet.'
+                    : 'Ce trajet est complet.', 'errors' => ['quantity' => ['Places insuffisantes.']]], 422);
+            }
+        }
         $unitPrice = $travelOffer->discounted_price;
 
         $booking = Booking::create([
@@ -38,6 +49,8 @@ class BookingController extends Controller
             'starts_at' => $travelOffer->departure_at,
             'ends_at' => $travelOffer->return_at,
             'status' => 'awaiting_payment',
+            'meta' => ['destination' => $travelOffer->destination_city, 'type' => $travelOffer->type],
+            'notes' => $request->string('notes'),
         ]);
 
         return response()->json($booking, 201);
