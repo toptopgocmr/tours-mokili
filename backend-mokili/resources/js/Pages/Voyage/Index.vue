@@ -5,7 +5,6 @@ import DestinationImage from '@/Components/DestinationImage.vue';
 import FlightSearchForm from '@/Components/FlightSearchForm.vue';
 import RideCard from '@/Components/RideCard.vue';
 import RideSearchBar from '@/Components/RideSearchBar.vue';
-import FlightScheduleBoard from '@/Components/FlightScheduleBoard.vue';
 import { dayHeading, RIDE_MODES, RIDE_PAGES, rideHour, rideMinutes, TIME_SLOTS } from '@/utils/rides';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -34,8 +33,6 @@ const date = ref(props.filters.date ?? '');
 const passengers = ref(Number(props.filters.passengers ?? 1) || 1);
 const time = ref(props.filters.time ?? '');
 const returnDate = ref(props.filters.return_date ?? '');
-// Onglet Vols : recherche de billets ou programme des vols.
-const flightTab = ref(new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('vue') === 'programme' ? 'programme' : 'search');
 const today = new Date().toISOString().slice(0, 10);
 const isRides = computed(() => type.value === 'circuit');
 const swapCities = () => { [from.value, destination.value] = [destination.value, from.value]; };
@@ -227,12 +224,10 @@ const cardSubtitle = (offer) => {
             </div>
             <!-- VOLS : moteur de billetterie aerienne -->
             <div v-if="type === 'vol'" class="mt-3">
-                <div class="mb-3 inline-flex rounded-xl bg-navy-50 p-1 text-sm">
-                    <button type="button" class="rounded-lg px-4 py-1.5 font-semibold" :class="flightTab === 'search' ? 'bg-white text-navy-900 shadow' : 'text-navy-600'" @click="flightTab = 'search'">✈ Acheter un billet</button>
-                    <button type="button" class="rounded-lg px-4 py-1.5 font-semibold" :class="flightTab === 'programme' ? 'bg-white text-navy-900 shadow' : 'text-navy-600'" @click="flightTab = 'programme'">🕓 Programme des vols</button>
-                </div>
-                <FlightSearchForm v-if="flightTab === 'search'" :cabins="cabins" :suggestions="popularAirports" />
-                <FlightScheduleBoard v-else />
+                <FlightSearchForm :cabins="cabins" :suggestions="popularAirports" />
+                <Link href="/voyage/vols/horaires" class="mt-3 inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-navy-900 shadow hover:bg-gold-50">
+                    🕓 Programme des vols : departs et arrivees en direct →
+                </Link>
             </div>
             <!-- CIRCUITS : recherche de trajet facon BlaBlaCar -->
             <form v-else-if="isRides" class="mt-3 space-y-3" @submit.prevent="search">
