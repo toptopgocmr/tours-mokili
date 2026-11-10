@@ -27,6 +27,10 @@ class TravelOfferController extends Controller
             // Trajets facon BlaBlaCar : depart, date, nombre de passagers.
             ->when($request->string('from')->isNotEmpty(), fn ($q) => $q->where('origin_city', 'like', '%'.$request->string('from').'%'))
             ->when($request->date('date'), fn ($q) => $q->whereDate('departure_at', $request->date('date')))
+            // "Partir a partir de 16h" (facon SNCF Connect).
+            ->when($request->date('date') && $this->hour($request) !== null, fn ($q) => $q->where('departure_at', '>=', $request->date('date')->setTime($this->hour($request), 0)))
+            // Les vols passent par la billetterie (onglet Vols), pas par les trajets.
+            ->when($isCircuit, fn ($q) => $q->where(fn ($w) => $w->whereNull('transport_mode')->orWhere('transport_mode', '!=', 'avion')))
             ->when($request->integer('passengers') > 0, fn ($q) => $q->where('seats_available', '>=', $request->integer('passengers')))
             ->when($isCircuit, fn ($q) => $q->where(fn ($w) => $w->whereNull('departure_at')->orWhere('departure_at', '>=', now())))
             ->when($request->string('type')->isNotEmpty(), fn ($q) => $q->where('type', $request->string('type')))
@@ -42,9 +46,26 @@ class TravelOfferController extends Controller
             ->paginate($isCircuit ? 20 : 9)
             ->withQueryString();
 
+        // Retour (facon SNCF Connect) : memes criteres, villes inversees.
+        $returnOffers = [];
+        if ($isCircuit && $request->date('return_date')) {
+            $returnOffers = TravelOffer::query()->active()
+                ->where('type', 'circuit')
+                ->where(fn ($w) => $w->whereNull('transport_mode')->orWhere('transport_mode', '!=', 'avion'))
+                ->when($request->string('destination')->isNotEmpty(), fn ($q) => $q->where('origin_city', 'like', '%'.$request->string('destination').'%'))
+                ->when($request->string('from')->isNotEmpty(), fn ($q) => $q->where('destination_city', 'like', '%'.$request->string('from').'%'))
+                ->whereDate('departure_at', $request->date('return_date'))
+                ->where('departure_at', '>=', now())
+                ->when($request->integer('passengers') > 0, fn ($q) => $q->where('seats_available', '>=', $request->integer('passengers')))
+                ->when($request->string('mode')->isNotEmpty(), fn ($q) => $q->where('transport_mode', $request->string('mode')))
+                ->when($request->string('scope')->isNotEmpty(), fn ($q) => $q->where('trip_scope', $request->string('scope')))
+                ->orderBy('departure_at')->limit(30)->get();
+        }
+
         return Inertia::render('Voyage/Index', [
             'offers' => $offers,
-            'filters' => (object) $request->only(['destination', 'type', 'mode', 'scope', 'departement', 'from', 'date', 'passengers']),
+            'returnOffers' => $returnOffers,
+            'filters' => (object) $request->only(['destination', 'type', 'mode', 'scope', 'departement', 'from', 'date', 'time', 'return_date', 'passengers']),
             'transportModes' => TravelOffer::TRANSPORT_MODES,
             'tripScopes' => config('catalogue.voyage.trip_scopes'),
             'departments' => config('catalogue.departments'),
@@ -52,6 +73,17 @@ class TravelOfferController extends Controller
             'popularAirports' => Airport::query()->active()->orderByDesc('popularity')
                 ->limit(12)->get(['iata_code', 'city', 'name', 'country_code']),
         ]);
+    }
+
+    /** Heure de depart minimale (?time=16 ou 16:00), entre 0 et 23. */
+    protected function hour(Request $request): ?int
+    {
+        $t = (string) $request->query('time', '');
+        if ($t === '' || ! preg_match('/^(\d{1,2})/', $t, $m) || (int) $m[1] > 23) {
+            return null;
+        }
+
+        return (int) $m[1];
     }
 
     public function show(TravelOffer $travelOffer): Response

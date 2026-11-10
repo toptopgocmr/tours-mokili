@@ -4,6 +4,8 @@ import PartnersSection from '@/Components/PartnersSection.vue';
 import DestinationImage from '@/Components/DestinationImage.vue';
 import FlightSearchForm from '@/Components/FlightSearchForm.vue';
 import RideCard from '@/Components/RideCard.vue';
+import RideSearchBar from '@/Components/RideSearchBar.vue';
+import FlightScheduleBoard from '@/Components/FlightScheduleBoard.vue';
 import { dayHeading, RIDE_MODES, RIDE_PAGES, rideHour, rideMinutes, TIME_SLOTS } from '@/utils/rides';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -12,6 +14,7 @@ defineOptions({ layout: MainLayout });
 
 const props = defineProps({
     offers: { type: Object, required: true },
+    returnOffers: { type: Array, default: () => [] },
     filters: { type: Object, default: () => ({}) },
     transportModes: { type: Object, default: () => ({}) },
     cabins: { type: Object, default: () => ({}) },
@@ -29,6 +32,10 @@ const departement = ref(props.filters.departement ?? '');
 const from = ref(props.filters.from ?? '');
 const date = ref(props.filters.date ?? '');
 const passengers = ref(Number(props.filters.passengers ?? 1) || 1);
+const time = ref(props.filters.time ?? '');
+const returnDate = ref(props.filters.return_date ?? '');
+// Onglet Vols : recherche de billets ou programme des vols.
+const flightTab = ref(new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('vue') === 'programme' ? 'programme' : 'search');
 const today = new Date().toISOString().slice(0, 10);
 const isRides = computed(() => type.value === 'circuit');
 const swapCities = () => { [from.value, destination.value] = [destination.value, from.value]; };
@@ -38,6 +45,7 @@ const ridePage = computed(() => RIDE_PAGES[mode.value] ?? RIDE_PAGES['']);
 
 // Filtres et tri facon BlaBlaCar (sur les trajets affiches).
 const rideSort = ref('departure');
+const showFilters = ref(false);
 const rideSlots = ref([]);
 const rideOperators = ref([]);
 const toggleIn = (list, v) => { const i = list.indexOf(v); i >= 0 ? list.splice(i, 1) : list.push(v); };
@@ -52,6 +60,12 @@ const filteredRides = computed(() => {
     if (rideSort.value === 'duration') return [...list].sort((a, b) => rideMinutes(a) - rideMinutes(b));
     return list;
 });
+const cheapestId = computed(() => (filteredRides.value.length > 1 ? [...filteredRides.value].sort((a, b) => Number(a.discounted_price ?? a.price) - Number(b.discounted_price ?? b.price))[0].id : null));
+const fastestId = computed(() => {
+    const l = filteredRides.value.filter((o) => Number.isFinite(rideMinutes(o)));
+    return l.length > 1 ? [...l].sort((a, b) => rideMinutes(a) - rideMinutes(b))[0].id : null;
+});
+const tomorrowIso = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); })();
 const cheapest = computed(() => (props.offers.data.length ? Math.min(...props.offers.data.map((o) => Number(o.discounted_price ?? o.price))) : null));
 
 // Bandeau des 7 prochains jours.
@@ -106,6 +120,8 @@ const search = () => {
             departement: type.value === 'circuit' ? departement.value : '',
             from: type.value === 'circuit' ? from.value : '',
             date: type.value === 'circuit' ? date.value : '',
+            time: type.value === 'circuit' && date.value ? time.value : '',
+            return_date: type.value === 'circuit' ? returnDate.value : '',
             passengers: type.value === 'circuit' && passengers.value > 1 ? passengers.value : '',
         }).filter(([, v]) => v)
     );
@@ -157,6 +173,32 @@ const cardSubtitle = (offer) => {
     <!-- Hero + search: style Booking/Kayak (recherche flottante par
          dessus la photo, onglets de type comme leurs onglets Vols/
          Hebergements/Voitures). -->
+    <!-- TRAJETS : accueil facon SNCF Connect (fond clair, titre centre). -->
+    <section v-if="isRides" class="bg-[#f3f6fb] px-4 pb-10 pt-6 sm:px-6">
+        <div class="mx-auto max-w-6xl">
+            <div class="mb-6 flex flex-wrap justify-center gap-2 whitespace-nowrap text-sm">
+                <button type="button" class="rounded-full px-4 py-1.5 font-semibold text-navy-700 hover:bg-white" @click="setType('vol')">✈ Vols</button>
+                <span class="rounded-full bg-navy-900 px-4 py-1.5 font-semibold text-white">Trains, bus et canots</span>
+                <button type="button" class="rounded-full px-4 py-1.5 font-semibold text-navy-700 hover:bg-white" @click="setType('')">Toutes les offres</button>
+            </div>
+            <h1 class="text-center text-2xl font-extrabold text-navy-900 sm:text-4xl">Trains, bus, canots : trouvez facilement votre trajet</h1>
+            <div class="mt-6">
+                <RideSearchBar
+                    v-model:mode="mode"
+                    v-model:scope="scope"
+                    v-model:from="from"
+                    v-model:to="destination"
+                    v-model:date="date"
+                    v-model:time="time"
+                    v-model:return-date="returnDate"
+                    v-model:passengers="passengers"
+                    @search="search"
+                />
+            </div>
+        </div>
+    </section>
+
+    <template v-else>
     <section class="relative h-[260px] overflow-hidden sm:h-[300px]">
         <img src="/images/hero.jpg" alt="Voyage" class="h-full w-full object-cover object-[center_20%]" />
         <div class="absolute inset-0 bg-gradient-to-b from-navy-900/70 via-navy-900/30 to-navy-900/10" />
@@ -185,10 +227,12 @@ const cardSubtitle = (offer) => {
             </div>
             <!-- VOLS : moteur de billetterie aerienne -->
             <div v-if="type === 'vol'" class="mt-3">
-                <FlightSearchForm :cabins="cabins" :suggestions="popularAirports" />
-                <Link href="/voyage/vols/horaires" class="mt-3 inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-navy-900 shadow hover:bg-gold-50">
-                    🕓 Programme des vols : departs et arrivees en direct →
-                </Link>
+                <div class="mb-3 inline-flex rounded-xl bg-navy-50 p-1 text-sm">
+                    <button type="button" class="rounded-lg px-4 py-1.5 font-semibold" :class="flightTab === 'search' ? 'bg-white text-navy-900 shadow' : 'text-navy-600'" @click="flightTab = 'search'">✈ Acheter un billet</button>
+                    <button type="button" class="rounded-lg px-4 py-1.5 font-semibold" :class="flightTab === 'programme' ? 'bg-white text-navy-900 shadow' : 'text-navy-600'" @click="flightTab = 'programme'">🕓 Programme des vols</button>
+                </div>
+                <FlightSearchForm v-if="flightTab === 'search'" :cabins="cabins" :suggestions="popularAirports" />
+                <FlightScheduleBoard v-else />
             </div>
             <!-- CIRCUITS : recherche de trajet facon BlaBlaCar -->
             <form v-else-if="isRides" class="mt-3 space-y-3" @submit.prevent="search">
@@ -238,6 +282,7 @@ const cardSubtitle = (offer) => {
             </form>
         </div>
     </div>
+    </template>
 
     <div class="mx-auto max-w-7xl px-6 py-10">
         <div v-if="type === 'vol'" class="mb-6 flex flex-wrap items-end justify-between gap-2">
@@ -272,7 +317,10 @@ const cardSubtitle = (offer) => {
 
             <div v-if="offers.data.length" class="grid gap-8 lg:grid-cols-[260px_1fr]">
                 <!-- Filtres -->
-                <aside class="space-y-6 text-sm">
+                <button type="button" class="flex items-center justify-center gap-2 rounded-full border-2 border-sky-700 py-2 text-sm font-semibold text-sky-700 lg:hidden" @click="showFilters = !showFilters">
+                    ⚙ {{ showFilters ? 'Masquer les filtres' : 'Filtrer et trier' }}<span v-if="rideSlots.length + rideOperators.length" class="rounded-full bg-sky-700 px-1.5 text-xs text-white">{{ rideSlots.length + rideOperators.length }}</span>
+                </button>
+                <aside class="space-y-6 text-sm lg:block" :class="showFilters ? 'block' : 'hidden'">
                     <div>
                         <p class="mb-2 text-base font-extrabold text-navy-900">Trier par</p>
                         <label v-for="o in [['departure', 'Depart le plus tot', '🕒'], ['price', 'Prix le plus bas', '💰'], ['duration', 'Trajet le plus court', '⏱️']]" :key="o[0]" class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 hover:bg-navy-50">
@@ -301,6 +349,10 @@ const cardSubtitle = (offer) => {
 
                 <!-- Trajets -->
                 <div>
+                    <div v-if="from || destination" class="mb-3 rounded-2xl bg-navy-900 px-5 py-3 text-white">
+                        <p class="text-xs uppercase tracking-wide text-gold-400">Aller</p>
+                        <p class="font-bold">{{ from || 'Partout' }} → {{ destination || 'Partout' }}<span class="font-normal text-navy-200"> · {{ date ? dayHeading(`${date}T12:00:00Z`) : 'Toutes les dates' }}{{ time !== '' && date ? ` · des ${time}h` : '' }} · {{ passengers }} voyageur{{ passengers > 1 ? 's' : '' }}</span></p>
+                    </div>
                     <p class="mb-4 text-sm text-navy-600">
                         <strong class="text-navy-900">{{ filteredRides.length }} trajet{{ filteredRides.length > 1 ? 's' : '' }} disponible{{ filteredRides.length > 1 ? 's' : '' }}</strong>
                         <span v-if="from || destination"> · {{ from || 'Partout' }} → {{ destination || 'Partout' }}</span>
@@ -309,10 +361,19 @@ const cardSubtitle = (offer) => {
                     <section v-for="g in rideDays" :key="g.key" class="mb-6">
                         <h3 class="mb-3 text-lg font-extrabold text-navy-900">{{ g.label }}</h3>
                         <div class="space-y-3">
-                            <RideCard v-for="o in g.items" :key="o.id" :offer="o" :passengers="passengers" />
+                            <RideCard v-for="o in g.items" :key="o.id" :offer="o" :passengers="passengers" :cheapest="o.id === cheapestId" :fastest="o.id === fastestId && o.id !== cheapestId" />
                         </div>
                     </section>
                     <p v-if="!filteredRides.length" class="rounded-2xl bg-navy-50/60 p-6 text-center text-navy-700">Aucun trajet ne correspond a ces filtres.</p>
+                    <!-- Retour (facon SNCF Connect) -->
+                    <section v-if="returnDate" class="mt-8 border-t pt-6">
+                        <h3 class="text-lg font-extrabold text-navy-900">↩ Retour · {{ dayHeading(`${returnDate}T12:00:00Z`) }}</h3>
+                        <p class="mb-3 text-sm text-navy-600">{{ destination || 'Partout' }} → {{ from || 'Partout' }}</p>
+                        <div v-if="returnOffers.length" class="space-y-3">
+                            <RideCard v-for="o in returnOffers" :key="`r${o.id}`" :offer="o" :passengers="passengers" />
+                        </div>
+                        <p v-else class="rounded-2xl bg-navy-50/60 p-6 text-center text-navy-700">Aucun trajet retour ce jour-la. Essayez une autre date de retour.</p>
+                    </section>
                     <div v-if="offers.next_page_url" class="text-center">
                         <Link :href="offers.next_page_url" preserve-scroll class="inline-block rounded-full border border-navy-200 px-6 py-2 text-sm font-semibold text-navy-900 hover:bg-navy-50">Plus de trajets</Link>
                     </div>
@@ -320,10 +381,16 @@ const cardSubtitle = (offer) => {
             </div>
 
             <!-- Aucun trajet : message + idees -->
-            <div v-else class="rounded-3xl bg-sky-50 p-8 text-center">
+            <div v-else class="rounded-2xl border border-navy-100 bg-white p-8 text-center">
                 <p class="text-4xl">{{ RIDE_MODES.find((m) => m.value === mode)?.icon ?? '🧭' }}</p>
-                <p class="mt-2 text-xl font-extrabold text-navy-900">Aucun trajet disponible pour cette recherche</p>
-                <p class="mt-1 text-navy-600">Essayez un autre jour ou l'un des trajets populaires ci-dessous. De nouveaux departs sont ajoutes chaque jour par nos transporteurs.</p>
+                <p class="mt-2 text-xl font-bold text-navy-900">Aucun trajet disponible pour cette recherche</p>
+                <p class="mx-auto mt-1 max-w-xl text-navy-600">Nos transporteurs ajoutent de nouveaux departs chaque jour. Essayez une autre date, un autre moyen de transport ou l'un des trajets populaires ci-dessous.</p>
+                <div class="mt-5 flex flex-wrap justify-center gap-3">
+                    <button v-if="date !== tomorrowIso" type="button" class="rounded-full border-2 border-sky-700 px-5 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-700 hover:text-white" @click="pickDate(tomorrowIso)">Voir demain</button>
+                    <button v-if="date" type="button" class="rounded-full border-2 border-sky-700 px-5 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-700 hover:text-white" @click="date = ''; time = ''; search()">Toutes les dates</button>
+                    <button v-if="mode || scope" type="button" class="rounded-full border-2 border-sky-700 px-5 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-700 hover:text-white" @click="mode = ''; scope = ''; search()">Tous les moyens de transport</button>
+                    <a href="/#contact" class="rounded-full bg-navy-900 px-5 py-2 text-sm font-semibold text-white hover:bg-navy-800">Demander un trajet</a>
+                </div>
             </div>
 
             <!-- Trajets populaires -->

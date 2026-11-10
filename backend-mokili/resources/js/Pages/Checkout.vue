@@ -5,6 +5,7 @@ import { bankCards, detectCardBrand } from '@/data/cemac';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
+import { dayHeading, rideTime, RIDE_ICONS } from '@/utils/rides';
 
 defineOptions({ layout: MainLayout });
 
@@ -18,6 +19,11 @@ const props = defineProps({
 // Onglet affiche : Mobile Money (Peex / pawaPay / MaishaPay / Digitwace) ou
 // carte (apercu d'interface, pas encore relie a un processeur).
 const method = ref('mobile_money');
+
+// Trajet train / bus / canot / taxi : recapitulatif facon SNCF Connect.
+const ride = computed(() => (props.booking.bookable?.type === 'circuit' ? props.booking.bookable : null));
+const STATUS_LABELS = { pending: 'En attente', awaiting_payment: 'En attente de paiement', confirmed: 'Confirmee', paid: 'Payee', cancelled: 'Annulee', failed: 'Echec', refunded: 'Remboursee', completed: 'Terminee' };
+const statusLabel = computed(() => STATUS_LABELS[String(props.booking.status).toLowerCase()] ?? props.booking.status);
 
 const countries = computed(() => props.methods?.countries ?? []);
 const gatewayLabels = computed(() =>
@@ -109,12 +115,45 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
 <template>
     <Head title="Paiement" />
 
+    <div v-if="ride" class="border-b border-navy-100 bg-white">
+        <div class="mx-auto flex max-w-4xl items-center gap-2 overflow-x-auto px-6 py-3 text-sm">
+            <template v-for="(st, i) in ['Trajet', 'Recapitulatif', 'Paiement']" :key="st">
+                <span class="flex shrink-0 items-center gap-2" :class="i === 2 ? 'font-semibold text-navy-900' : 'text-emerald-700'">
+                    <span class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white" :class="i === 2 ? 'bg-sky-700' : 'bg-emerald-600'">{{ i === 2 ? 3 : '✓' }}</span>
+                    {{ st }}
+                </span>
+                <span v-if="i < 2" class="h-px w-8 shrink-0 bg-navy-200" />
+            </template>
+        </div>
+    </div>
     <div class="mx-auto grid max-w-4xl gap-10 px-6 py-12 md:grid-cols-2">
         <div>
+            <div v-if="ride" class="mb-4 rounded-2xl border border-navy-100 bg-white">
+                <div class="border-b border-navy-100 px-5 py-3">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Aller</p>
+                    <p class="font-bold text-navy-900">{{ dayHeading(ride.departure_at) }}</p>
+                </div>
+                <div class="grid grid-cols-[56px_16px_1fr] gap-x-3 px-5 py-4 text-sm">
+                    <p class="text-lg font-bold tabular-nums text-navy-900">{{ rideTime(ride.departure_at) }}</p>
+                    <div class="flex flex-col items-center pt-1.5"><span class="h-3 w-3 rounded-full border-[3px] border-sky-700" /><span class="w-0.5 flex-1 bg-sky-700" /></div>
+                    <div class="pb-4"><p class="font-semibold text-navy-900">{{ ride.origin_city }}</p><p v-if="ride.departure_point" class="text-xs text-navy-500">{{ ride.departure_point }}</p></div>
+                    <p class="text-lg font-bold tabular-nums text-navy-900">{{ rideTime(ride.arrival_at) }}</p>
+                    <div class="flex justify-center"><span class="h-3 w-3 rounded-full border-[3px] border-sky-700" /></div>
+                    <p class="font-semibold text-navy-900">{{ ride.destination_city }}</p>
+                </div>
+                <div class="flex items-center gap-3 border-t border-navy-100 px-5 py-3 text-sm">
+                    <span class="text-xl">{{ RIDE_ICONS[ride.transport_mode] ?? '🧭' }}</span>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-semibold text-navy-900">{{ ride.airline || 'Transporteur partenaire' }}</p>
+                        <p class="text-xs text-navy-500">{{ ride.transport_mode_label }}</p>
+                    </div>
+                    <span class="shrink-0 whitespace-nowrap rounded-full bg-navy-50 px-2.5 py-1 text-xs font-semibold text-navy-700">{{ booking.quantity }} voyageur{{ booking.quantity > 1 ? 's' : '' }}</span>
+                </div>
+            </div>
             <h1 class="text-2xl font-bold text-navy-900">Recapitulatif de la reservation</h1>
             <div class="mt-4 space-y-2 rounded-2xl border p-5 text-sm">
                 <p><span class="text-navy-500">Reference :</span> <span class="font-semibold">{{ booking.reference }}</span></p>
-                <p><span class="text-navy-500">Statut :</span> <span class="font-semibold capitalize">{{ booking.status }}</span></p>
+                <p><span class="text-navy-500">Statut :</span> <span class="font-semibold">{{ statusLabel }}</span></p>
                 <template v-if="isFlight">
                     <p><span class="text-navy-500">Dossier billetterie :</span> <span class="font-semibold">{{ booking.bookable.reference }}</span></p>
                     <p><span class="text-navy-500">Vol :</span> {{ booking.bookable.title }}</p>
@@ -128,7 +167,7 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                 <p v-if="booking.meta?.adults !== undefined">
                     <span class="text-navy-500">Billets :</span> {{ booking.meta.adults }} adulte(s), {{ booking.meta.children ?? 0 }} enfant(s)
                 </p>
-                <p v-else-if="!isFlight"><span class="text-navy-500">Quantite :</span> {{ booking.quantity }}</p>
+                <p v-else-if="!isFlight && !ride"><span class="text-navy-500">Quantite :</span> {{ booking.quantity }}</p>
                 <p class="text-lg font-bold text-gold-600">
                     Total : {{ Number(booking.total_amount).toLocaleString('fr-FR') }} {{ booking.currency }}
                 </p>

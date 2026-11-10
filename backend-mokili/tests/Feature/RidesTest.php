@@ -43,6 +43,25 @@ class RidesTest extends TestCase
         $this->getJson('/api/voyage/offers?type=circuit&from=Brazzaville&passengers=3')->assertOk()->assertJsonCount(2, 'data'); // bus + train, sans le trajet passe
     }
 
+    public function test_sncf_style_search_hour_return_and_no_flights_in_rides(): void
+    {
+        $d = now()->addDays(3);
+        $early = $this->ride(['departure_at' => $d->copy()->setTime(7, 0)]);
+        $late = $this->ride(['title' => 'Bus du soir', 'departure_at' => $d->copy()->setTime(17, 0)]);
+        $this->ride(['title' => 'Sejour a Paris', 'transport_mode' => 'avion', 'destination_city' => 'Paris']);
+        $back = $this->ride(['title' => 'Retour', 'origin_city' => 'Pointe-Noire', 'destination_city' => 'Brazzaville', 'departure_at' => now()->addDays(6)->setTime(9, 0)]);
+        $this->ride(['title' => 'Retour autre jour', 'origin_city' => 'Pointe-Noire', 'destination_city' => 'Brazzaville', 'departure_at' => now()->addDays(8)->setTime(9, 0)]);
+
+        $this->get('/voyage?type=circuit')->assertInertia(fn ($p) => $p->where('offers.data', fn ($o) => collect($o)->every(fn ($x) => $x['transport_mode'] !== 'avion')));
+
+        $this->get('/voyage?type=circuit&from=Brazzaville&destination=Pointe-Noire&date='.$d->toDateString().'&time=16&return_date='.now()->addDays(6)->toDateString())
+            ->assertOk()->assertInertia(fn ($p) => $p->has('offers.data', 1)->where('offers.data.0.id', $late->id)
+                ->has('returnOffers', 1)->where('returnOffers.0.id', $back->id)->where('filters.time', '16'));
+
+        $this->get('/voyage?type=circuit&from=Brazzaville&date='.$d->toDateString())->assertInertia(fn ($p) => $p->has('offers.data', 2)->has('returnOffers', 0));
+        $this->assertNotNull($early);
+    }
+
     public function test_booking_is_limited_to_remaining_seats_and_payment_takes_the_seats(): void
     {
         $ride = $this->ride();
