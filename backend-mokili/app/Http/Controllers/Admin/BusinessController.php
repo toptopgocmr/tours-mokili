@@ -49,17 +49,28 @@ class BusinessController extends Controller
 
     public function edit(Business $business): Response
     {
-        return Inertia::render('Admin/Partners/Form', ['business' => $business, 'categories' => Business::CATEGORIES]);
+        return Inertia::render('Admin/Partners/Form', ['business' => $business->makeVisible('preview_image'), 'categories' => Business::CATEGORIES]);
     }
 
     public function update(Request $request, Business $business): RedirectResponse
     {
         $data = $this->validated($request);
         $data['image'] = $this->imageFor($request, $business->image);
+        // "Publier la photo" : la societe a donne son accord, l'apercu devient public.
+        if ($request->boolean('publish_preview') && $business->preview_image) {
+            $data['image'] = $business->preview_image;
+            $data['preview_image'] = null;
+        }
 
         $business->update($data);
 
         return redirect()->route('admin.partners.index')->with('success', 'Fiche mise a jour.');
+    }
+
+    /** Mode presentation : photos apercu (admin / agents connectes uniquement). */
+    public function previews(): \Illuminate\Http\JsonResponse
+    {
+        return response()->json(Business::query()->whereNotNull('preview_image')->pluck('preview_image', 'id'));
     }
 
     public function destroy(Business $business): RedirectResponse
@@ -111,6 +122,7 @@ class BusinessController extends Controller
             'image' => ['nullable', 'image', 'max:4096'],
             'image_link' => ['nullable', 'url', 'max:500'],
             'remove_image' => ['boolean'],
+            'preview_image' => ['nullable', 'url', 'max:500'],
         ]);
 
         unset($data['image'], $data['image_link'], $data['remove_image']);

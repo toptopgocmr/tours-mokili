@@ -255,6 +255,7 @@ Route::middleware(['auth', 'role:admin,agent'])->prefix('admin')->name('admin.')
 
     Route::get('/partenaires', [AdminBusinessController::class, 'index'])->name('partners.index');
     Route::get('/partenaires/creer', [AdminBusinessController::class, 'create'])->name('partners.create');
+    Route::get('/partenaires/apercus', [AdminBusinessController::class, 'previews'])->name('partners.previews');
     Route::post('/partenaires', [AdminBusinessController::class, 'store'])->name('partners.store');
     Route::get('/partenaires/{business}/editer', [AdminBusinessController::class, 'edit'])->name('partners.edit');
     Route::put('/partenaires/{business}', [AdminBusinessController::class, 'update'])->name('partners.update');

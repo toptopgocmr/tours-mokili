@@ -1,6 +1,8 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
 import GuideCover from '@/Components/GuideCover.vue';
+import { usePreviewPhotos } from '@/composables/usePreviewPhotos';
+const { photoFor, isPreview } = usePreviewPhotos();
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
@@ -37,7 +39,8 @@ const whatsappUrl = computed(() => (b.value.whatsapp ? `https://wa.me/${b.value.
         <div class="mt-4 grid gap-10 md:grid-cols-[1fr_340px]">
             <div>
                 <div class="relative h-72 overflow-hidden rounded-3xl">
-                    <GuideCover :src="business.image_url" :category="business.category" :alt="business.name" icon-class="h-20 w-20" />
+                    <GuideCover :src="photoFor(business)" :category="business.category" :alt="business.name" icon-class="h-20 w-20" />
+                    <span v-if="isPreview(business)" class="absolute left-2 top-2 z-10 rounded bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-950 shadow" title="Visible uniquement par l'equipe MOKILI TOUR tant que la photo n'est pas publiee">Apercu admin</span>
                     <div class="absolute inset-0 bg-gradient-to-t from-navy-900/80 via-transparent to-transparent" />
                     <div class="absolute bottom-5 left-6 right-6 text-white">
                         <span class="rounded-full bg-gold-500 px-3 py-0.5 text-xs font-semibold text-navy-900">{{ business.category_label }}</span>
@@ -83,7 +86,7 @@ const whatsappUrl = computed(() => (b.value.whatsapp ? `https://wa.me/${b.value.
             <h2 class="text-xl font-bold text-navy-900">Autres adresses : {{ business.category_label }}</h2>
             <div class="mt-4 grid gap-5 sm:grid-cols-4">
                 <Link v-for="s in similar" :key="s.id" :href="`/partenaires/${s.slug}`" class="overflow-hidden rounded-2xl border transition hover:shadow-md">
-                    <div class="h-24"><GuideCover :src="s.image_url" :category="s.category" :alt="s.name" icon-class="h-8 w-8" /></div>
+                    <div class="h-24"><GuideCover :src="photoFor(s)" :category="s.category" :alt="s.name" icon-class="h-8 w-8" /></div>
                     <p class="p-3 text-sm font-semibold text-navy-900">{{ s.name }}</p>
                 </Link>
             </div>

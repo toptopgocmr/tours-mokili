@@ -6,6 +6,9 @@ import GuideCover from '@/Components/GuideCover.vue';
 import { Link } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import axios from 'axios';
+import { usePreviewPhotos } from '@/composables/usePreviewPhotos';
+
+const { photoFor, isPreview } = usePreviewPhotos();
 
 const props = defineProps({
     module: { type: String, required: true },
@@ -77,7 +80,8 @@ const visible = computed(() => (active.value ? items.value.filter((b) => b.categ
                 class="group overflow-hidden rounded-2xl border shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
             >
                 <div class="relative h-32">
-                    <GuideCover :src="b.image_url" :category="b.category" :alt="b.name" icon-class="h-10 w-10" />
+                    <GuideCover :src="photoFor(b)" :category="b.category" :alt="b.name" icon-class="h-10 w-10" />
+                    <span v-if="isPreview(b)" class="absolute left-2 top-2 z-10 rounded bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-950 shadow" title="Visible uniquement par l'equipe MOKILI TOUR tant que la photo n'est pas publiee">Apercu admin</span>
                     <span v-if="b.stars" class="absolute right-2 top-2 rounded-full bg-navy-900/80 px-2 py-0.5 text-xs text-gold-400">{{ '★'.repeat(b.stars) }}</span>
                 </div>
                 <div class="p-3">

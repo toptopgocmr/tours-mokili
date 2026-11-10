@@ -1,6 +1,9 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import GuideCover from '@/Components/GuideCover.vue';
+import { usePreviewPhotos } from '@/composables/usePreviewPhotos';
+
+const { photoFor, isPreview } = usePreviewPhotos();
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -50,10 +53,11 @@ const remove = (b) => {
             </thead>
             <tbody>
                 <tr v-for="b in businesses.data" :key="b.id">
-                    <td class="w-16"><div class="h-10 w-14 overflow-hidden rounded"><GuideCover :src="b.image_url" :category="b.category" icon-class="h-5 w-5" /></div></td>
+                    <td class="w-16"><div class="h-10 w-14 overflow-hidden rounded"><GuideCover :src="photoFor(b)" :category="b.category" icon-class="h-5 w-5" /></div></td>
                     <td class="font-medium text-slate-900">
                         {{ b.name }} <span v-if="b.stars" class="text-xs text-amber-500">{{ '★'.repeat(b.stars) }}</span>
-                        <p v-if="!b.image_url" class="text-xs text-amber-600">Pas encore de photo</p>
+                        <p v-if="isPreview(b)" class="text-xs font-semibold text-amber-600">Photo en apercu (non publiee)</p>
+                        <p v-else-if="!b.image_url" class="text-xs text-amber-600">Pas encore de photo</p>
                     </td>
                     <td>{{ categories[b.category] ?? b.category }}</td>
                     <td class="font-medium">{{ MODULE_LABELS[modules[b.category]] ?? '-' }}</td>

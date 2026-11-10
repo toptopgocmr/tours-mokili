@@ -36,6 +36,8 @@ const form = useForm({
     image: null,
     image_link: '',
     remove_image: false,
+    preview_image: b.preview_image ?? '',
+    publish_preview: false,
 });
 
 const preview = ref(b.image_url ?? null);
@@ -79,6 +81,22 @@ const submit = () => {
                     </label>
                     <p class="text-xs text-slate-400">Utilisez une photo dont vous avez les droits (fournie par la societe ou prise par vous).</p>
                     <p v-if="form.errors.image || form.errors.image_link" class="text-xs text-red-600">{{ form.errors.image ?? form.errors.image_link }}</p>
+                </div>
+            </div>
+
+            <!-- Mode presentation -->
+            <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <p class="text-sm font-semibold text-amber-900">Photo de presentation (visible seulement par l'equipe MOKILI TOUR)</p>
+                <p class="text-xs text-amber-800">Pour presenter la fiche a la societe avant son accord. Les visiteurs ne la voient pas.</p>
+                <div class="mt-2 flex items-start gap-3">
+                    <div v-if="form.preview_image" class="h-16 w-24 shrink-0 overflow-hidden rounded border"><img :src="form.preview_image" referrerpolicy="no-referrer" class="h-full w-full object-cover" alt="" /></div>
+                    <div class="flex-1 space-y-2">
+                        <input v-model="form.preview_image" type="url" placeholder="URL de la photo de presentation" class="w-full rounded border-slate-300 text-sm" />
+                        <label v-if="isEdit && b.preview_image" class="flex items-center gap-1.5 text-xs font-semibold text-green-700">
+                            <input v-model="form.publish_preview" type="checkbox" /> La societe a donne son accord : publier cette photo pour tout le monde
+                        </label>
+                        <p v-if="form.errors.preview_image" class="text-xs text-red-600">{{ form.errors.preview_image }}</p>
+                    </div>
                 </div>
             </div>
         </div>

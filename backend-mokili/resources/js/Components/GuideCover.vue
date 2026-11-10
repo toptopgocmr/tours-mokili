@@ -55,7 +55,7 @@ const logoBroken = ref(false);
 
 <template>
     <div class="relative h-full w-full overflow-hidden">
-        <img v-if="src && !broken" :src="src" :alt="alt" class="h-full w-full object-cover" loading="lazy" @error="broken = true" />
+        <img v-if="src && !broken" :src="src" :alt="alt" class="h-full w-full object-cover" loading="lazy" referrerpolicy="no-referrer" @error="broken = true" />
         <template v-else-if="plane && !planeBroken">
             <img :src="plane.url" :alt="`Avion ${alt}`" class="h-full w-full object-cover" loading="lazy" @error="planeBroken = true" />
             <span v-if="logo && !logoBroken" class="absolute bottom-2 left-2 flex h-8 max-w-[60%] items-center rounded-md bg-white/95 px-2 shadow">

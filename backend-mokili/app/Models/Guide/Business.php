@@ -50,8 +50,11 @@ class Business extends Model
     protected $fillable = [
         'name', 'slug', 'category', 'city', 'district', 'address', 'country', 'stars',
         'description', 'services', 'opening_hours', 'price_range', 'phone', 'whatsapp',
-        'email', 'website', 'latitude', 'longitude', 'image', 'gallery', 'is_featured', 'is_active',
+        'email', 'website', 'latitude', 'longitude', 'image', 'gallery', 'is_featured', 'is_active', 'preview_image',
     ];
+
+    // Photo du mode presentation : jamais envoyee au public (voir PreviewController).
+    protected $hidden = ['preview_image'];
 
     protected $appends = ['image_url', 'gallery_urls', 'category_label', 'module'];
 
