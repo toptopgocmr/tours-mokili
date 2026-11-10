@@ -22,6 +22,8 @@ class RentalController extends Controller
         'aeroport' => "Remise a l'aeroport",
     ];
 
+    public const DRIVER_AGES = ['18-24' => '18 - 24 ans', '25-29' => '25 - 29 ans', '30+' => '30 ans et plus'];
+
     public function availability(Request $request, Vehicle $vehicle): JsonResponse
     {
         $this->ensureRentable($vehicle);
@@ -51,14 +53,18 @@ class RentalController extends Controller
             'starts_at' => ['required', 'date', 'after_or_equal:today'],
             'ends_at' => ['required', 'date', 'after_or_equal:starts_at'],
             'pickup_time' => ['nullable', 'date_format:H:i'],
+            'return_time' => ['nullable', 'date_format:H:i'],
+            'return_elsewhere' => ['boolean'],
+            'return_place' => ['nullable', 'required_if:return_elsewhere,true', 'string', 'max:255'],
+            'driver_age' => ['nullable', 'in:'.implode(',', array_keys(self::DRIVER_AGES))],
             'pickup_mode' => ['required', 'in:'.implode(',', array_keys(self::PICKUP))],
             'pickup_address' => ['nullable', 'required_if:pickup_mode,livraison', 'string', 'max:255'],
             'with_driver' => ['boolean'],
             'notes' => ['nullable', 'string', 'max:1000'],
-        ], ['pickup_address.required_if' => 'Indiquez l\'adresse de livraison.']);
+        ], ['pickup_address.required_if' => 'Indiquez l\'adresse de livraison.', 'return_place.required_if' => 'Indiquez le lieu de retour.']);
 
         $start = Carbon::parse($data['starts_at'].' '.($data['pickup_time'] ?? '09:00'));
-        $end = Carbon::parse($data['ends_at'].' '.($data['pickup_time'] ?? '09:00'));
+        $end = Carbon::parse($data['ends_at'].' '.($data['return_time'] ?? $data['pickup_time'] ?? '09:00'));
 
         $booking = DB::transaction(function () use ($vehicle, $start, $end, $data, $request) {
             // Verrou sur le vehicule : deux clients ne peuvent pas prendre les memes dates.
@@ -87,6 +93,8 @@ class RentalController extends Controller
                     'pickup_label' => self::PICKUP[$data['pickup_mode']],
                     'pickup_address' => $data['pickup_address'] ?? null,
                     'with_driver' => (bool) ($data['with_driver'] ?? false),
+                    'return_place' => ! empty($data['return_elsewhere']) ? ($data['return_place'] ?? null) : null,
+                    'driver_age' => $data['driver_age'] ?? null,
                 ],
                 'notes' => $data['notes'] ?? null,
             ]);

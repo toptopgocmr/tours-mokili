@@ -35,7 +35,7 @@ const specs = computed(() => [
     v.value.offer_type !== 'mecanique' && v.value.transmission && ['Boite', v.value.transmission === 'manuelle' ? 'Manuelle' : 'Automatique'],
     v.value.fuel && ['Carburant', v.value.fuel.charAt(0).toUpperCase() + v.value.fuel.slice(1)],
     v.value.mileage_km && ['Kilometrage', `${money(v.value.mileage_km)} km`],
-    v.value.category && ['Categorie', v.value.category.charAt(0).toUpperCase() + v.value.category.slice(1)],
+    v.value.category && ['Categorie', v.value.category === 'suv' ? 'SUV' : v.value.category.charAt(0).toUpperCase() + v.value.category.slice(1)],
     v.value.city && ['Ville', v.value.city],
 ].filter(Boolean));
 
@@ -55,7 +55,11 @@ const busy = computed(() => new Set(props.busyDays));
 const form = useForm({
     starts_at: props.search.start || addDays(today, 1),
     ends_at: props.search.end || addDays(today, 3),
-    pickup_time: '09:00',
+    pickup_time: props.search.start_time || '10:00',
+    return_time: props.search.end_time || props.search.start_time || '10:00',
+    return_elsewhere: !!props.search.return_city,
+    return_place: props.search.return_city || '',
+    driver_age: props.search.age || '30+',
     pickup_mode: 'agence',
     pickup_address: '',
     with_driver: false,
@@ -123,7 +127,10 @@ const dayClass = (d) => {
 };
 
 const fmt = (d) => (d ? new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) : '');
-const canBook = computed(() => check.value.available === true && !check.value.loading && (form.pickup_mode !== 'livraison' || form.pickup_address));
+const canBook = computed(() => check.value.available === true && !check.value.loading && (form.pickup_mode !== 'livraison' || form.pickup_address) && (!form.return_elsewhere || form.return_place));
+const isSale = computed(() => v.value.offer_type === 'vente');
+const saleMsg = (what) => `Bonjour, je suis interesse(e) par votre ${v.value.title} vu sur MOKILI TOUR. ${what}`;
+const SAFETY = ['Rencontrez le vendeur dans un lieu public et de jour.', 'Verifiez la carte grise, le controle technique et le numero de chassis.', 'Faites un essai routier et, si possible, un diagnostic dans un garage.', "Ne versez jamais d'acompte avant d'avoir vu le vehicule."];
 const submit = () => form.post(`/voiture/${v.value.slug}/reserver`, { preserveScroll: true });
 
 const CONDITIONS = [
@@ -167,6 +174,13 @@ const CONDITIONS = [
                         <p class="mt-0.5 font-bold text-slate-900">{{ val }}</p>
                     </div>
                 </div>
+
+                <section v-if="isSale" class="mt-8">
+                    <h2 class="text-xl font-extrabold text-slate-900">Fiche technique</h2>
+                    <dl class="mt-3 divide-y rounded-2xl border border-slate-200 bg-white text-sm">
+                        <div v-for="[k, val] in [['Marque', v.brand], ['Modele', v.model], ...specs]" :key="k" class="flex justify-between px-4 py-2.5"><dt class="text-slate-500">{{ k }}</dt><dd class="font-semibold text-slate-900">{{ val || '-' }}</dd></div>
+                    </dl>
+                </section>
 
                 <section v-if="v.description" class="mt-8">
                     <h2 class="text-xl font-extrabold text-slate-900">Description</h2>
@@ -245,9 +259,13 @@ const CONDITIONS = [
                             <span class="block text-[11px] font-semibold text-slate-500">Restitution</span>
                             <input v-model="form.ends_at" type="date" :min="form.starts_at || today" class="w-full border-0 p-0 text-sm font-semibold focus:ring-0" />
                         </label>
-                        <label class="col-span-2 flex items-center justify-between border-t border-slate-200 px-3 py-2">
-                            <span class="text-[11px] font-semibold text-slate-500">Heure de prise en charge</span>
-                            <input v-model="form.pickup_time" type="time" class="border-0 p-0 text-sm font-semibold focus:ring-0" />
+                        <label class="border-r border-t border-slate-200 px-3 py-2">
+                            <span class="block text-[11px] font-semibold text-slate-500">Heure de depart</span>
+                            <input v-model="form.pickup_time" type="time" step="1800" class="w-full border-0 p-0 text-sm font-semibold focus:ring-0" />
+                        </label>
+                        <label class="border-t border-slate-200 px-3 py-2">
+                            <span class="block text-[11px] font-semibold text-slate-500">Heure de retour</span>
+                            <input v-model="form.return_time" type="time" step="1800" class="w-full border-0 p-0 text-sm font-semibold focus:ring-0" />
                         </label>
                     </div>
 
@@ -272,8 +290,22 @@ const CONDITIONS = [
                         <input v-if="form.pickup_mode === 'livraison'" v-model="form.pickup_address" type="text" placeholder="Adresse de livraison (quartier, rue...)" class="mt-2 w-full rounded-lg border-slate-300 text-sm" />
                         <p v-if="form.errors.pickup_address" class="mt-1 text-xs text-red-600">{{ form.errors.pickup_address }}</p>
                         <label class="mt-3 flex items-center gap-2 text-sm text-slate-700">
+                            <input v-model="form.return_elsewhere" type="checkbox" class="rounded text-[#006ce4]" /> Retour dans un autre lieu
+                        </label>
+                        <input v-if="form.return_elsewhere" v-model="form.return_place" type="text" placeholder="Lieu de retour (ville, aeroport...)" class="mt-2 w-full rounded-lg border-slate-300 text-sm" />
+                        <p v-if="form.errors.return_place" class="mt-1 text-xs text-red-600">{{ form.errors.return_place }}</p>
+                        <label class="mt-2 flex items-center gap-2 text-sm text-slate-700">
                             <input v-model="form.with_driver" type="checkbox" class="rounded text-[#006ce4]" /> Je souhaite un chauffeur (tarif confirme par le loueur)
                         </label>
+                        <label class="mt-3 flex items-center justify-between gap-2 text-sm text-slate-700">
+                            <span>Age du conducteur</span>
+                            <select v-model="form.driver_age" class="rounded-lg border-slate-300 py-1 text-sm font-semibold">
+                                <option value="18-24">18 - 24 ans</option>
+                                <option value="25-29">25 - 29 ans</option>
+                                <option value="30+">30 ans et plus</option>
+                            </select>
+                        </label>
+                        <p v-if="form.driver_age === '18-24' && !form.with_driver" class="mt-1 text-xs text-amber-700">Jeune conducteur : le loueur peut demander une caution plus elevee.</p>
                     </div>
 
                     <div v-if="check.days" class="mt-4 rounded-xl bg-slate-50 p-3 text-sm">
@@ -298,12 +330,28 @@ const CONDITIONS = [
                     </div>
                 </form>
 
-                <div v-else class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <p class="text-2xl font-extrabold text-slate-900">
-                        <span v-if="v.display_price?.original" class="mr-1 text-base font-normal text-red-500 line-through">{{ money(v.display_price.original) }}</span>{{ price }}
-                    </p>
-                    <ContactButtons v-if="v.phone" :phone="v.phone" :message="`Bonjour, je suis interesse(e) par votre annonce MOKILI TOUR : ${v.title}`" />
-                    <p v-else class="text-sm text-slate-500">Le vendeur n'a pas encore indique de telephone. Contactez le service client MOKILI TOUR.</p>
+                <div v-else class="space-y-4">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <p v-if="isSale" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Prix de vente</p>
+                        <p class="text-3xl font-extrabold text-navy-900">
+                            <span v-if="v.display_price?.original" class="mr-1 block text-base font-normal text-red-500 line-through">{{ money(v.display_price.original) }} {{ v.currency }}</span>{{ price }}
+                        </p>
+                        <p v-if="isSale && v.year" class="mt-1 text-sm text-slate-500">{{ [v.year, v.mileage_km ? `${money(v.mileage_km)} km` : null, v.fuel, v.transmission].filter(Boolean).join(' · ') }}</p>
+                        <div class="mt-4">
+                            <ContactButtons v-if="v.phone" :phone="v.phone" :message="saleMsg(isSale ? 'Est-il toujours disponible ?' : 'Pouvez-vous me donner plus d\'informations ?')" />
+                            <p v-else class="text-sm text-slate-500">Le vendeur n'a pas encore indique de telephone. Contactez le service client MOKILI TOUR.</p>
+                        </div>
+                        <div v-if="isSale && v.phone" class="mt-3 grid grid-cols-2 gap-2">
+                            <a :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(saleMsg('Je souhaiterais faire un essai, quand seriez-vous disponible ?'))}`" target="_blank" rel="noopener" class="rounded-xl border border-slate-300 px-3 py-2.5 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Demander un essai</a>
+                            <a :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(saleMsg('Le prix est-il negociable ?'))}`" target="_blank" rel="noopener" class="rounded-xl border border-slate-300 px-3 py-2.5 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Faire une offre</a>
+                        </div>
+                    </div>
+                    <div v-if="isSale" class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                        <p class="font-bold text-amber-900">Conseils pour acheter en securite</p>
+                        <ul class="mt-2 space-y-1.5 text-sm text-amber-900/90">
+                            <li v-for="t in SAFETY" :key="t" class="flex gap-2"><span>•</span>{{ t }}</li>
+                        </ul>
+                    </div>
                 </div>
             </aside>
         </div>

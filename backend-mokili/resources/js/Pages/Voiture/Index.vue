@@ -4,115 +4,381 @@ import MainLayout from '@/Layouts/MainLayout.vue';
 import PartnersSection from '@/Components/PartnersSection.vue';
 import ListingImage from '@/Components/ListingImage.vue';
 import GuideCover from '@/Components/GuideCover.vue';
+import PhotoHero from '@/Components/PhotoHero.vue';
 import Paginator from '@/Components/Paginator.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
 defineOptions({ layout: MainLayout });
 
+// VOITURE : location facon Europcar / Sixt (lieu, dates + heures, retour
+// different, age du conducteur), vente facon site d'annonces auto (filtres
+// marque, prix, annee, kilometrage, carburant, boite + tri), mecanique.
 const props = defineProps({
     vehicles: { type: Object, required: true },
     garages: { type: Array, default: () => [] },
     filters: { type: Object, default: () => ({}) },
     offerTypes: { type: Object, default: () => ({}) },
+    facets: { type: Object, default: () => ({ brands: [], fuels: [], transmissions: [], categories: [] }) },
+    sorts: { type: Object, default: () => ({}) },
 });
 
-const search = reactive({ type: props.filters.type ?? '', city: props.filters.city ?? '', q: props.filters.q ?? '', start: props.filters.start ?? '', end: props.filters.end ?? '' });
-const todayIso = new Date().toISOString().slice(0, 10);
-const detailHref = (slug) => `/voiture/${slug}` + (search.type === 'location' && search.start && search.end ? `?start=${search.start}&end=${search.end}` : '');
-const ICONS = { location: '🔑', vente: '🏷️', mecanique: '🔧' };
-const HERO = {
-    '': ['Location, vente et mecanique', 'Louez, achetez ou faites entretenir votre vehicule.'],
-    location: ['Location de vehicules', 'Citadines, SUV et utilitaires, avec ou sans chauffeur.'],
-    vente: ['Vehicules a vendre', 'Annonces de particuliers et de professionnels.'],
-    mecanique: ['Mecanique & entretien', 'Garages, vidange, diagnostic, carrosserie, depannage.'],
+const f = props.filters;
+const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const todayIso = iso(new Date());
+const plus = (n) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return iso(d);
 };
 
-const submit = () => {
-    const query = Object.fromEntries(Object.entries(search).filter(([, v]) => v));
-    router.get('/voiture', query, { preserveState: true, preserveScroll: true, replace: true });
+const s = reactive({
+    type: f.type ?? '',
+    q: f.q ?? '',
+    city: f.city ?? '',
+    vehicule: f.vehicule ?? 'voitures',
+    start: f.start ?? '',
+    end: f.end ?? '',
+    start_time: f.start_time ?? '10:00',
+    end_time: f.end_time ?? '10:00',
+    return_elsewhere: !!f.return_city,
+    return_city: f.return_city ?? '',
+    age: f.age ?? '30+',
+    brand: f.brand ?? '',
+    fuel: f.fuel ?? '',
+    transmission: f.transmission ?? '',
+    category: f.category ?? '',
+    price_min: f.price_min ?? '',
+    price_max: f.price_max ?? '',
+    year_min: f.year_min ?? '',
+    km_max: f.km_max ?? '',
+    sort: f.sort ?? 'recent',
+});
+
+const query = () => {
+    const keep = {
+        location: ['type', 'city', 'vehicule', 'start', 'end', 'start_time', 'end_time', 'return_city', 'age', 'sort', 'transmission', 'category', 'price_max'],
+        vente: ['type', 'q', 'city', 'brand', 'fuel', 'transmission', 'category', 'price_min', 'price_max', 'year_min', 'km_max', 'sort'],
+        mecanique: ['type', 'q', 'city'],
+        '': ['type', 'q', 'city'],
+    }[s.type] ?? ['type'];
+    const out = {};
+    keep.forEach((k) => {
+        if (k === 'return_city' && !s.return_elsewhere) return;
+        if (s[k] !== '' && s[k] !== null && !(k === 'sort' && s[k] === 'recent')) out[k] = s[k];
+    });
+    return out;
 };
+const submit = () => router.get('/voiture', query(), { preserveState: true, preserveScroll: true, replace: true });
 const setType = (t) => {
-    search.type = t;
+    s.type = t;
+    if (t === 'location' && !s.start) {
+        s.start = plus(1);
+        s.end = plus(4);
+    }
+    router.get('/voiture', query(), { preserveScroll: true, replace: true });
+};
+const resetVente = () => {
+    Object.assign(s, { q: '', brand: '', fuel: '', transmission: '', category: '', price_min: '', price_max: '', year_min: '', km_max: '' });
     submit();
 };
-const price = (v) => (v.display_price ? `${v.display_price.suffix === 'a partir de' ? 'Des ' : ''}${Number(v.display_price.amount).toLocaleString('fr-FR')} ${v.currency}${v.display_price.suffix === '/ jour' ? ' / jour' : ''}` : 'Prix sur demande');
+
+const money = (x) => Number(x ?? 0).toLocaleString('fr-FR');
+const cap = (x) => (x === 'suv' ? 'SUV' : x ? String(x).charAt(0).toUpperCase() + String(x).slice(1) : '');
+const days = computed(() => {
+    if (!s.start || !s.end) return 0;
+    return Math.max(1, Math.round((new Date(s.end) - new Date(s.start)) / 86400000));
+});
+const detailHref = (v) => {
+    if (v.offer_type !== 'location' || !s.start || !s.end) return `/voiture/${v.slug}`;
+    const p = new URLSearchParams({ start: s.start, end: s.end, start_time: s.start_time, end_time: s.end_time, age: s.age });
+    if (s.return_elsewhere && s.return_city) p.set('return_city', s.return_city);
+    return `/voiture/${v.slug}?${p.toString()}`;
+};
+const datesSearched = computed(() => s.type === 'location' && f.start && f.end);
+const filtersOpen = ref(false);
+const activeVente = computed(() => ['q', 'brand', 'fuel', 'transmission', 'category', 'price_min', 'price_max', 'year_min', 'km_max'].filter((k) => f[k]).length);
+
+const HERO = {
+    '': ['Location, vente et mecanique', 'Louez, achetez ou faites entretenir votre vehicule.'],
+    location: ['Location de voitures et utilitaires', 'Citadines, SUV, berlines et utilitaires, avec ou sans chauffeur.'],
+    vente: ['Voitures a vendre', 'Annonces de particuliers et de professionnels au Congo et en Afrique centrale.'],
+    mecanique: ['Mecanique & entretien', 'Garages, vidange, diagnostic, carrosserie, depannage.'],
+};
+const PRICE_STEPS = [2000000, 5000000, 10000000, 20000000];
+const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i);
 </script>
 
 <template>
-    <Head title="Voiture" />
+    <Head :title="HERO[s.type]?.[0] ?? 'Voiture'" />
 
-    <section class="relative h-[240px] overflow-hidden sm:h-[280px]">
-        <img src="/images/hero.jpg" alt="Voiture" class="h-full w-full object-cover object-[center_40%]" />
-        <div class="absolute inset-0 bg-gradient-to-b from-navy-900/70 via-navy-900/30 to-navy-900/10" />
-        <div class="relative max-w-3xl px-6 pt-14 sm:px-10">
-            <p class="text-sm font-semibold uppercase tracking-widest text-gold-600">Voiture</p>
-            <h1 class="mt-2 text-2xl font-extrabold text-white drop-shadow sm:text-3xl">{{ HERO[search.type]?.[0] }}</h1>
-            <p class="mt-1 text-sm text-white/90 drop-shadow">{{ HERO[search.type]?.[1] }}</p>
-        </div>
-    </section>
-
-    <div class="relative z-10 -mt-10 px-6 sm:-mt-12">
-        <div class="mx-auto max-w-4xl rounded-2xl bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.15)] sm:p-5">
-            <div class="flex flex-wrap gap-2 border-b border-gray-100 pb-3">
-                <button type="button" class="rounded-full px-4 py-1.5 text-sm font-semibold transition" :class="!search.type ? 'bg-navy-900 text-white' : 'text-navy-700 hover:bg-navy-50'" @click="setType('')">Tout</button>
+    <PhotoHero class="px-4 pb-24 pt-10 text-white sm:pt-12">
+        <div class="mx-auto max-w-6xl">
+            <h1 class="text-3xl font-extrabold drop-shadow sm:text-4xl">{{ HERO[s.type]?.[0] }}</h1>
+            <p class="mt-1 text-white/90 drop-shadow">{{ HERO[s.type]?.[1] }}</p>
+            <div class="mt-5 flex flex-wrap gap-2">
+                <button type="button" class="rounded-full px-4 py-2 text-sm font-semibold transition" :class="!s.type ? 'bg-white text-navy-900' : 'bg-white/15 text-white hover:bg-white/25'" @click="setType('')">Tout</button>
                 <button
                     v-for="(label, key) in offerTypes"
                     :key="key"
                     type="button"
-                    class="rounded-full px-4 py-1.5 text-sm font-semibold transition"
-                    :class="search.type === key ? 'bg-navy-900 text-white' : 'text-navy-700 hover:bg-navy-50'"
+                    class="rounded-full px-4 py-2 text-sm font-semibold transition"
+                    :class="s.type === key ? 'bg-white text-navy-900' : 'bg-white/15 text-white hover:bg-white/25'"
                     @click="setType(key)"
-                >
-                    {{ ICONS[key] }} {{ label }}
-                </button>
+                >{{ label }}</button>
             </div>
-            <form class="mt-3 flex flex-col gap-2 sm:flex-row" @submit.prevent="submit">
-                <input v-model="search.q" type="text" placeholder="Marque, modele (ex. Toyota)..." class="flex-1 rounded-full border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600" />
-                <input v-model="search.city" type="text" placeholder="Ville" class="rounded-full border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600 sm:w-40" />
-                <template v-if="search.type === 'location'">
-                    <label class="flex items-center gap-2 rounded-full border border-gray-200 px-3 text-xs text-navy-500">Du<input v-model="search.start" type="date" :min="todayIso" class="border-0 p-1 text-sm text-navy-900 focus:ring-0" /></label>
-                    <label class="flex items-center gap-2 rounded-full border border-gray-200 px-3 text-xs text-navy-500">au<input v-model="search.end" type="date" :min="search.start || todayIso" class="border-0 p-1 text-sm text-navy-900 focus:ring-0" /></label>
-                </template>
-                <button type="submit" class="btn-gold sm:px-10">Rechercher</button>
-            </form>
         </div>
+    </PhotoHero>
+
+    <div class="relative z-10 -mt-20 px-4">
+        <!-- ===== LOCATION : formulaire facon Europcar / Sixt ===== -->
+        <form v-if="s.type === 'location'" class="mx-auto max-w-6xl rounded-2xl bg-white p-5 shadow-[0_8px_30px_rgba(0,0,0,0.18)] sm:p-6" @submit.prevent="submit">
+            <p class="text-sm font-bold text-slate-900">Quel type de vehicule ?</p>
+            <div class="mt-2 inline-flex overflow-hidden rounded-xl border border-slate-300">
+                <button v-for="[k, label] in [['voitures', 'Voitures'], ['utilitaires', 'Utilitaires']]" :key="k" type="button" class="px-5 py-2.5 text-sm font-semibold transition" :class="s.vehicule === k ? 'bg-navy-900 text-white' : 'bg-white text-slate-700 hover:bg-slate-50'" @click="s.vehicule = k">{{ label }}</button>
+            </div>
+
+            <div class="mt-5 grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr]">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-bold text-slate-900">Lieu de retrait</p>
+                        <label class="flex cursor-pointer items-center gap-1.5 text-xs text-slate-600">
+                            <input v-model="s.return_elsewhere" type="checkbox" class="rounded text-navy-900" /> Retour dans un autre lieu
+                        </label>
+                    </div>
+                    <input v-model="s.city" type="text" placeholder="Ville, aeroport, adresse..." class="mt-2 h-12 w-full rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" />
+                    <input v-if="s.return_elsewhere" v-model="s.return_city" type="text" placeholder="Lieu de retour" class="mt-2 h-12 w-full rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" />
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-slate-900">Date et heure de depart</p>
+                    <div class="mt-2 flex h-12 overflow-hidden rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-gold-500">
+                        <input v-model="s.start" type="date" :min="todayIso" class="min-w-0 flex-1 border-0 text-sm focus:ring-0" @change="s.end < s.start && (s.end = s.start)" />
+                        <input v-model="s.start_time" type="time" step="1800" class="w-28 border-0 border-l border-slate-200 text-sm focus:ring-0" />
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-slate-900">Date et heure de retour</p>
+                    <div class="mt-2 flex h-12 overflow-hidden rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-gold-500">
+                        <input v-model="s.end" type="date" :min="s.start || todayIso" class="min-w-0 flex-1 border-0 text-sm focus:ring-0" />
+                        <input v-model="s.end_time" type="time" step="1800" class="w-28 border-0 border-l border-slate-200 text-sm focus:ring-0" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-5 text-sm text-slate-700">
+                    <label class="flex items-center gap-2">Age du conducteur
+                        <select v-model="s.age" class="rounded-lg border-slate-300 py-1.5 text-sm font-semibold">
+                            <option value="18-24">18 - 24 ans</option>
+                            <option value="25-29">25 - 29 ans</option>
+                            <option value="30+">30 ans et plus</option>
+                        </select>
+                    </label>
+                    <label class="flex items-center gap-2">Boite
+                        <select v-model="s.transmission" class="rounded-lg border-slate-300 py-1.5 text-sm font-semibold">
+                            <option value="">Toutes</option>
+                            <option value="automatique">Automatique</option>
+                            <option value="manuelle">Manuelle</option>
+                        </select>
+                    </label>
+                    <span v-if="days" class="text-slate-500">{{ days }} jour(s) de location</span>
+                </div>
+                <button type="submit" class="h-12 rounded-xl bg-gold-500 px-10 font-bold text-navy-900 transition hover:bg-gold-400">Voir les vehicules</button>
+            </div>
+        </form>
+
+        <!-- ===== VENTE / TOUT / MECANIQUE : barre de recherche ===== -->
+        <form v-else class="mx-auto flex max-w-6xl flex-col gap-2 rounded-2xl bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.18)] sm:flex-row" @submit.prevent="submit">
+            <input v-model="s.q" type="text" :placeholder="s.type === 'mecanique' ? 'Prestation, garage (ex. vidange)...' : 'Marque, modele (ex. Toyota RAV4)...'" class="h-12 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" />
+            <input v-model="s.city" type="text" placeholder="Ville" class="h-12 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500 sm:w-52" />
+            <button type="submit" class="h-12 rounded-xl bg-gold-500 px-10 font-bold text-navy-900 transition hover:bg-gold-400">Rechercher</button>
+        </form>
     </div>
 
-    <div class="mx-auto max-w-7xl px-6 py-10">
-        <section v-if="garages.length" class="mb-12">
+    <!-- Avantages -->
+    <div v-if="s.type === 'location' || s.type === 'vente'" class="mx-auto mt-8 grid max-w-6xl gap-4 px-4 sm:grid-cols-3">
+        <template v-if="s.type === 'location'">
+            <div v-for="[t, d] in [['Disponibilite en direct', 'Seuls les vehicules libres sur vos dates sont affiches.'], ['Paiement Mobile Money', 'Reservez et payez en quelques secondes.'], ['Annulation flexible', 'Gratuite jusqu\'a 24 h avant la prise en charge.']]" :key="t" class="flex items-start gap-3">
+                <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy-900 text-sm text-gold-400">✓</span>
+                <div><p class="font-bold text-slate-900">{{ t }}</p><p class="text-sm text-slate-500">{{ d }}</p></div>
+            </div>
+        </template>
+        <template v-else>
+            <div v-for="[t, d] in [['Annonces verifiees', 'Chaque annonce est controlee avant publication.'], ['Contact direct', 'Appelez ou ecrivez au vendeur sur WhatsApp.'], ['Conseils d\'achat', 'Verifiez la carte grise et essayez le vehicule.']]" :key="t" class="flex items-start gap-3">
+                <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy-900 text-sm text-gold-400">✓</span>
+                <div><p class="font-bold text-slate-900">{{ t }}</p><p class="text-sm text-slate-500">{{ d }}</p></div>
+            </div>
+        </template>
+    </div>
+
+    <div class="mx-auto max-w-6xl px-4 py-8">
+        <!-- Garages (mecanique) -->
+        <section v-if="garages.length" class="mb-10">
             <h2 class="text-xl font-bold text-navy-900">Garages partenaires</h2>
             <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <Link v-for="g in garages" :key="g.id" :href="`/partenaires/${g.slug}`" class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg">
                     <div class="h-28"><GuideCover :src="g.image_url" category="garage" :alt="g.name" icon-class="h-10 w-10" /></div>
-                    <div class="p-3">
-                        <p class="font-semibold text-navy-900">{{ g.name }}</p>
-                        <p class="text-xs text-navy-500">{{ g.district ?? g.city }}</p>
-                    </div>
+                    <div class="p-3"><p class="font-semibold text-navy-900">{{ g.name }}</p><p class="text-xs text-navy-500">{{ g.district ?? g.city }}</p></div>
                 </Link>
             </div>
         </section>
 
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <Link v-for="v in vehicles.data" :key="v.id" :href="detailHref(v.slug)" class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg">
-                <div class="relative">
-                    <ListingImage :src="v.image_url" fallback-class="bg-orange-600">{{ v.brand }} {{ v.model }}</ListingImage>
-                    <span class="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-navy-900">{{ ICONS[v.offer_type] }} {{ v.offer_type_label }}</span>
+        <!-- ===== VENTE : sidebar de filtres + annonces ===== -->
+        <div v-if="s.type === 'vente'" class="grid gap-6 lg:grid-cols-[270px_1fr]">
+            <aside :class="filtersOpen ? 'block' : 'hidden lg:block'">
+                <div class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5">
+                    <div class="flex items-center justify-between">
+                        <p class="font-bold text-slate-900">Filtres</p>
+                        <button v-if="activeVente" type="button" class="text-xs font-semibold text-[#006ce4]" @click="resetVente">Tout effacer</button>
+                    </div>
+                    <label class="block text-sm">
+                        <span class="font-semibold text-slate-800">Marque</span>
+                        <select v-model="s.brand" class="mt-1 w-full rounded-lg border-slate-300 text-sm" @change="submit">
+                            <option value="">Toutes les marques</option>
+                            <option v-for="b in facets.brands" :key="b.key" :value="b.key">{{ b.key }} ({{ b.count }})</option>
+                        </select>
+                    </label>
+                    <div class="text-sm">
+                        <span class="font-semibold text-slate-800">Prix (XAF)</span>
+                        <div class="mt-1 grid grid-cols-2 gap-2">
+                            <input v-model.number="s.price_min" type="number" min="0" placeholder="Min" class="rounded-lg border-slate-300 text-sm" @change="submit" />
+                            <input v-model.number="s.price_max" type="number" min="0" placeholder="Max" class="rounded-lg border-slate-300 text-sm" @change="submit" />
+                        </div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <button v-for="p in PRICE_STEPS" :key="p" type="button" class="rounded-full border px-2.5 py-1 text-xs" :class="Number(s.price_max) === p ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-600'" @click="s.price_min = ''; s.price_max = p; submit()">≤ {{ (p / 1000000).toLocaleString('fr-FR') }} M</button>
+                        </div>
+                    </div>
+                    <label class="block text-sm">
+                        <span class="font-semibold text-slate-800">Annee minimum</span>
+                        <select v-model="s.year_min" class="mt-1 w-full rounded-lg border-slate-300 text-sm" @change="submit">
+                            <option value="">Toutes</option>
+                            <option v-for="y in YEARS" :key="y" :value="y">{{ y }} et plus</option>
+                        </select>
+                    </label>
+                    <label class="block text-sm">
+                        <span class="font-semibold text-slate-800">Kilometrage maximum</span>
+                        <select v-model="s.km_max" class="mt-1 w-full rounded-lg border-slate-300 text-sm" @change="submit">
+                            <option value="">Peu importe</option>
+                            <option v-for="k in [20000, 50000, 100000, 150000, 200000]" :key="k" :value="k">{{ money(k) }} km</option>
+                        </select>
+                    </label>
+                    <div class="text-sm">
+                        <span class="font-semibold text-slate-800">Boite de vitesses</span>
+                        <div class="mt-2 grid grid-cols-2 gap-2">
+                            <button v-for="[k, label] in [['automatique', 'Automatique'], ['manuelle', 'Manuelle']]" :key="k" type="button" class="rounded-lg border px-2 py-2 text-xs font-semibold" :class="s.transmission === k ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700'" @click="s.transmission = s.transmission === k ? '' : k; submit()">{{ label }}</button>
+                        </div>
+                    </div>
+                    <div v-if="facets.fuels.length" class="text-sm">
+                        <span class="font-semibold text-slate-800">Carburant</span>
+                        <label v-for="x in facets.fuels" :key="x.key" class="mt-2 flex items-center gap-2 text-slate-700">
+                            <input type="radio" name="fuel" :checked="s.fuel === x.key" class="text-navy-900" @change="s.fuel = x.key; submit()" />
+                            <span class="flex-1">{{ cap(x.key) }}</span><span class="text-xs text-slate-400">{{ x.count }}</span>
+                        </label>
+                    </div>
+                    <div v-if="facets.categories.length" class="text-sm">
+                        <span class="font-semibold text-slate-800">Type de carrosserie</span>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <button v-for="x in facets.categories" :key="x.key" type="button" class="rounded-full border px-3 py-1 text-xs font-semibold" :class="s.category === x.key ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700'" @click="s.category = s.category === x.key ? '' : x.key; submit()">{{ cap(x.key) }}</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="p-4">
-                    <p class="font-semibold text-navy-900">{{ v.title }}</p>
-                    <p class="text-xs text-navy-500">
-                        {{ [v.year, v.mileage_km ? `${Number(v.mileage_km).toLocaleString('fr-FR')} km` : null, v.fuel, v.city].filter(Boolean).join(' · ') }}
-                    </p>
-                    <p class="mt-1 text-sm font-semibold text-gold-600"><span v-if="v.display_price?.original" class="mr-1 text-xs font-normal text-navy-400 line-through">{{ Number(v.display_price.original).toLocaleString('fr-FR') }}</span>{{ price(v) }}</p>
-                    <PromoBadge :promo="v.promo" class="mt-1" />
-                    <p v-if="v.offer_type === 'location' && filters.start && filters.end" class="mt-1 text-xs font-semibold text-green-700">✓ Disponible sur vos dates</p>
-                </div>
-            </Link>
-        </div>
-        <p v-if="!vehicles.data.length" class="mt-10 text-center text-navy-500">Aucune annonce pour le moment dans cette categorie.</p>
-        <Paginator :page="vehicles" />
+            </aside>
 
-        <PartnersSection v-if="search.type !== 'mecanique'" module="voiture" title="Taxis, VTC & garages" subtitle="Applications de taxi, chauffeurs prives et garages a Brazzaville." />
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="text-xl font-extrabold text-slate-900">{{ vehicles.total ?? vehicles.data.length }} annonce(s)</h2>
+                    <div class="flex items-center gap-2">
+                        <button type="button" class="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-semibold lg:hidden" @click="filtersOpen = !filtersOpen">Filtres<span v-if="activeVente"> ({{ activeVente }})</span></button>
+                        <select v-model="s.sort" class="rounded-full border-slate-300 py-1.5 pl-3 pr-8 text-sm font-semibold" @change="submit">
+                            <option v-for="(label, key) in sorts" :key="key" :value="key">{{ label }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4 space-y-4">
+                    <Link v-for="v in vehicles.data" :key="v.id" :href="detailHref(v)" class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:shadow-lg sm:flex-row">
+                        <div class="relative shrink-0 sm:w-72">
+                            <ListingImage :src="v.image_url" fallback-class="bg-navy-800" class="h-48 sm:h-full">{{ v.brand }} {{ v.model }}</ListingImage>
+                            <PromoBadge :promo="v.promo" class="absolute left-2 top-2" />
+                        </div>
+                        <div class="flex min-w-0 flex-1 flex-col justify-between gap-3 p-4">
+                            <div>
+                                <p class="text-lg font-bold text-slate-900">{{ v.title }}</p>
+                                <div class="mt-2 flex flex-wrap gap-1.5 text-xs font-semibold text-slate-700">
+                                    <span v-if="v.year" class="rounded-md bg-slate-100 px-2 py-1">{{ v.year }}</span>
+                                    <span v-if="v.mileage_km" class="rounded-md bg-slate-100 px-2 py-1">{{ money(v.mileage_km) }} km</span>
+                                    <span v-if="v.fuel" class="rounded-md bg-slate-100 px-2 py-1">{{ cap(v.fuel) }}</span>
+                                    <span v-if="v.transmission" class="rounded-md bg-slate-100 px-2 py-1">{{ cap(v.transmission) }}</span>
+                                    <span v-if="v.category" class="rounded-md bg-slate-100 px-2 py-1">{{ cap(v.category) }}</span>
+                                </div>
+                                <p v-if="v.description" class="mt-2 line-clamp-2 text-sm text-slate-500">{{ v.description }}</p>
+                            </div>
+                            <div class="flex items-end justify-between gap-3">
+                                <p class="text-sm text-slate-500">📍 {{ v.city }}</p>
+                                <div class="text-right">
+                                    <p v-if="v.display_price?.original" class="text-sm text-red-500 line-through">{{ money(v.display_price.original) }} {{ v.currency }}</p>
+                                    <p class="text-2xl font-extrabold text-navy-900">{{ v.display_price ? `${money(v.display_price.amount)} ${v.currency}` : 'Prix sur demande' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </Link>
+                </div>
+                <div v-if="!vehicles.data.length" class="mt-6 rounded-2xl border bg-white p-10 text-center">
+                    <p class="text-lg font-semibold text-slate-900">Aucune annonce ne correspond a vos criteres.</p>
+                    <button v-if="activeVente" type="button" class="mt-3 font-semibold text-[#006ce4]" @click="resetVente">Retirer les filtres</button>
+                </div>
+                <Paginator :page="vehicles" />
+            </div>
+        </div>
+
+        <!-- ===== LOCATION / TOUT / MECANIQUE : cartes ===== -->
+        <template v-else>
+            <div v-if="s.type === 'location'" class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <h2 class="text-xl font-extrabold text-slate-900">
+                    {{ vehicles.total ?? vehicles.data.length }} vehicule(s){{ datesSearched ? ' disponibles sur vos dates' : '' }}
+                </h2>
+                <select v-model="s.sort" class="rounded-full border-slate-300 py-1.5 pl-3 pr-8 text-sm font-semibold" @change="submit">
+                    <option value="recent">Recommandes</option>
+                    <option value="prix_asc">Prix par jour croissant</option>
+                    <option value="prix_desc">Prix par jour decroissant</option>
+                </select>
+            </div>
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <Link v-for="v in vehicles.data" :key="v.id" :href="detailHref(v)" class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:shadow-lg">
+                    <div class="relative">
+                        <ListingImage :src="v.image_url" fallback-class="bg-navy-800" class="h-44">{{ v.brand }} {{ v.model }}</ListingImage>
+                        <span class="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-0.5 text-xs font-semibold text-navy-900">{{ v.offer_type_label }}</span>
+                        <PromoBadge :promo="v.promo" class="absolute right-3 top-3" />
+                    </div>
+                    <div class="flex flex-1 flex-col p-4">
+                        <p class="font-bold text-slate-900">{{ v.title }}</p>
+                        <p class="text-xs text-slate-500">{{ cap(v.category) || 'Vehicule' }} · {{ v.city }}</p>
+                        <div v-if="v.offer_type !== 'mecanique'" class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+                            <span v-if="v.seats">{{ v.seats }} places</span>
+                            <span v-if="v.transmission">{{ cap(v.transmission) }}</span>
+                            <span v-if="v.fuel">{{ cap(v.fuel) }}</span>
+                            <span v-if="v.mileage_km">{{ money(v.mileage_km) }} km</span>
+                        </div>
+                        <div class="mt-auto flex items-end justify-between pt-4">
+                            <div>
+                                <p v-if="v.display_price?.original" class="text-xs text-red-500 line-through">{{ money(v.display_price.original) }}</p>
+                                <p class="text-lg font-extrabold text-navy-900">
+                                    {{ v.display_price ? money(v.display_price.amount) : 'Sur demande' }}<span v-if="v.display_price" class="text-sm font-semibold"> {{ v.currency }}</span>
+                                    <span v-if="v.offer_type === 'location'" class="text-xs font-normal text-slate-500">/ jour</span>
+                                </p>
+                                <p v-if="v.offer_type === 'location' && datesSearched && v.display_price" class="text-xs text-slate-500">{{ money(v.display_price.amount * days) }} {{ v.currency }} pour {{ days }} jour(s)</p>
+                            </div>
+                            <span class="rounded-lg bg-navy-900 px-3 py-2 text-xs font-semibold text-white group-hover:bg-navy-800">{{ v.offer_type === 'location' ? 'Reserver' : 'Voir' }}</span>
+                        </div>
+                        <p v-if="v.offer_type === 'location' && datesSearched" class="mt-2 text-xs font-semibold text-green-700">✓ Disponible sur vos dates</p>
+                    </div>
+                </Link>
+            </div>
+            <p v-if="!vehicles.data.length" class="mt-10 text-center text-navy-500">
+                {{ datesSearched ? 'Aucun vehicule libre sur ces dates : essayez d\'autres dates.' : 'Aucune annonce pour le moment dans cette categorie.' }}
+            </p>
+            <Paginator :page="vehicles" />
+        </template>
+
+        <PartnersSection v-if="s.type !== 'mecanique' && s.type !== 'vente'" module="voiture" title="Taxis, VTC & garages" subtitle="Applications de taxi, chauffeurs prives et garages a Brazzaville." />
     </div>
 </template>

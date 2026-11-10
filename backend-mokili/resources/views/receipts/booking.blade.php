@@ -102,7 +102,7 @@
                             @if ($booking->starts_at)
                                 <br><span class="muted">
                                     @if ($kind === 'LodgingListing')Du {{ $d($booking->starts_at, 'd/m/Y') }} au {{ $d($booking->ends_at, 'd/m/Y') }}
-                                    @elseif ($kind === 'Vehicle')Prise en charge le {{ $d($booking->starts_at, 'd/m/Y \a H:i') }}, restitution le {{ $d($booking->ends_at, 'd/m/Y') }}
+                                    @elseif ($kind === 'Vehicle')Prise en charge le {{ $d($booking->starts_at, 'd/m/Y \a H:i') }}, restitution le {{ $d($booking->ends_at, 'd/m/Y \a H:i') }}{{ ! empty($meta['return_place']) ? ' ('.$meta['return_place'].')' : '' }}
                                     @else Le {{ $d($booking->starts_at, 'd/m/Y \a H:i') }}
                                     @endif
                                 </span>

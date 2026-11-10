@@ -12,41 +12,73 @@ use Inertia\Response;
 // VOITURE : location, vente et mecanique (garages et prestations).
 class VehicleController extends Controller
 {
+    public const SORTS = [
+        'recent' => 'Les plus recentes',
+        'prix_asc' => 'Prix croissant',
+        'prix_desc' => 'Prix decroissant',
+        'km_asc' => 'Kilometrage le plus bas',
+        'annee_desc' => 'Annee la plus recente',
+    ];
+
     public function index(Request $request): Response
     {
         $type = $request->string('type')->toString();
         $types = config('catalogue.voiture.offer_types');
         $type = isset($types[$type]) ? $type : '';
+        $priceCol = $type === 'location' ? 'price_per_day' : 'sale_price';
+
+        $base = Vehicle::query()->active()->when($type, fn ($q) => $q->where('offer_type', $type));
+        $query = (clone $base)
+            ->when($request->filled('city'), fn ($q) => $q->where('city', 'like', '%'.$request->string('city').'%'))
+            ->when($request->filled('q'), fn ($q) => $q->where(fn ($w) => $w
+                ->where('title', 'like', '%'.$request->string('q').'%')
+                ->orWhere('brand', 'like', '%'.$request->string('q').'%')
+                ->orWhere('model', 'like', '%'.$request->string('q').'%')))
+            // Voitures / Utilitaires (facon Europcar / Sixt).
+            ->when($request->input('vehicule') === 'utilitaires', fn ($q) => $q->where('category', 'utilitaire'))
+            ->when($request->input('vehicule') === 'voitures', fn ($q) => $q->where(fn ($w) => $w->whereNull('category')->orWhere('category', '!=', 'utilitaire')))
+            ->when($request->filled('brand'), fn ($q) => $q->where('brand', $request->string('brand')))
+            ->when($request->filled('fuel'), fn ($q) => $q->where('fuel', $request->string('fuel')))
+            ->when($request->filled('transmission'), fn ($q) => $q->where('transmission', $request->string('transmission')))
+            ->when($request->filled('category'), fn ($q) => $q->where('category', $request->string('category')))
+            ->when($request->filled('seats'), fn ($q) => $q->where('seats', '>=', $request->integer('seats')))
+            ->when($request->filled('price_min'), fn ($q) => $q->where($priceCol, '>=', $request->float('price_min')))
+            ->when($request->filled('price_max'), fn ($q) => $q->where($priceCol, '<=', $request->float('price_max')))
+            ->when($request->filled('year_min'), fn ($q) => $q->where('year', '>=', $request->integer('year_min')))
+            ->when($request->filled('km_max'), fn ($q) => $q->where('mileage_km', '<=', $request->integer('km_max')))
+            // Location : seulement les vehicules libres sur les dates demandees.
+            ->when($type === 'location' && $request->filled('start') && $request->filled('end'), function ($q) use ($request) {
+                $start = \Carbon\Carbon::parse($request->input('start'))->startOfDay();
+                $end = \Carbon\Carbon::parse($request->input('end'))->endOfDay();
+                $q->whereNotIn('id', \App\Models\Booking::query()->where('bookable_type', Vehicle::class)
+                    ->where(fn ($s) => $s->whereIn('status', ['confirmed', 'paid', 'completed'])
+                        ->orWhere(fn ($w) => $w->where('status', 'awaiting_payment')->where('created_at', '>=', now()->subMinutes(\App\Services\Voiture\VehicleAvailability::HOLD_MINUTES))))
+                    ->where('starts_at', '<=', $end)->where('ends_at', '>=', $start)->select('bookable_id'));
+            });
+
+        match ($request->input('sort')) {
+            'prix_asc' => $query->orderByRaw("$priceCol is null")->orderBy($priceCol),
+            'prix_desc' => $query->orderByDesc($priceCol),
+            'km_asc' => $query->orderByRaw('mileage_km is null')->orderBy('mileage_km'),
+            'annee_desc' => $query->orderByDesc('year'),
+            default => $query->latest(),
+        };
+
+        $pool = (clone $base)->get(['brand', 'fuel', 'transmission', 'category']);
+        $count = fn ($col) => $pool->pluck($col)->filter()->countBy()->sortKeys()->map(fn ($n, $k) => ['key' => $k, 'count' => $n])->values();
 
         return Inertia::render('Voiture/Index', [
-            'vehicles' => Vehicle::query()
-                ->active()
-                ->when($type, fn ($q) => $q->where('offer_type', $type))
-                ->when($request->filled('city'), fn ($q) => $q->where('city', 'like', '%'.$request->string('city').'%'))
-                ->when($request->filled('q'), fn ($q) => $q->where(fn ($w) => $w
-                    ->where('title', 'like', '%'.$request->string('q').'%')
-                    ->orWhere('brand', 'like', '%'.$request->string('q').'%')
-                    ->orWhere('model', 'like', '%'.$request->string('q').'%')))
-                // Location : seulement les vehicules libres sur les dates demandees.
-                ->when($type === 'location' && $request->filled('start') && $request->filled('end'), function ($q) use ($request) {
-                    $start = \Carbon\Carbon::parse($request->input('start'))->startOfDay();
-                    $end = \Carbon\Carbon::parse($request->input('end'))->endOfDay();
-                    $q->whereNotIn('id', \App\Models\Booking::query()->where('bookable_type', Vehicle::class)
-                        ->where(fn ($s) => $s->whereIn('status', ['confirmed', 'paid', 'completed'])
-                            ->orWhere(fn ($w) => $w->where('status', 'awaiting_payment')->where('created_at', '>=', now()->subMinutes(\App\Services\Voiture\VehicleAvailability::HOLD_MINUTES))))
-                        ->where('starts_at', '<=', $end)->where('ends_at', '>=', $start)->select('bookable_id'));
-                })
-                ->latest()
-                ->paginate(12)
-                ->withQueryString(),
+            'vehicles' => $query->paginate(12)->withQueryString(),
             // Mecanique : les garages partenaires en plus des annonces.
             'garages' => $type === 'mecanique'
                 ? Business::query()->active()->where('category', 'garage')
                     ->when($request->filled('city'), fn ($q) => $q->where('city', 'like', '%'.$request->string('city').'%'))
                     ->orderByDesc('is_featured')->orderBy('name')->limit(24)->get()
                 : [],
-            'filters' => (object) ($request->only('city', 'q', 'start', 'end') + ['type' => $type]),
+            'filters' => (object) ($request->only('city', 'q', 'start', 'end', 'start_time', 'end_time', 'vehicule', 'brand', 'fuel', 'transmission', 'category', 'seats', 'price_min', 'price_max', 'year_min', 'km_max', 'sort', 'age', 'return_city') + ['type' => $type]),
             'offerTypes' => $types,
+            'facets' => ['brands' => $count('brand'), 'fuels' => $count('fuel'), 'transmissions' => $count('transmission'), 'categories' => $count('category')],
+            'sorts' => self::SORTS,
         ]);
     }
 
@@ -58,7 +90,7 @@ class VehicleController extends Controller
             'vehicle' => $vehicle,
             'busyDays' => $vehicle->offer_type === 'location' ? \App\Services\Voiture\VehicleAvailability::busyDays($vehicle) : [],
             'pickupModes' => \App\Http\Controllers\Voiture\RentalController::PICKUP,
-            'search' => request()->only(['start', 'end']),
+            'search' => request()->only(['start', 'end', 'start_time', 'end_time', 'age', 'return_city']),
             'similar' => Vehicle::query()->active()->where('offer_type', $vehicle->offer_type)
                 ->whereKeyNot($vehicle->id)->latest()->limit(4)->get(),
         ]);

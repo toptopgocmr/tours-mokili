@@ -60,4 +60,28 @@ class VehicleRentalTest extends TestCase
         $this->actingAs(User::factory()->create())->post("/voiture/{$car->slug}/reserver", ['starts_at' => $start, 'ends_at' => $start, 'pickup_mode' => 'livraison'])
             ->assertSessionHasErrors('pickup_address');
     }
+
+    public function test_rental_options_and_sale_filters(): void
+    {
+        Vehicle::query()->delete(); // annonces de demonstration
+        $car = $this->car();
+        $van = $this->car(['title' => 'Hiace', 'category' => 'utilitaire']);
+        $d = now()->addDays(3)->toDateString();
+        $this->actingAs(User::factory()->create())->post("/voiture/{$car->slug}/reserver", [
+            'starts_at' => $d, 'ends_at' => now()->addDays(5)->toDateString(), 'pickup_time' => '08:30', 'return_time' => '18:00',
+            'pickup_mode' => 'aeroport', 'return_elsewhere' => true, 'return_place' => 'Pointe-Noire', 'driver_age' => '25-29',
+        ])->assertRedirect();
+        $b = Booking::latest('id')->first();
+        $this->assertSame('Pointe-Noire', $b->meta['return_place']);
+        $this->assertSame('25-29', $b->meta['driver_age']);
+        $this->assertStringContainsString('18:00', (string) $b->ends_at);
+
+        $this->get('/voiture?type=location&vehicule=utilitaires')->assertInertia(fn ($p) => $p->has('vehicles.data', 1)->where('vehicles.data.0.id', $van->id));
+
+        $this->car(['title' => 'RAV4 a vendre', 'offer_type' => 'vente', 'price_per_day' => null, 'sale_price' => 9000000, 'year' => 2019, 'mileage_km' => 80000, 'fuel' => 'essence']);
+        $this->car(['title' => 'Vieille Corolla', 'offer_type' => 'vente', 'price_per_day' => null, 'sale_price' => 3000000, 'year' => 2010, 'mileage_km' => 220000, 'fuel' => 'diesel']);
+        $this->get('/voiture?type=vente&price_max=5000000')->assertInertia(fn ($p) => $p->has('vehicles.data', 1)->where('vehicles.data.0.title', 'Vieille Corolla'));
+        $this->get('/voiture?type=vente&year_min=2015&km_max=100000')->assertInertia(fn ($p) => $p->has('vehicles.data', 1)->where('vehicles.data.0.title', 'RAV4 a vendre'));
+        $this->get('/voiture?type=vente&sort=prix_asc')->assertInertia(fn ($p) => $p->where('vehicles.data.0.title', 'Vieille Corolla')->has('facets.fuels', 2));
+    }
 }

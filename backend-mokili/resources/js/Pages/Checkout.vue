@@ -196,9 +196,10 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                     </template>
                     <template v-else-if="item.isVehicle && booking.starts_at">
                         <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Prise en charge</dt><dd class="text-right font-semibold">{{ fmtDate(booking.starts_at) }} a {{ new Date(booking.starts_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }}</dd></div>
-                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Restitution</dt><dd class="text-right font-semibold">{{ fmtDate(booking.ends_at) }}</dd></div>
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Restitution</dt><dd class="text-right font-semibold">{{ fmtDate(booking.ends_at) }} a {{ new Date(booking.ends_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }}<span v-if="booking.meta?.return_place" class="block text-xs font-normal text-navy-500">{{ booking.meta.return_place }}</span></dd></div>
                         <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Duree</dt><dd>{{ booking.quantity }} jour(s)</dd></div>
                         <div v-if="booking.meta?.pickup_label" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Remise</dt><dd class="text-right">{{ booking.meta.pickup_label }}<span v-if="booking.meta.pickup_address" class="block text-xs text-navy-500">{{ booking.meta.pickup_address }}</span></dd></div>
+                        <div v-if="booking.meta?.driver_age" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Conducteur</dt><dd>{{ booking.meta.driver_age === '30+' ? '30 ans et plus' : booking.meta.driver_age + ' ans' }}</dd></div>
                         <div v-if="booking.meta?.with_driver" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Chauffeur</dt><dd>Demande (tarif confirme par le loueur)</dd></div>
                     </template>
                     <template v-else-if="item.isLodging && booking.starts_at">
