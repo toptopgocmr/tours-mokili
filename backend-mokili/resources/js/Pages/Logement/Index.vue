@@ -3,6 +3,7 @@ import PromoBadge from '@/Components/PromoBadge.vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import PartnersSection from '@/Components/PartnersSection.vue';
 import ListingImage from '@/Components/ListingImage.vue';
+import PhotoHero from '@/Components/PhotoHero.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 
@@ -116,7 +117,7 @@ const activeFilters = computed(() => s.type.length + s.amenities.length + (s.pri
     <Head title="Hotels, appartements et villas" />
 
     <!-- En-tete bleu + barre de recherche jaune -->
-    <section class="bg-[#003b95] px-4 pb-14 pt-10 text-white sm:pt-14">
+    <PhotoHero class="px-4 pb-16 pt-12 text-white sm:pt-16">
         <div class="mx-auto max-w-6xl">
             <h1 class="text-3xl font-extrabold leading-tight sm:text-5xl">
                 <template v-if="firstName">{{ firstName }}, quelle sera votre prochaine destination ?</template>
@@ -124,13 +125,12 @@ const activeFilters = computed(() => s.type.length + s.amenities.length + (s.pri
             </h1>
             <p class="mt-3 text-lg text-white/90 sm:text-xl">Hotels, appartements et villas au Congo, en Afrique et dans le monde. Paiement par Mobile Money.</p>
         </div>
-    </section>
+    </PhotoHero>
 
     <div class="relative z-20 -mt-8 px-4">
         <form class="mx-auto grid max-w-6xl gap-1 rounded-xl bg-[#ffb700] p-1 shadow-lg lg:grid-cols-[1.3fr_1.2fr_1.2fr_auto]" @submit.prevent="submit">
             <label class="flex items-center gap-3 rounded-lg bg-white px-3 py-2.5">
-                <span class="text-xl">🛏️</span>
-                <span class="min-w-0 flex-1">
+                                <span class="min-w-0 flex-1">
                     <span class="block text-[11px] text-slate-500">Indiquez la destination</span>
                     <input v-model="s.city" type="text" placeholder="Ville, quartier, hotel..." class="w-full border-0 p-0 text-sm font-semibold text-slate-900 placeholder:font-normal focus:ring-0" />
                 </span>
@@ -138,8 +138,7 @@ const activeFilters = computed(() => s.type.length + s.amenities.length + (s.pri
             </label>
 
             <div class="flex items-center gap-3 rounded-lg bg-white px-3 py-2.5">
-                <span class="text-xl">📅</span>
-                <div class="grid flex-1 grid-cols-2 gap-2">
+                                <div class="grid flex-1 grid-cols-2 gap-2">
                     <label class="min-w-0">
                         <span class="block text-[11px] text-slate-500">Arrivee</span>
                         <input v-model="s.check_in" type="date" :min="today" class="w-full border-0 p-0 text-sm font-semibold text-slate-900 focus:ring-0" @change="onCheckIn" />
@@ -153,12 +152,11 @@ const activeFilters = computed(() => s.type.length + s.amenities.length + (s.pri
 
             <div ref="occRef" class="relative">
                 <button type="button" class="flex h-full w-full items-center gap-3 rounded-lg bg-white px-3 py-2.5 text-left" @click.stop="occOpen = !occOpen">
-                    <span class="text-xl">👤</span>
-                    <span class="min-w-0 flex-1">
+                                        <span class="min-w-0 flex-1">
                         <span class="block text-[11px] text-slate-500">Voyageurs et chambres</span>
                         <span class="block truncate text-sm font-semibold text-slate-900">{{ occLabel }}</span>
                     </span>
-                    <span class="text-slate-500">▾</span>
+                    <svg class="h-4 w-4 text-slate-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
                 </button>
                 <div v-if="occOpen" class="absolute right-0 top-full z-30 mt-2 w-full min-w-[280px] rounded-xl border bg-white p-4 text-slate-900 shadow-xl" @click.stop>
                     <div v-for="row in [['adults', 'Adultes', 1, 30], ['children', 'Enfants', 0, 10], ['rooms', 'Chambres', 1, 10]]" :key="row[0]" class="flex items-center justify-between py-2">
@@ -188,7 +186,7 @@ const activeFilters = computed(() => s.type.length + s.amenities.length + (s.pri
                 :class="s.type.includes(t.key) ? 'border-[#006ce4] bg-blue-50 text-[#006ce4]' : 'border-slate-300 bg-white text-slate-700 hover:border-slate-500'"
                 @click="toggle('type', t.key)"
             >
-                {{ TYPE_ICONS[t.key] }} {{ t.label }} <span class="font-normal text-slate-500">({{ t.count }})</span>
+                {{ t.label }} <span class="font-normal text-slate-500">({{ t.count }})</span>
             </button>
         </div>
 
@@ -290,7 +288,7 @@ const activeFilters = computed(() => s.type.length + s.amenities.length + (s.pri
                                     <button type="button" class="font-semibold text-[#006ce4] underline" @click="goCity(l.city)">{{ l.city }}</button>
                                     <span class="text-slate-500"> · {{ l.address || l.country }}</span>
                                 </p>
-                                <p v-if="l.property_type_label" class="mt-2 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{{ TYPE_ICONS[l.property_type] }} {{ l.property_type_label }}</p>
+                                <p v-if="l.property_type_label" class="mt-2 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{{ l.property_type_label }}</p>
                                 <p class="mt-2 text-sm font-semibold text-slate-800">
                                     {{ l.bedrooms }} chambre(s) · {{ l.bathrooms }} salle(s) de bain · jusqu'a {{ l.max_guests }} voyageurs
                                 </p>

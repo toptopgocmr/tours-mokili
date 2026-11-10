@@ -22,6 +22,7 @@ class RubricsTest extends TestCase
 
     public function test_logement_filters_villa_hotel_appartement(): void
     {
+        LodgingListing::query()->delete(); // logements de demonstration
         foreach (['villa', 'hotel', 'appartement', 'villa'] as $i => $type) {
             LodgingListing::create(['title' => "Logement $i", 'property_type' => $type, 'city' => 'Brazzaville', 'country' => 'CG',
                 'price_per_night' => 30000, 'status' => 'published', 'is_active' => true]);
