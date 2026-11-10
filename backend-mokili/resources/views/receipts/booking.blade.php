@@ -4,7 +4,8 @@
     $meta = $booking->meta ?? [];
     $paidAt = $payment?->paid_at ?? $booking->updated_at;
     $receiptNo = 'RC-'.$paidAt->format('Ymd').'-'.str_pad((string) $booking->id, 5, '0', STR_PAD_LEFT);
-    $unitLabel = match ($kind) {
+    $isDeposit = ($meta['kind'] ?? null) === 'acompte_vente';
+    $unitLabel = $isDeposit ? 'acompte' : match ($kind) {
         'LodgingListing' => 'nuit(s)',
         'Vehicle' => 'jour(s)',
         'TravelOffer' => 'place(s)',
@@ -98,7 +99,8 @@
                 <tbody>
                     <tr>
                         <td>
-                            <strong>{{ $title }}</strong>@if ($place)<br><span class="muted">{{ $place }}</span>@endif
+                            <strong>{{ $isDeposit ? 'Acompte de reservation - ' : '' }}{{ $title }}</strong>@if ($place)<br><span class="muted">{{ $place }}</span>@endif
+                            @if ($isDeposit && ! empty($meta['sale_price']))<br><span class="muted">Prix du vehicule : {{ $money($meta['sale_price']) }} {{ $booking->currency }} - reste a regler au vendeur : {{ $money($meta['sale_price'] - $booking->total_amount) }} {{ $booking->currency }}</span>@endif
                             @if ($booking->starts_at)
                                 <br><span class="muted">
                                     @if ($kind === 'LodgingListing')Du {{ $d($booking->starts_at, 'd/m/Y') }} au {{ $d($booking->ends_at, 'd/m/Y') }}

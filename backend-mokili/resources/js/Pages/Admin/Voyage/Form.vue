@@ -19,6 +19,8 @@ const form = useForm({
     type: props.offer?.type ?? 'vol',
     transport_mode: props.offer?.transport_mode ?? '',
     departure_point: props.offer?.departure_point ?? '',
+    arrival_point: props.offer?.arrival_point ?? '',
+    amenities: props.offer?.amenities ?? [],
     duration_label: props.offer?.duration_label ?? '',
     trip_scope: props.offer?.trip_scope ?? '',
     origin_department: props.offer?.origin_department ?? '',
@@ -66,6 +68,8 @@ const submit = () => {
         form.post('/admin/voyage');
     }
 };
+const AMENITY_LIST = { wifi: 'Wi-Fi', prises: 'Prises electriques', clim: 'Climatisation', toilettes: 'Toilettes', bagages: 'Bagage en soute inclus', collation: 'Collation', tv: 'Ecrans / TV', gilets: 'Gilets de sauvetage' };
+const toggleAmenity = (k) => { const i = form.amenities.indexOf(k); i >= 0 ? form.amenities.splice(i, 1) : form.amenities.push(k); };
 </script>
 
 <template>
@@ -116,6 +120,16 @@ const submit = () => {
         <div v-if="form.type !== 'vol'">
             <label class="text-sm font-medium text-slate-700">Lieu de depart / embarquement</label>
             <input v-model="form.departure_point" type="text" placeholder="Ex : Gare routiere de Mikalou, Port du Beach..." class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div v-if="form.type !== 'vol'">
+            <label class="text-sm font-medium text-slate-700">Lieu d'arrivee</label>
+            <input v-model="form.arrival_point" type="text" placeholder="Ex : Gare routiere, agence..." class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div v-if="form.type !== 'vol'" class="sm:col-span-2">
+            <label class="text-sm font-medium text-slate-700">Services a bord</label>
+            <div class="mt-2 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+                <label v-for="(lbl, k) in AMENITY_LIST" :key="k" class="flex items-center gap-2"><input type="checkbox" :checked="form.amenities.includes(k)" @change="toggleAmenity(k)" /> {{ lbl }}</label>
+            </div>
         </div>
         <div v-if="form.type !== 'vol'">
             <label class="text-sm font-medium text-slate-700">Portee du trajet</label>

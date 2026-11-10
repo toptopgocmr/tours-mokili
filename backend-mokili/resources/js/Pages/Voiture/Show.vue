@@ -6,6 +6,7 @@ import ContactButtons from '@/Components/ContactButtons.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import axios from 'axios';
+import { useCarShortlist, monthly } from '@/composables/useCarShortlist';
 
 defineOptions({ layout: MainLayout });
 
@@ -18,7 +19,43 @@ const props = defineProps({
     busyDays: { type: Array, default: () => [] },
     pickupModes: { type: Object, default: () => ({}) },
     search: { type: Object, default: () => ({}) },
+    sale: { type: Object, default: null },
+    idTypes: { type: Object, default: () => ({}) },
 });
+
+// ---------- Galerie ----------
+const photos = computed(() => (props.vehicle.gallery_urls?.length ? props.vehicle.gallery_urls : [props.vehicle.image_url].filter(Boolean)));
+const photo = ref(0);
+const go = (d) => (photo.value = (photo.value + d + photos.value.length) % photos.value.length);
+const zoom = ref(false);
+
+// ---------- Vente : favoris, partage, financement, reservation ----------
+const { isFav, toggleFav, inCompare, toggleCompare, compare } = useCarShortlist();
+const shared = ref(false);
+const share = async () => {
+    const url = window.location.href;
+    try {
+        if (navigator.share) await navigator.share({ title: props.vehicle.title, url });
+        else {
+            await navigator.clipboard.writeText(url);
+            shared.value = true;
+            setTimeout(() => (shared.value = false), 2000);
+        }
+    } catch {
+        /* partage annule */
+    }
+};
+const fin = ref({ ...(props.sale?.finance ?? { down_payment_percent: 20, months: 36, annual_rate: 12 }) });
+const salePrice = computed(() => Number(props.vehicle.display_price?.amount ?? 0));
+const downPayment = computed(() => Math.round(salePrice.value * fin.value.down_payment_percent / 100));
+const perMonth = computed(() => monthly(salePrice.value, fin.value));
+const totalCredit = computed(() => perMonth.value * fin.value.months);
+const reserveForm = useForm({ phone: '', message: '' });
+const reserve = () => reserveForm.post(`/voiture/${props.vehicle.slug}/reserver-achat`, { preserveScroll: true });
+const tradeIn = ref({ brand: '', model: '', year: '', km: '' });
+const tradeInMsg = computed(() => `Bonjour, je suis interesse(e) par votre ${props.vehicle.title} (MOKILI TOUR) et je souhaite faire estimer ma voiture en reprise : ${tradeIn.value.brand} ${tradeIn.value.model} ${tradeIn.value.year}, ${tradeIn.value.km} km.`);
+const printSheet = () => window.print();
+const goTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
 const v = computed(() => props.vehicle);
 const isRental = computed(() => v.value.offer_type === 'location' && !!v.value.price_per_day);
@@ -66,6 +103,12 @@ const form = useForm({
     return_elsewhere: !!props.search.return_city,
     return_place: props.search.return_city || '',
     driver_age: props.search.age || '30+',
+    id_type: 'cni',
+    id_number: '',
+    id_document: null,
+    license_number: '',
+    license_date: '',
+    license_document: null,
     pickup_mode: 'agence',
     pickup_address: '',
     with_driver: false,
@@ -133,11 +176,18 @@ const dayClass = (d) => {
 };
 
 const fmt = (d) => (d ? new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) : '');
-const canBook = computed(() => check.value.available === true && !check.value.loading && (form.pickup_mode !== 'livraison' || form.pickup_address) && (!form.return_elsewhere || form.return_place));
+const canBook = computed(() => check.value.available === true && !check.value.loading && (form.pickup_mode !== 'livraison' || form.pickup_address) && (!form.return_elsewhere || form.return_place) && docsOk.value);
 const isSale = computed(() => v.value.offer_type === 'vente');
 const saleMsg = (what) => `Bonjour, je suis interesse(e) par votre ${v.value.title} vu sur MOKILI TOUR. ${what}`;
 const SAFETY = ['Rencontrez le vendeur dans un lieu public et de jour.', 'Verifiez la carte grise, le controle technique et le numero de chassis.', 'Faites un essai routier et, si possible, un diagnostic dans un garage.', "Ne versez jamais d'acompte avant d'avoir vu le vehicule."];
-const submit = () => form.post(`/voiture/${v.value.slug}/reserver`, { preserveScroll: true });
+const docName = ref({ id_document: '', license_document: '' });
+const onDoc = (field, e) => {
+    const f = e.target.files[0];
+    form[field] = f ?? null;
+    docName.value[field] = f?.name ?? '';
+};
+const docsOk = computed(() => form.id_number && form.id_document && (form.with_driver || (form.license_number && form.license_date && form.license_document)));
+const submit = () => form.post(`/voiture/${v.value.slug}/reserver`, { preserveScroll: true, forceFormData: true });
 
 const CONDITIONS = [
     ['Permis de conduire', 'Permis valide depuis au moins 2 ans (sauf location avec chauffeur).'],
@@ -169,8 +219,34 @@ const CONDITIONS = [
 
         <div class="mt-5 grid gap-8 lg:grid-cols-[1fr_380px]">
             <div class="min-w-0">
-                <div class="overflow-hidden rounded-2xl bg-slate-100">
-                    <ListingImage :src="v.image_url" fallback-class="bg-orange-600 text-xl font-semibold" class="h-64 sm:h-96">{{ v.brand }} {{ v.model }}</ListingImage>
+                <div class="relative overflow-hidden rounded-2xl bg-slate-100">
+                    <button type="button" class="block w-full" @click="photos.length && (zoom = true)">
+                        <ListingImage :src="photos[photo] ?? null" fallback-class="bg-navy-800 text-xl font-semibold" class="h-64 sm:h-[26rem]">{{ v.brand }} {{ v.model }}</ListingImage>
+                    </button>
+                    <template v-if="photos.length > 1">
+                        <button type="button" class="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-xl text-navy-900 shadow hover:bg-white" aria-label="Photo precedente" @click="go(-1)">‹</button>
+                        <button type="button" class="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-xl text-navy-900 shadow hover:bg-white" aria-label="Photo suivante" @click="go(1)">›</button>
+                    </template>
+                    <span v-if="photos.length" class="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">{{ photo + 1 }} / {{ photos.length }}</span>
+                    <span v-if="sale?.reserved" class="absolute left-3 top-3 rounded-md bg-red-600 px-3 py-1 text-xs font-bold uppercase text-white">Reserve</span>
+                </div>
+                <div v-if="photos.length > 1" class="mt-2 flex gap-2 overflow-x-auto pb-1">
+                    <button v-for="(u, i) in photos" :key="u" type="button" class="h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 transition" :class="i === photo ? 'ring-navy-900' : 'ring-transparent opacity-70 hover:opacity-100'" @click="photo = i">
+                        <img :src="u" alt="" class="h-full w-full object-cover" loading="lazy" />
+                    </button>
+                </div>
+                <div v-if="zoom" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" @click.self="zoom = false">
+                    <img :src="photos[photo]" alt="" class="max-h-[85vh] max-w-full rounded-lg object-contain" />
+                    <button type="button" class="absolute right-5 top-5 text-3xl text-white" aria-label="Fermer" @click="zoom = false">×</button>
+                    <template v-if="photos.length > 1">
+                        <button type="button" class="absolute left-4 text-5xl text-white" @click="go(-1)">‹</button>
+                        <button type="button" class="absolute right-4 text-5xl text-white" @click="go(1)">›</button>
+                    </template>
+                </div>
+
+                <!-- Onglets (vente) -->
+                <div v-if="isSale" class="sticky top-16 z-10 mt-6 flex gap-2 overflow-x-auto bg-white/95 py-2 backdrop-blur">
+                    <button v-for="[id, t] in [['caracteristiques', 'Caracteristiques'], ['equipements', 'Equipements'], ['financement', 'Financement'], ['reprise', 'Reprise'], ['vendeur', 'Vendeur']]" :key="id" type="button" class="whitespace-nowrap rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-navy-900 hover:text-navy-900" @click="goTo(id)">{{ t }}</button>
                 </div>
 
                 <!-- Caracteristiques -->
@@ -181,7 +257,7 @@ const CONDITIONS = [
                     </div>
                 </div>
 
-                <section v-if="isSale" class="mt-8">
+                <section v-if="isSale" id="caracteristiques" class="mt-8 scroll-mt-32">
                     <h2 class="text-xl font-extrabold text-slate-900">Fiche technique</h2>
                     <dl class="mt-3 divide-y rounded-2xl border border-slate-200 bg-white text-sm">
                         <div v-for="[k, val] in [['Marque', v.brand], ['Modele', v.model], ...specs]" :key="k" class="flex justify-between px-4 py-2.5"><dt class="text-slate-500">{{ k }}</dt><dd class="font-semibold text-slate-900">{{ val || '-' }}</dd></div>
@@ -193,7 +269,7 @@ const CONDITIONS = [
                     <p class="mt-2 whitespace-pre-line leading-relaxed text-slate-700">{{ v.description }}</p>
                 </section>
 
-                <section v-if="v.options?.length" class="mt-8">
+                <section v-if="v.options?.length" id="equipements" class="mt-8 scroll-mt-32">
                     <h2 class="text-xl font-extrabold text-slate-900">Equipements</h2>
                     <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         <span v-for="o in v.options" :key="o" class="flex items-center gap-2 text-sm text-slate-700"><span class="text-green-600">✓</span>{{ o }}</span>
@@ -206,6 +282,59 @@ const CONDITIONS = [
                         <span v-for="s in v.services" :key="s" class="rounded-full bg-green-50 px-3 py-1 text-sm font-medium text-green-800">✓ {{ s }}</span>
                     </div>
                 </section>
+
+                <template v-if="isSale">
+                    <section id="financement" class="mt-8 scroll-mt-32">
+                        <h2 class="text-xl font-extrabold text-slate-900">Simuler mon financement</h2>
+                        <div class="mt-3 grid gap-5 rounded-2xl border border-slate-200 bg-white p-5 sm:grid-cols-2">
+                            <div class="space-y-4 text-sm">
+                                <label class="block">
+                                    <span class="flex justify-between font-semibold text-slate-800"><span>Apport</span><span>{{ fin.down_payment_percent }} % · {{ money(downPayment) }} {{ v.currency }}</span></span>
+                                    <input v-model.number="fin.down_payment_percent" type="range" min="0" max="70" step="5" class="mt-2 w-full accent-navy-900" />
+                                </label>
+                                <label class="block">
+                                    <span class="flex justify-between font-semibold text-slate-800"><span>Duree</span><span>{{ fin.months }} mois</span></span>
+                                    <input v-model.number="fin.months" type="range" min="6" max="72" step="6" class="mt-2 w-full accent-navy-900" />
+                                </label>
+                                <label class="block">
+                                    <span class="flex justify-between font-semibold text-slate-800"><span>Taux annuel estime</span><span>{{ fin.annual_rate }} %</span></span>
+                                    <input v-model.number="fin.annual_rate" type="range" min="0" max="25" step="0.5" class="mt-2 w-full accent-navy-900" />
+                                </label>
+                            </div>
+                            <div class="flex flex-col justify-center rounded-xl bg-navy-900 p-5 text-white">
+                                <p class="text-sm text-white/70">Mensualite estimee</p>
+                                <p class="text-3xl font-extrabold text-gold-400">{{ money(perMonth) }} {{ v.currency }}<span class="text-base font-semibold text-white"> /mois</span></p>
+                                <p class="mt-2 text-xs text-white/70">Montant finance : {{ money(salePrice - downPayment) }} {{ v.currency }} · Cout total : {{ money(totalCredit + downPayment) }} {{ v.currency }}</p>
+                            </div>
+                            <p class="text-[11px] text-slate-400 sm:col-span-2">Simulation indicative, sans valeur d'offre. Un credit vous engage et doit etre rembourse : verifiez vos capacites de remboursement avant de vous engager. Renseignez-vous aupres de votre banque ou d'un etablissement de microfinance.</p>
+                        </div>
+                    </section>
+
+                    <section id="reprise" class="mt-8 scroll-mt-32">
+                        <h2 class="text-xl font-extrabold text-slate-900">Faire reprendre mon vehicule</h2>
+                        <p class="mt-1 text-sm text-slate-500">Proposez votre voiture actuelle en reprise : le vendeur vous repond avec une estimation.</p>
+                        <div class="mt-3 grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 sm:grid-cols-4">
+                            <input v-model="tradeIn.brand" type="text" placeholder="Marque" class="rounded-lg border-slate-300 text-sm" />
+                            <input v-model="tradeIn.model" type="text" placeholder="Modele" class="rounded-lg border-slate-300 text-sm" />
+                            <input v-model="tradeIn.year" type="number" placeholder="Annee" class="rounded-lg border-slate-300 text-sm" />
+                            <input v-model="tradeIn.km" type="number" placeholder="Kilometrage" class="rounded-lg border-slate-300 text-sm" />
+                            <a v-if="v.phone" :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(tradeInMsg)}`" target="_blank" rel="noopener" class="rounded-xl bg-navy-900 py-2.5 text-center text-sm font-semibold text-white sm:col-span-4" :class="!tradeIn.brand && 'pointer-events-none opacity-50'">Demander une estimation au vendeur</a>
+                            <p v-else class="text-sm text-slate-500 sm:col-span-4">Le vendeur n'a pas indique de telephone.</p>
+                        </div>
+                    </section>
+
+                    <section id="vendeur" class="mt-8 scroll-mt-32">
+                        <h2 class="text-xl font-extrabold text-slate-900">Le vendeur</h2>
+                        <div class="mt-3 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5">
+                            <div>
+                                <p class="font-bold text-slate-900">{{ sale?.seller?.name ?? 'Vendeur MOKILI TOUR' }}</p>
+                                <p class="text-sm text-slate-500">{{ v.city }}<span v-if="sale?.seller?.since"> · sur MOKILI TOUR depuis {{ sale.seller.since }}</span></p>
+                                <p v-if="sale?.seller?.verified" class="mt-1 text-xs font-semibold text-green-700">✓ Professionnel verifie par MOKILI TOUR</p>
+                            </div>
+                            <ContactButtons v-if="v.phone" :phone="v.phone" :message="saleMsg('Est-il toujours disponible ?')" />
+                        </div>
+                    </section>
+                </template>
 
                 <!-- Disponibilites -->
                 <section v-if="isRental" id="disponibilites" class="mt-8">
@@ -321,6 +450,45 @@ const CONDITIONS = [
                         <p v-if="form.driver_age === '18-24' && !form.with_driver" class="mt-1 text-xs text-amber-700">Jeune conducteur : le loueur peut demander une caution plus elevee.</p>
                     </div>
 
+                    <!-- Conducteur : piece d'identite + permis -->
+                    <div class="mt-4 border-t border-slate-100 pt-4">
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-700">Conducteur</p>
+                        <label class="mt-2 block text-sm">
+                            <span class="text-slate-600">Type de piece d'identite</span>
+                            <select v-model="form.id_type" class="mt-1 w-full rounded-lg border-slate-300 text-sm">
+                                <option v-for="(label, key) in idTypes" :key="key" :value="key">{{ label }}</option>
+                            </select>
+                        </label>
+                        <input v-model="form.id_number" type="text" placeholder="Numero de la piece d'identite" class="mt-2 w-full rounded-lg border-slate-300 text-sm" />
+                        <p v-if="form.errors.id_number" class="mt-1 text-xs text-red-600">{{ form.errors.id_number }}</p>
+                        <label class="mt-2 flex cursor-pointer items-center gap-3 rounded-lg border border-dashed px-3 py-2.5 text-sm" :class="form.id_document ? 'border-green-500 bg-green-50 text-green-800' : 'border-slate-300 text-slate-600 hover:border-slate-500'">
+                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white text-lg ring-1 ring-slate-200">+</span>
+                            <span class="min-w-0 truncate">{{ docName.id_document || "Photo de la piece d'identite (recto)" }}</span>
+                            <input type="file" accept="image/*,application/pdf" class="hidden" @change="onDoc('id_document', $event)" />
+                        </label>
+                        <p v-if="form.errors.id_document" class="mt-1 text-xs text-red-600">{{ form.errors.id_document }}</p>
+
+                        <template v-if="!form.with_driver">
+                            <p class="mt-4 text-sm font-semibold text-slate-700">Permis de conduire</p>
+                            <div class="mt-2 grid grid-cols-2 gap-2">
+                                <input v-model="form.license_number" type="text" placeholder="Numero du permis" class="rounded-lg border-slate-300 text-sm" />
+                                <label class="block">
+                                    <input v-model="form.license_date" type="date" :max="today" class="w-full rounded-lg border-slate-300 text-sm" title="Date d'obtention" />
+                                </label>
+                            </div>
+                            <p class="mt-1 text-[11px] text-slate-500">Date d'obtention du permis a droite.</p>
+                            <p v-if="form.errors.license_number || form.errors.license_date" class="mt-1 text-xs text-red-600">{{ form.errors.license_number || form.errors.license_date }}</p>
+                            <label class="mt-2 flex cursor-pointer items-center gap-3 rounded-lg border border-dashed px-3 py-2.5 text-sm" :class="form.license_document ? 'border-green-500 bg-green-50 text-green-800' : 'border-slate-300 text-slate-600 hover:border-slate-500'">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white text-lg ring-1 ring-slate-200">+</span>
+                                <span class="min-w-0 truncate">{{ docName.license_document || 'Photo du permis de conduire' }}</span>
+                                <input type="file" accept="image/*,application/pdf" class="hidden" @change="onDoc('license_document', $event)" />
+                            </label>
+                            <p v-if="form.errors.license_document" class="mt-1 text-xs text-red-600">{{ form.errors.license_document }}</p>
+                        </template>
+                        <p v-else class="mt-2 text-xs text-slate-500">Avec chauffeur : le permis de conduire n'est pas demande.</p>
+                        <p class="mt-2 text-[11px] text-slate-400">Vos documents sont transmis uniquement au loueur et a MOKILI TOUR pour verifier la location.</p>
+                    </div>
+
                     <div v-if="check.days" class="mt-4 rounded-xl bg-slate-50 p-3 text-sm">
                         <div class="flex justify-between"><span>{{ money(check.unit_price) }} {{ v.currency }} × {{ check.days }} jour(s)</span><span>{{ money(check.total) }}</span></div>
                         <div class="mt-2 flex items-end justify-between border-t border-slate-200 pt-2">
@@ -345,18 +513,62 @@ const CONDITIONS = [
 
                 <div v-else class="space-y-4">
                     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <p v-if="isSale" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Prix de vente</p>
-                        <p class="text-3xl font-extrabold text-navy-900">
-                            <span v-if="v.display_price?.original" class="mr-1 block text-base font-normal text-red-500 line-through">{{ money(v.display_price.original) }} {{ v.currency }}</span>{{ price }}
-                        </p>
-                        <p v-if="isSale && v.year" class="mt-1 text-sm text-slate-500">{{ [v.year, v.mileage_km ? `${money(v.mileage_km)} km` : null, v.fuel, v.transmission].filter(Boolean).join(' · ') }}</p>
-                        <div class="mt-4">
-                            <ContactButtons v-if="v.phone" :phone="v.phone" :message="saleMsg(isSale ? 'Est-il toujours disponible ?' : 'Pouvez-vous me donner plus d\'informations ?')" />
-                            <p v-else class="text-sm text-slate-500">Le vendeur n'a pas encore indique de telephone. Contactez le service client MOKILI TOUR.</p>
+                        <div v-if="isSale" class="flex items-center justify-between text-sm">
+                            <div class="flex items-center gap-1">
+                                <button type="button" class="rounded-full p-2 hover:bg-slate-100" aria-label="Partager" @click="share">
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+                                </button>
+                                <button type="button" class="rounded-full p-2 hover:bg-slate-100" :aria-label="isFav(v.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'" @click="toggleFav(v.id)">
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" :fill="isFav(v.id) ? '#f43f5e' : 'none'" :stroke="isFav(v.id) ? '#f43f5e' : 'currentColor'" stroke-width="2"><path d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.3 5 6.9 5c2 0 3.4 1.1 4.1 2.2C11.7 6.1 13.1 5 15.1 5c3.6 0 5.7 3.6 4.4 6.8C19.5 16.4 12 21 12 21z" /></svg>
+                                </button>
+                                <span v-if="shared" class="text-xs text-green-700">Lien copie</span>
+                            </div>
+                            <button type="button" class="text-xs font-semibold underline" @click="printSheet">Imprimer la fiche</button>
                         </div>
-                        <div v-if="isSale && v.phone" class="mt-3 grid grid-cols-2 gap-2">
-                            <a :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(saleMsg('Je souhaiterais faire un essai, quand seriez-vous disponible ?'))}`" target="_blank" rel="noopener" class="rounded-xl border border-slate-300 px-3 py-2.5 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Demander un essai</a>
-                            <a :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(saleMsg('Le prix est-il negociable ?'))}`" target="_blank" rel="noopener" class="rounded-xl border border-slate-300 px-3 py-2.5 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Faire une offre</a>
+                        <div v-if="isSale" class="mt-1 flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-xl font-extrabold text-slate-900">{{ v.brand }} {{ v.model }}</p>
+                                <p class="text-sm text-slate-500">{{ v.version || v.title }}</p>
+                            </div>
+                            <p class="shrink-0 text-xs text-slate-500">Vu {{ money(v.views) }} fois</p>
+                        </div>
+                        <div v-if="isSale" class="mt-3 flex flex-wrap gap-1.5 text-xs font-medium text-slate-700">
+                            <span v-if="v.fuel" class="rounded-md bg-slate-100 px-2 py-1">{{ cat.fuels?.[v.fuel] ?? v.fuel }}</span>
+                            <span v-if="v.transmission" class="rounded-md bg-slate-100 px-2 py-1">{{ v.transmission === 'manuelle' ? 'Manuelle' : 'Automatique' }}</span>
+                            <span v-if="v.year" class="rounded-md bg-slate-100 px-2 py-1">{{ v.year }}</span>
+                            <span v-if="v.mileage_km" class="rounded-md bg-slate-100 px-2 py-1">{{ money(v.mileage_km) }} km</span>
+                            <span v-if="v.warranty_months" class="rounded-md bg-navy-900 px-2 py-1 text-white">Garantie {{ v.warranty_months }} mois</span>
+                        </div>
+                        <div class="mt-4 border-t border-slate-100 pt-4">
+                            <p v-if="v.display_price?.original" class="text-base text-red-500 line-through">{{ money(v.display_price.original) }} {{ v.currency }}</p>
+                            <p class="text-3xl font-extrabold text-navy-900">{{ price }}</p>
+                            <p v-if="isSale && salePrice" class="mt-1 text-sm text-slate-600">ou environ <b class="text-lg text-navy-900">{{ money(perMonth) }} {{ v.currency }}</b> /mois*
+                                <button type="button" class="ml-1 text-xs font-semibold text-[#006ce4] underline" @click="goTo('financement')">Personnaliser</button></p>
+                        </div>
+
+                        <template v-if="isSale">
+                            <div class="mt-4 grid grid-cols-2 gap-2">
+                                <a v-if="v.phone" :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(saleMsg('Est-il toujours disponible ?'))}`" target="_blank" rel="noopener" class="flex items-center justify-center rounded-full bg-navy-900 px-3 py-3 text-center text-sm font-bold text-white hover:bg-navy-800">Se renseigner</a>
+                                <button v-if="user" type="button" class="rounded-full bg-gold-500 px-3 py-3 text-sm font-bold text-navy-900 hover:bg-gold-400 disabled:cursor-not-allowed disabled:opacity-50" :class="!v.phone && 'col-span-2'" :disabled="sale?.reserved || reserveForm.processing" @click="reserve">
+                                    {{ sale?.reserved ? 'Deja reserve' : 'Reserver ce vehicule' }}
+                                </button>
+                                <Link v-else href="/login" class="rounded-full bg-gold-500 px-3 py-3 text-center text-sm font-bold text-navy-900">Reserver ce vehicule</Link>
+                            </div>
+                            <p class="mt-2 text-xs text-slate-500">Reservation par un acompte de <b>{{ money(sale?.deposit) }} {{ v.currency }}</b> en Mobile Money, deduit du prix chez le vendeur. Le vehicule est retire de la vente pour vous.</p>
+                            <p v-if="reserveForm.errors.reserve" class="mt-1 text-xs font-semibold text-red-600">{{ reserveForm.errors.reserve }}</p>
+                            <div v-if="v.phone" class="mt-3 grid grid-cols-2 gap-2">
+                                <a :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(saleMsg('Je souhaiterais faire un essai, quand seriez-vous disponible ?'))}`" target="_blank" rel="noopener" class="rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Demander un essai</a>
+                                <a :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(saleMsg('Le prix est-il negociable ?'))}`" target="_blank" rel="noopener" class="rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Faire une offre</a>
+                                <a :href="`tel:${v.phone}`" class="col-span-2 rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Appeler le vendeur</a>
+                            </div>
+                            <button type="button" class="mt-3 w-full rounded-xl border px-3 py-2 text-sm font-semibold" :class="inCompare(v.id) ? 'border-navy-900 bg-navy-50 text-navy-900' : 'border-slate-300 text-slate-700'" @click="toggleCompare(v.id)">
+                                {{ inCompare(v.id) ? '✓ Ajoute au comparateur' : 'Ajouter au comparateur' }}
+                            </button>
+                            <Link v-if="compare.length >= 2" :href="`/voiture/comparer?ids=${compare.join(',')}`" class="mt-2 block text-center text-xs font-semibold text-[#006ce4] underline">Comparer {{ compare.length }} vehicules</Link>
+                        </template>
+                        <div v-else class="mt-4">
+                            <ContactButtons v-if="v.phone" :phone="v.phone" :message="saleMsg('Pouvez-vous me donner plus d\'informations ?')" />
+                            <p v-else class="text-sm text-slate-500">Le vendeur n'a pas encore indique de telephone. Contactez le service client MOKILI TOUR.</p>
                         </div>
                     </div>
                     <div v-if="isSale" class="rounded-2xl border border-amber-200 bg-amber-50 p-5">

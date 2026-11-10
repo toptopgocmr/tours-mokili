@@ -63,6 +63,10 @@ const when = (iso) => (iso ? new Date(`${iso}:00`).toLocaleString('fr-FR', { day
                     <td>
                         <p class="font-medium text-slate-900">{{ b.client?.name }}</p>
                         <p class="text-xs text-slate-500">{{ b.client?.phone || b.client?.email }}</p>
+                        <div v-if="b.driver" class="mt-1 text-[11px] text-slate-500">
+                            <p>{{ b.driver.id }} · <a :href="b.driver.id_url" target="_blank" class="font-semibold text-sky-700 underline">voir</a></p>
+                            <p>{{ b.driver.license }}<template v-if="b.driver.license_url"> · <a :href="b.driver.license_url" target="_blank" class="font-semibold text-sky-700 underline">voir</a></template></p>
+                        </div>
                     </td>
                     <td><span class="font-semibold">{{ b.item?.kind === 'Parc' && b.item?.unit?.includes('adulte') ? '' : b.quantity }}</span> <span class="text-xs text-slate-500">{{ b.item?.unit }}</span></td>
                     <td class="whitespace-nowrap font-semibold">{{ money(b.total, b.currency) }}</td>

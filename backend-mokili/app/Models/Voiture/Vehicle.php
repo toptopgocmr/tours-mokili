@@ -19,10 +19,18 @@ class Vehicle extends Model
         'transmission', 'seats', 'mileage_km', 'fuel', 'services', 'price_per_day', 'sale_price',
         'currency', 'city', 'country', 'phone',
         'image', 'is_active', 'status', 'rejection_reason', 'discount_percent', 'promo_label', 'promo_ends_at',
-        'color', 'doors', 'condition', 'first_owner', 'engine', 'options',
+        'color', 'doors', 'condition', 'first_owner', 'engine', 'options', 'gallery', 'version', 'warranty_months', 'views',
     ];
 
-    protected $appends = ['image_url', 'offer_type_label', 'display_price', 'promo'];
+    protected $appends = ['image_url', 'offer_type_label', 'display_price', 'promo', 'gallery_urls'];
+
+    /** Toutes les photos (principale + galerie), en URL. */
+    public function getGalleryUrlsAttribute(): array
+    {
+        return collect([$this->image, ...($this->gallery ?? [])])->filter()->unique()->map(
+            fn ($p) => str_starts_with($p, 'http') ? $p : Storage::disk('public')->url($p)
+        )->values()->all();
+    }
 
     public function getOfferTypeLabelAttribute(): string
     {
@@ -77,6 +85,7 @@ class Vehicle extends Model
             'sale_price' => 'decimal:2',
             'services' => 'array',
             'options' => 'array',
+            'gallery' => 'array',
             'first_owner' => 'boolean',
             'is_active' => 'boolean',
             'promo_ends_at' => 'datetime',

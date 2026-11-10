@@ -1,19 +1,19 @@
 <script setup>
-// Resultat train / bus / canot / taxi facon SNCF Connect : heure de depart
-// et d'arrivee en grand, duree sur une ligne, gares, pictogramme du moyen,
-// transporteur, places, puis prix "a partir de" et bouton Choisir.
+// Trajet bus / train / canot / taxi facon BlaBlaCar : 08:00 o—2h25—o 10:25,
+// ville + gare sous chaque heure, prix a droite, badge "Le plus tot et le
+// plus rapide" / "Le moins cher", puis transporteur et services a bord.
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { rideTime, RIDE_ICONS } from '@/utils/rides';
+import { rideTime } from '@/utils/rides';
 
 const props = defineProps({
     offer: { type: Object, required: true },
     passengers: { type: Number, default: 1 },
     cheapest: { type: Boolean, default: false },
     fastest: { type: Boolean, default: false },
+    earliest: { type: Boolean, default: false },
 });
 
-const time = rideTime;
 const dur = computed(() => {
     const a = props.offer.departure_at ? new Date(props.offer.departure_at) : null;
     const b = props.offer.arrival_at ? new Date(props.offer.arrival_at) : null;
@@ -23,73 +23,86 @@ const dur = computed(() => {
     }
     return props.offer.duration_label ?? '';
 });
-// Arrivee le lendemain (+1), comme sur SNCF Connect.
 const nextDay = computed(() => {
     const a = props.offer.departure_at?.slice(0, 10);
     const b = props.offer.arrival_at?.slice(0, 10);
     return a && b && b > a;
 });
+const night = computed(() => {
+    const h = Number(rideTime(props.offer.departure_at).slice(0, 2));
+    return h >= 21 || h < 5;
+});
 const price = computed(() => Math.round(Number(props.offer.discounted_price ?? props.offer.price)));
 const total = computed(() => price.value * props.passengers);
 const seats = computed(() => Number(props.offer.seats_available ?? 0));
 const full = computed(() => seats.value === 0 || seats.value < props.passengers);
-const MODE_COLORS = { train: 'bg-sky-700', bus: 'bg-emerald-600', canot: 'bg-cyan-600', bateau: 'bg-cyan-700', taxi: 'bg-amber-500' };
 const href = computed(() => `/voyage/${props.offer.slug}${props.passengers > 1 ? `?passagers=${props.passengers}` : ''}`);
+const badge = computed(() => {
+    const parts = [];
+    if (props.earliest) parts.push('le plus tot');
+    if (props.cheapest) parts.push('le moins cher');
+    if (props.fastest) parts.push('le plus rapide');
+    if (!parts.length) return null;
+    const txt = parts.join(' et ');
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+});
+const AMENITIES = { wifi: 'Wi-Fi', prises: 'Prises electriques', clim: 'Climatisation', toilettes: 'Toilettes', bagages: 'Bagage inclus', collation: 'Collation', tv: 'Ecrans', gilets: 'Gilets de sauvetage' };
+const money = (n) => n.toLocaleString('fr-FR');
 </script>
 
 <template>
     <Link
         :href="href"
-        class="group block rounded-2xl border border-navy-100 bg-white transition hover:border-sky-600 hover:shadow-[0_4px_16px_rgba(5,15,33,0.10)]"
-        :class="full && 'pointer-events-none opacity-60'"
+        class="group block rounded-2xl border-2 bg-white px-5 py-4 transition hover:shadow-[0_6px_20px_rgba(5,15,33,0.10)]"
+        :class="[badge ? 'border-[#2f6fe4]' : 'border-transparent shadow-[0_1px_6px_rgba(5,15,33,0.10)] hover:border-navy-100', full && 'pointer-events-none opacity-60']"
     >
-        <div v-if="cheapest || fastest" class="flex gap-2 px-5 pt-3">
-            <span v-if="cheapest" class="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">Le moins cher</span>
-            <span v-if="fastest" class="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-semibold text-sky-700">Le plus rapide</span>
-        </div>
-        <div class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
-            <!-- Horaires -->
-            <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-3">
-                    <span class="text-2xl font-bold tabular-nums text-navy-900">{{ time(offer.departure_at) }}</span>
-                    <span class="flex flex-1 items-center gap-2 text-xs text-navy-500">
-                        <span class="h-px flex-1 bg-navy-200" />
-                        <span class="whitespace-nowrap">{{ dur || 'Duree a confirmer' }}</span>
-                        <span class="h-px flex-1 bg-navy-200" />
-                    </span>
-                    <span class="text-2xl font-bold tabular-nums text-navy-900">{{ time(offer.arrival_at) }}<sup v-if="nextDay" class="ml-0.5 text-xs font-semibold text-rose-600">+1</sup></span>
+        <span v-if="badge" class="mb-3 inline-block rounded-md bg-navy-900 px-2 py-1 text-xs font-bold text-white">{{ badge }}</span>
+
+        <div class="flex items-start justify-between gap-4">
+            <!-- Horaires + villes -->
+            <div class="min-w-0 flex-1 sm:max-w-md">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg font-bold tabular-nums text-navy-900">{{ rideTime(offer.departure_at) }}</span>
+                    <span class="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-navy-900" />
+                    <span class="h-0.5 flex-1 bg-navy-900" />
+                    <span class="shrink-0 text-xs font-semibold text-navy-500">{{ dur || '—' }}<span v-if="night" class="ml-1" title="Trajet de nuit">☾</span></span>
+                    <span class="h-0.5 flex-1 bg-navy-900" />
+                    <span class="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-navy-900" />
+                    <span class="text-lg font-bold tabular-nums text-navy-900">{{ rideTime(offer.arrival_at) || '--:--' }}<sup v-if="nextDay" class="ml-0.5 text-xs font-semibold text-navy-500">+1</sup></span>
                 </div>
-                <div class="mt-1 flex justify-between gap-4 text-sm text-navy-700">
-                    <span class="truncate">{{ offer.departure_point || offer.origin_city || '—' }}</span>
-                    <span class="truncate text-right">{{ offer.destination_city }}</span>
-                </div>
-                <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                    <span class="inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-semibold text-white" :class="MODE_COLORS[offer.transport_mode] ?? 'bg-navy-700'">
-                        <span>{{ RIDE_ICONS[offer.transport_mode] ?? '🧭' }}</span>{{ offer.transport_mode_label || 'Trajet' }}
-                    </span>
-                    <span class="font-semibold text-navy-900">{{ offer.airline || 'Transporteur partenaire' }}</span>
-                    <span class="text-navy-400">·</span>
-                    <span class="text-navy-600">Direct</span>
-                    <span
-                        class="ml-auto rounded-full px-2 py-0.5 font-semibold sm:ml-2"
-                        :class="seats === 0 ? 'bg-gray-100 text-gray-500' : seats <= 3 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'"
-                    >
-                        {{ seats === 0 ? 'Complet' : seats <= 3 ? `Plus que ${seats} place${seats > 1 ? 's' : ''}` : `${seats} places` }}
-                    </span>
+                <div class="mt-1 flex justify-between gap-4">
+                    <div class="min-w-0">
+                        <p class="truncate font-bold text-navy-900">{{ offer.origin_city || '—' }}</p>
+                        <p v-if="offer.departure_point" class="truncate text-sm text-navy-600">{{ offer.departure_point }}</p>
+                    </div>
+                    <div class="min-w-0 text-right">
+                        <p class="truncate font-bold text-navy-900">{{ offer.destination_city }}</p>
+                        <p v-if="offer.arrival_point" class="truncate text-sm text-navy-600">{{ offer.arrival_point }}</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Prix -->
-            <div class="flex items-center justify-between gap-4 border-t border-navy-100 pt-3 sm:w-48 sm:flex-col sm:items-end sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
-                <div class="sm:text-right">
-                    <p class="text-xs text-navy-500">{{ passengers > 1 ? `${passengers} voyageurs` : 'par voyageur' }}</p>
-                    <p class="text-2xl font-bold text-navy-900">{{ (passengers > 1 ? total : price).toLocaleString('fr-FR') }}<span class="ml-1 text-sm font-semibold">{{ offer.currency }}</span></p>
-                    <p v-if="Number(offer.discount_percent) > 0" class="inline-block rounded bg-rose-600 px-1.5 text-[10px] font-bold text-white">-{{ offer.discount_percent }}%<span v-if="offer.promo_label"> · {{ offer.promo_label }}</span></p>
-                </div>
-                <span class="rounded-full border-2 border-sky-700 px-5 py-1.5 text-sm font-semibold text-sky-700 transition group-hover:bg-sky-700 group-hover:text-white">
-                    {{ full ? 'Complet' : 'Choisir' }}
-                </span>
+            <div class="shrink-0 text-right">
+                <p class="text-2xl font-extrabold tabular-nums text-navy-900">{{ money(passengers > 1 ? total : price) }}<span class="ml-1 text-sm font-bold">{{ offer.currency }}</span></p>
+                <p v-if="passengers > 1" class="text-xs text-navy-500">{{ passengers }} voyageurs</p>
+                <p v-if="Number(offer.discount_percent) > 0" class="mt-1 inline-block rounded bg-rose-600 px-1.5 text-[10px] font-bold text-white">-{{ offer.discount_percent }}%<span v-if="offer.promo_label"> · {{ offer.promo_label }}</span></p>
             </div>
+        </div>
+
+        <!-- Transporteur + services -->
+        <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-navy-50 pt-3 text-sm">
+            <svg class="h-6 w-6 shrink-0 text-navy-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <template v-if="offer.transport_mode === 'train'"><rect x="5" y="3" width="14" height="14" rx="3" /><path d="M5 11h14M9 17l-2 4M15 17l2 4" /></template>
+                <template v-else-if="offer.transport_mode === 'canot' || offer.transport_mode === 'bateau'"><path d="M3 15h18l-2.5 4h-13zM6 15V9h9l3 6M10 9V5" /></template>
+                <template v-else-if="offer.transport_mode === 'taxi' || offer.transport_mode === 'voiture'"><path d="M5 16V12l2-5h10l2 5v4M3 12h18" /><circle cx="7.5" cy="16.5" r="1.5" /><circle cx="16.5" cy="16.5" r="1.5" /></template>
+                <template v-else><rect x="3" y="5" width="18" height="11" rx="2" /><path d="M3 11h18M7 16v2M17 16v2M8 5v6M14 5v6" /></template>
+            </svg>
+            <span class="rounded-lg border border-navy-100 px-3 py-1 font-bold text-navy-900">{{ offer.airline || 'Transporteur partenaire' }}</span>
+            <span v-for="a in (offer.amenities ?? []).slice(0, 4)" :key="a" class="text-navy-500">{{ AMENITIES[a] ?? a }}</span>
+            <span class="ml-auto text-xs font-semibold" :class="seats === 0 ? 'text-gray-500' : seats <= 3 ? 'text-amber-700' : 'text-emerald-700'">
+                {{ seats === 0 ? 'Complet' : seats <= 3 ? `Plus que ${seats} place${seats > 1 ? 's' : ''}` : `${seats} places` }}
+            </span>
         </div>
     </Link>
 </template>

@@ -8,6 +8,7 @@ import PhotoHero from '@/Components/PhotoHero.vue';
 import Paginator from '@/Components/Paginator.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
+import { useCarShortlist, monthly } from '@/composables/useCarShortlist';
 
 defineOptions({ layout: MainLayout });
 
@@ -21,7 +22,12 @@ const props = defineProps({
     offerTypes: { type: Object, default: () => ({}) },
     facets: { type: Object, default: () => ({ brands: [], fuels: [], transmissions: [], categories: [] }) },
     sorts: { type: Object, default: () => ({}) },
+    reservedIds: { type: Array, default: () => [] },
+    finance: { type: Object, default: () => ({}) },
 });
+const { favorites, compare, isFav, inCompare, toggleFav, toggleCompare, clearCompare } = useCarShortlist();
+const showFavs = () => router.get('/voiture', { type: 'vente', ids: favorites.value.join(',') || '0' }, { preserveScroll: true });
+const onlyFavs = computed(() => !!props.filters.ids);
 
 const f = props.filters;
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -352,45 +358,56 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
 
             <div class="min-w-0">
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <h2 class="text-xl font-extrabold text-slate-900">{{ vehicles.total ?? vehicles.data.length }} annonce(s)</h2>
+                    <h2 class="text-xl font-extrabold text-slate-900">{{ onlyFavs ? 'Mes favoris' : `${vehicles.total ?? vehicles.data.length} annonce(s)` }}</h2>
                     <div class="flex items-center gap-2">
+                        <button v-if="onlyFavs" type="button" class="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-semibold" @click="setType('vente')">Toutes les annonces</button>
+                        <button v-else type="button" class="flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-sm font-semibold" :disabled="!favorites.length" :class="!favorites.length && 'opacity-50'" @click="showFavs">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="#f43f5e"><path d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.3 5 6.9 5c2 0 3.4 1.1 4.1 2.2C11.7 6.1 13.1 5 15.1 5c3.6 0 5.7 3.6 4.4 6.8C19.5 16.4 12 21 12 21z" /></svg>
+                            Favoris ({{ favorites.length }})
+                        </button>
                         <button type="button" class="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-semibold lg:hidden" @click="filtersOpen = !filtersOpen">Filtres<span v-if="activeVente"> ({{ activeVente }})</span></button>
                         <select v-model="s.sort" class="rounded-full border-slate-300 py-1.5 pl-3 pr-8 text-sm font-semibold" @change="submit">
                             <option v-for="(label, key) in sorts" :key="key" :value="key">{{ label }}</option>
                         </select>
                     </div>
                 </div>
-                <div class="mt-4 space-y-4">
-                    <Link v-for="v in vehicles.data" :key="v.id" :href="detailHref(v)" class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:shadow-lg sm:flex-row">
-                        <div class="relative shrink-0 sm:w-72">
-                            <ListingImage :src="v.image_url" fallback-class="bg-navy-800" class="h-48 sm:h-full">{{ v.brand }} {{ v.model }}</ListingImage>
-                            <PromoBadge :promo="v.promo" class="absolute left-2 top-2" />
-                        </div>
-                        <div class="flex min-w-0 flex-1 flex-col justify-between gap-3 p-4">
-                            <div>
-                                <p class="text-lg font-bold text-slate-900">{{ v.title }}</p>
-                                <div class="mt-2 flex flex-wrap gap-1.5 text-xs font-semibold text-slate-700">
-                                    <span v-if="v.year" class="rounded-md bg-slate-100 px-2 py-1">{{ v.year }}</span>
-                                    <span v-if="v.mileage_km" class="rounded-md bg-slate-100 px-2 py-1">{{ money(v.mileage_km) }} km</span>
-                                    <span v-if="v.fuel" class="rounded-md bg-slate-100 px-2 py-1">{{ label('fuels', v.fuel) }}</span>
-                                    <span v-if="v.transmission" class="rounded-md bg-slate-100 px-2 py-1">{{ cap(v.transmission) }}</span>
-                                    <span v-if="v.category" class="rounded-md bg-slate-100 px-2 py-1">{{ label('categories', v.category) }}</span>
-                                    <span v-if="v.color" class="flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1"><span class="h-2.5 w-2.5 rounded-full ring-1 ring-black/20" :style="{ background: colorOf(v.color)?.[1] }" />{{ colorOf(v.color)?.[0] ?? cap(v.color) }}</span>
-                                    <span v-if="v.condition === 'neuf'" class="rounded-md bg-green-100 px-2 py-1 text-green-800">Neuf</span>
-                                    <span v-if="v.first_owner" class="rounded-md bg-blue-100 px-2 py-1 text-blue-800">1re main</span>
-                                </div>
-                                <p v-if="v.description" class="mt-2 line-clamp-2 text-sm text-slate-500">{{ v.description }}</p>
+                <div class="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    <article v-for="v in vehicles.data" :key="v.id" class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow-xl">
+                        <div class="relative">
+                            <Link :href="detailHref(v)"><ListingImage :src="v.image_url" fallback-class="bg-navy-800" class="h-48">{{ v.brand }} {{ v.model }}</ListingImage></Link>
+                            <div class="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/55 px-1.5 py-1 text-xs font-semibold text-white backdrop-blur">
+                                <button type="button" class="rounded-full px-2 py-0.5 underline-offset-2 hover:underline" :class="inCompare(v.id) && 'bg-white text-navy-900 no-underline'" @click="toggleCompare(v.id)">{{ inCompare(v.id) ? '✓ Compare' : 'Comparer' }}</button>
+                                <span class="h-3 w-px bg-white/50" />
+                                <button type="button" class="flex h-6 w-6 items-center justify-center rounded-full" :aria-label="isFav(v.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'" @click="toggleFav(v.id)">
+                                    <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="isFav(v.id) ? '#f43f5e' : 'none'" :stroke="isFav(v.id) ? '#f43f5e' : 'currentColor'" stroke-width="2"><path d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.3 5 6.9 5c2 0 3.4 1.1 4.1 2.2C11.7 6.1 13.1 5 15.1 5c3.6 0 5.7 3.6 4.4 6.8C19.5 16.4 12 21 12 21z" /></svg>
+                                </button>
                             </div>
-                            <div class="flex items-end justify-between gap-3">
-                                <p class="text-sm text-slate-500">{{ v.city }}</p>
-                                <div class="text-right">
-                                    <p v-if="v.display_price?.original" class="text-sm text-red-500 line-through">{{ money(v.display_price.original) }} {{ v.currency }}</p>
-                                    <p class="text-2xl font-extrabold text-navy-900">{{ v.display_price ? `${money(v.display_price.amount)} ${v.currency}` : 'Prix sur demande' }}</p>
-                                </div>
-                            </div>
+                            <span v-if="reservedIds.includes(v.id)" class="absolute left-2 top-2 rounded-md bg-red-600 px-2 py-1 text-[11px] font-bold uppercase text-white">Reserve</span>
+                            <PromoBadge v-else :promo="v.promo" class="absolute left-2 top-2" />
                         </div>
-                    </Link>
+                        <div v-if="v.warranty_months" class="flex items-center gap-2 bg-navy-900 px-4 py-2 text-sm font-semibold text-white">Garantie {{ v.warranty_months }} mois</div>
+                        <div v-else-if="v.condition === 'neuf' || v.first_owner" class="flex items-center gap-2 bg-gold-500 px-4 py-2 text-sm font-semibold text-navy-900">{{ v.condition === 'neuf' ? 'Vehicule neuf' : 'Premiere main' }}</div>
+                        <Link :href="detailHref(v)" class="flex flex-1 flex-col p-4">
+                            <p class="text-lg font-bold leading-tight text-slate-900">{{ v.brand }} {{ v.model }}</p>
+                            <p class="mt-0.5 truncate text-xs font-medium uppercase tracking-wide text-slate-500">{{ v.version || v.title }}</p>
+                            <div class="mt-3 flex flex-wrap gap-1.5 text-xs font-medium text-slate-700">
+                                <span v-if="v.mileage_km" class="rounded-full bg-slate-100 px-2.5 py-1">{{ money(v.mileage_km) }} km</span>
+                                <span v-if="v.fuel" class="rounded-full bg-slate-100 px-2.5 py-1">{{ label('fuels', v.fuel) }}</span>
+                                <span v-if="v.year" class="rounded-full bg-slate-100 px-2.5 py-1">{{ v.year }}</span>
+                                <span v-if="v.transmission" class="rounded-full bg-slate-100 px-2.5 py-1">{{ cap(v.transmission) }}</span>
+                                <span v-if="v.color" class="flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1"><span class="h-2.5 w-2.5 rounded-full ring-1 ring-black/20" :style="{ background: colorOf(v.color)?.[1] }" />{{ colorOf(v.color)?.[0] ?? cap(v.color) }}</span>
+                            </div>
+                            <p v-if="v.options?.length" class="mt-2 truncate text-xs text-slate-500">{{ v.options.slice(0, 4).join(' · ') }}</p>
+                            <div class="mt-auto border-t border-slate-100 pt-3">
+                                <p v-if="v.display_price?.original" class="text-sm text-red-500 line-through">{{ money(v.display_price.original) }} {{ v.currency }}</p>
+                                <p class="text-2xl font-extrabold text-navy-900">{{ v.display_price ? `${money(v.display_price.amount)} ${v.currency}` : 'Prix sur demande' }}</p>
+                                <p v-if="v.display_price" class="text-xs text-slate-500">ou environ <b class="text-sm text-navy-900">{{ money(monthly(v.display_price.amount, finance)) }} {{ v.currency }}</b> /mois*</p>
+                                <p class="mt-1 text-xs text-slate-400">{{ v.city }}</p>
+                            </div>
+                        </Link>
+                    </article>
                 </div>
+                <p v-if="vehicles.data.length" class="mt-4 text-[11px] text-slate-400">* Estimation indicative avec {{ finance.down_payment_percent }} % d'apport sur {{ finance.months }} mois a {{ finance.annual_rate }} % par an. Un credit vous engage et doit etre rembourse.</p>
                 <div v-if="!vehicles.data.length" class="mt-6 rounded-2xl border bg-white p-10 text-center">
                     <p class="text-lg font-semibold text-slate-900">Aucune annonce ne correspond a vos criteres.</p>
                     <button v-if="activeVente" type="button" class="mt-3 font-semibold text-[#006ce4]" @click="resetVente">Retirer les filtres</button>
@@ -447,6 +464,15 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
             </p>
             <Paginator :page="vehicles" />
         </template>
+
+        <!-- Barre du comparateur -->
+        <div v-if="s.type === 'vente' && compare.length" class="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
+            <div class="flex items-center gap-3 rounded-full bg-navy-900 py-2 pl-5 pr-2 text-sm text-white shadow-2xl">
+                <span>{{ compare.length }} vehicule(s) a comparer <span class="text-white/60">(4 max)</span></span>
+                <button type="button" class="text-xs text-white/70 underline" @click="clearCompare">Vider</button>
+                <Link :href="`/voiture/comparer?ids=${compare.join(',')}`" class="rounded-full bg-gold-500 px-4 py-2 font-bold text-navy-900" :class="compare.length < 2 && 'pointer-events-none opacity-50'">Comparer</Link>
+            </div>
+        </div>
 
         <PartnersSection v-if="s.type !== 'mecanique' && s.type !== 'vente'" module="voiture" title="Taxis, VTC & garages" subtitle="Applications de taxi, chauffeurs prives et garages a Brazzaville." />
     </div>

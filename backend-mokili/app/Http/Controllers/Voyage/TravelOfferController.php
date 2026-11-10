@@ -65,6 +65,8 @@ class TravelOfferController extends Controller
         return Inertia::render('Voyage/Index', [
             'offers' => $offers,
             'returnOffers' => $returnOffers,
+            'dayPrices' => $isCircuit ? $this->dayPrices($request) : [],
+            'popularRoutes' => $isCircuit ? $this->popularRoutes($request) : [],
             'filters' => (object) $request->only(['destination', 'type', 'mode', 'scope', 'departement', 'from', 'date', 'time', 'return_date', 'passengers']),
             'transportModes' => TravelOffer::TRANSPORT_MODES,
             'tripScopes' => config('catalogue.voyage.trip_scopes'),
@@ -73,6 +75,45 @@ class TravelOfferController extends Controller
             'popularAirports' => Airport::query()->active()->orderByDesc('popularity')
                 ->limit(12)->get(['iata_code', 'city', 'name', 'country_code']),
         ]);
+    }
+
+    /** Trajets a venir (bus, train, canot, taxi) correspondant aux villes et au moyen choisis. */
+    protected function upcomingRides(Request $request)
+    {
+        return TravelOffer::query()->active()->where('type', 'circuit')
+            ->where(fn ($w) => $w->whereNull('transport_mode')->orWhere('transport_mode', '!=', 'avion'))
+            ->where('departure_at', '>=', now())
+            ->when($request->string('mode')->isNotEmpty(), fn ($q) => $q->where('transport_mode', $request->string('mode')))
+            ->when($request->integer('passengers') > 0, fn ($q) => $q->where('seats_available', '>=', $request->integer('passengers')));
+    }
+
+    /** Bandeau facon BlaBlaCar : prix le plus bas pour chacun des 8 prochains jours. */
+    protected function dayPrices(Request $request): array
+    {
+        $rows = $this->upcomingRides($request)
+            ->when($request->string('from')->isNotEmpty(), fn ($q) => $q->where('origin_city', 'like', '%'.$request->string('from').'%'))
+            ->when($request->string('destination')->isNotEmpty(), fn ($q) => $q->where('destination_city', 'like', '%'.$request->string('destination').'%'))
+            ->where('departure_at', '<', now()->addDays(8)->endOfDay())
+            ->limit(3000)->get(['id', 'departure_at', 'price', 'discount_percent', 'promo_ends_at']);
+
+        return $rows->groupBy(fn ($o) => $o->departure_at->toDateString())
+            ->map(fn ($g) => (int) round($g->min(fn ($o) => $o->discounted_price)))->all();
+    }
+
+    /** Trajets populaires : destinations les plus servies, prix "des", autres villes de depart. */
+    protected function popularRoutes(Request $request): array
+    {
+        $rows = $this->upcomingRides($request)->where('departure_at', '<', now()->addDays(60))
+            ->limit(5000)->get(['id', 'origin_city', 'destination_city', 'price', 'discount_percent', 'promo_ends_at']);
+
+        return $rows->filter(fn ($o) => $o->origin_city && $o->destination_city)
+            ->groupBy('destination_city')->sortByDesc(fn ($g) => $g->count())->take(8)
+            ->map(function ($g, $to) {
+                $byFrom = $g->groupBy('origin_city')->map(fn ($x, $from) => ['from' => $from, 'price' => (int) round($x->min(fn ($o) => $o->discounted_price)), 'count' => $x->count()])
+                    ->sortByDesc('count')->values();
+
+                return ['to' => $to, 'from' => $byFrom[0]['from'], 'price' => $byFrom[0]['price'], 'others' => $byFrom->slice(1, 3)->values()->all()];
+            })->values()->all();
     }
 
     /** Programme des departs / arrivees : trains, bus, canots rapides, taxis. */

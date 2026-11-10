@@ -13,6 +13,12 @@ class VehicleRentalTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function docs(): array
+    {
+        return ['id_type' => 'cni', 'id_number' => 'CNI-123', 'id_document' => \Illuminate\Http\UploadedFile::fake()->image('cni.jpg'),
+            'license_number' => 'P-998', 'license_date' => '2015-06-01', 'license_document' => \Illuminate\Http\UploadedFile::fake()->image('permis.jpg')];
+    }
+
     protected function car(array $a = []): Vehicle
     {
         return Vehicle::create($a + ['title' => 'Toyota Test', 'offer_type' => 'location', 'brand' => 'Toyota', 'model' => 'Corolla', 'price_per_day' => 25000,
@@ -29,7 +35,7 @@ class VehicleRentalTest extends TestCase
             ->assertJson(['available' => true, 'days' => 3, 'total' => 75000]);
 
         $client = User::factory()->create();
-        $this->actingAs($client)->post("/voiture/{$car->slug}/reserver", ['starts_at' => $start, 'ends_at' => $end, 'pickup_time' => '10:00', 'pickup_mode' => 'agence'])
+        $this->actingAs($client)->post("/voiture/{$car->slug}/reserver", [...$this->docs(), 'starts_at' => $start, 'ends_at' => $end, 'pickup_time' => '10:00', 'pickup_mode' => 'agence'])
             ->assertRedirect();
         $b = Booking::where('bookable_type', Vehicle::class)->firstOrFail();
         $this->assertSame(3, (int) $b->quantity);
@@ -40,7 +46,7 @@ class VehicleRentalTest extends TestCase
         $mid = now()->addDays(7)->toDateString();
         $this->getJson("/voiture/{$car->slug}/disponibilite?start=$mid&end=".now()->addDays(10)->toDateString())->assertOk()
             ->assertJson(['available' => false])->assertJsonPath('next_free', fn ($d) => $d > $end);
-        $this->actingAs(User::factory()->create())->post("/voiture/{$car->slug}/reserver", ['starts_at' => $mid, 'ends_at' => $mid, 'pickup_mode' => 'agence'])
+        $this->actingAs(User::factory()->create())->post("/voiture/{$car->slug}/reserver", [...$this->docs(), 'starts_at' => $mid, 'ends_at' => $mid, 'pickup_mode' => 'agence'])
             ->assertSessionHasErrors('starts_at');
 
         // Liste : le vehicule disparait du filtre "disponible du ... au ...".
@@ -57,7 +63,7 @@ class VehicleRentalTest extends TestCase
         $this->travel(31)->minutes();
         $this->getJson("/voiture/{$car->slug}/disponibilite?start=$start&end=$start")->assertJson(['available' => true]);
 
-        $this->actingAs(User::factory()->create())->post("/voiture/{$car->slug}/reserver", ['starts_at' => $start, 'ends_at' => $start, 'pickup_mode' => 'livraison'])
+        $this->actingAs(User::factory()->create())->post("/voiture/{$car->slug}/reserver", [...$this->docs(), 'starts_at' => $start, 'ends_at' => $start, 'pickup_mode' => 'livraison'])
             ->assertSessionHasErrors('pickup_address');
     }
 
@@ -67,7 +73,7 @@ class VehicleRentalTest extends TestCase
         $car = $this->car();
         $van = $this->car(['title' => 'Hiace', 'category' => 'utilitaire']);
         $d = now()->addDays(3)->toDateString();
-        $this->actingAs(User::factory()->create())->post("/voiture/{$car->slug}/reserver", [
+        $this->actingAs(User::factory()->create())->post("/voiture/{$car->slug}/reserver", [...$this->docs(), 
             'starts_at' => $d, 'ends_at' => now()->addDays(5)->toDateString(), 'pickup_time' => '08:30', 'return_time' => '18:00',
             'pickup_mode' => 'aeroport', 'return_elsewhere' => true, 'return_place' => 'Pointe-Noire', 'driver_age' => '25-29',
         ])->assertRedirect();
@@ -105,5 +111,60 @@ class VehicleRentalTest extends TestCase
         $this->get('/voiture?type=vente&color=blanc')->assertInertia(fn ($p) => $p->has('vehicles.data', 1)->where('vehicles.data.0.title', 'Toyota RAV4 2019'));
         $this->get('/voiture?type=vente&brand=Toyota&model=RAV4&first_owner=1&doors=5')->assertInertia(fn ($p) => $p->has('vehicles.data', 1));
         $this->get('/voiture?type=vente&fuel=diesel')->assertInertia(fn ($p) => $p->has('vehicles.data', 1)->where('vehicles.data.0.title', 'Noire'));
+    }
+
+    public function test_sale_reservation_deposit_compare_and_gallery(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        Vehicle::query()->delete();
+        $seller = User::factory()->create(['role' => 'partner', 'partner_verified_at' => now(), 'company_name' => 'Auto Congo']);
+        $this->actingAs($seller)->post('/partner/voiture', [
+            'title' => 'Toyota RAV4 2019', 'offer_type' => 'vente', 'brand' => 'Toyota', 'model' => 'RAV4', 'category' => 'suv',
+            'transmission' => 'automatique', 'seats' => 5, 'sale_price' => 9500000, 'currency' => 'XAF', 'version' => '2.5 Hybrid', 'warranty_months' => 6,
+            'gallery' => [\Illuminate\Http\UploadedFile::fake()->image('a.jpg'), \Illuminate\Http\UploadedFile::fake()->image('b.jpg')], 'intent' => 'submit',
+        ])->assertRedirect();
+        $car = Vehicle::firstOrFail();
+        $this->assertCount(2, $car->gallery);
+        $car->update(['status' => 'published', 'is_active' => true]);
+
+        $buyer = User::factory()->create();
+        $this->actingAs($buyer)->get("/voiture/{$car->slug}")->assertInertia(fn ($p) => $p->where('sale.reserved', false)->where('sale.deposit', 100000)->where('sale.seller.name', 'Auto Congo')->has('vehicle.gallery_urls', 2));
+        $this->assertSame(1, $car->fresh()->views);
+
+        $this->post("/voiture/{$car->slug}/reserver-achat")->assertRedirect();
+        $b = Booking::latest('id')->first();
+        $this->assertEquals(100000, $b->total_amount);
+        $this->assertSame('acompte_vente', $b->meta['kind']);
+
+        // Un autre client ne peut plus reserver.
+        $this->actingAs(User::factory()->create())->post("/voiture/{$car->slug}/reserver-achat")->assertSessionHasErrors('reserve');
+        $this->get('/voiture?type=vente')->assertInertia(fn ($p) => $p->where('reservedIds', fn ($ids) => collect($ids)->contains($car->id)));
+
+        $other = $this->car(['title' => 'Accent', 'offer_type' => 'vente', 'price_per_day' => null, 'sale_price' => 4000000]);
+        $this->get("/voiture/comparer?ids={$car->id},{$other->id}")->assertOk()->assertInertia(fn ($p) => $p->component('Voiture/Compare')->has('vehicles', 2));
+        $this->get("/voiture?type=vente&ids={$other->id}")->assertInertia(fn ($p) => $p->has('vehicles.data', 1));
+    }
+
+    public function test_rental_requires_id_and_license_and_documents_stay_private(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $owner = User::factory()->create(['role' => 'partner']);
+        $car = $this->car(['owner_id' => $owner->id]);
+        $d = now()->addDays(3)->toDateString();
+        $client = User::factory()->create();
+
+        $this->actingAs($client)->post("/voiture/{$car->slug}/reserver", ['starts_at' => $d, 'ends_at' => $d, 'pickup_mode' => 'agence'])
+            ->assertSessionHasErrors(['id_type', 'id_number', 'id_document', 'license_number', 'license_document']);
+        // Avec chauffeur : pas de permis demande.
+        $this->post("/voiture/{$car->slug}/reserver", ['starts_at' => $d, 'ends_at' => $d, 'pickup_mode' => 'agence', 'with_driver' => true,
+            'id_type' => 'passeport', 'id_number' => 'P123', 'id_document' => \Illuminate\Http\UploadedFile::fake()->image('p.jpg')])->assertRedirect()->assertSessionHasNoErrors();
+        $b = Booking::latest('id')->first();
+        $this->assertSame('passeport', $b->meta['driver']['id_type']);
+        \Illuminate\Support\Facades\Storage::disk('local')->assertExists($b->meta['driver']['id_document']);
+
+        $this->get("/location/{$b->id}/documents/id_document")->assertOk();
+        $this->actingAs($owner)->get("/location/{$b->id}/documents/id_document")->assertOk();
+        $this->actingAs(User::factory()->create())->get("/location/{$b->id}/documents/id_document")->assertForbidden();
+        $this->actingAs($owner)->get('/partner/reservations')->assertOk()->assertSee('P123');
     }
 }

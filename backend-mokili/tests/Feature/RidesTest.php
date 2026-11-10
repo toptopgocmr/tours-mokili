@@ -126,4 +126,21 @@ class RidesTest extends TestCase
         $this->assertSame('2026-11-24 15:00', $trips->last()->arrival_at->format('Y-m-d H:i'));
         $this->assertCount(5, $trips->pluck('slug')->unique());
     }
+
+    public function test_blablacar_style_day_prices_and_popular_routes(): void
+    {
+        \App\Models\Voyage\TravelOffer::query()->delete();
+        $mk = fn ($from, $to, $price, $days) => \App\Models\Voyage\TravelOffer::create(['title' => "$from - $to", 'type' => 'circuit', 'transport_mode' => 'bus', 'origin_city' => $from, 'destination_city' => $to, 'destination_country' => 'CG', 'price' => $price, 'currency' => 'XAF', 'seats_available' => 10, 'is_active' => true, 'departure_at' => now()->startOfDay()->addDays($days)->setTime(8, 0), 'arrival_at' => now()->startOfDay()->addDays($days)->setTime(16, 0), 'arrival_point' => 'Gare Tie-Tie', 'amenities' => ['wifi']]);
+        $mk('Brazzaville', 'Pointe-Noire', 15000, 1);
+        $mk('Brazzaville', 'Pointe-Noire', 12000, 1);
+        $mk('Brazzaville', 'Pointe-Noire', 14000, 2);
+        $mk('Dolisie', 'Pointe-Noire', 6000, 2);
+
+        $d1 = now()->addDay()->toDateString();
+        $this->get('/voyage?type=circuit&from=Brazzaville&destination=Pointe-Noire')->assertInertia(fn ($p) => $p
+            ->where("dayPrices.$d1", 12000)
+            ->where('popularRoutes.0.to', 'Pointe-Noire')->where('popularRoutes.0.from', 'Brazzaville')->where('popularRoutes.0.price', 12000)
+            ->where('popularRoutes.0.others.0.from', 'Dolisie')
+            ->where('offers.data.0.arrival_point', 'Gare Tie-Tie'));
+    }
 }

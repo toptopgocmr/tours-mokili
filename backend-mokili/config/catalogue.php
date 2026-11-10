@@ -83,6 +83,10 @@ return [
             'marron' => ['Marron', '#78350f'], 'jaune' => ['Jaune', '#facc15'], 'orange' => ['Orange', '#f97316'], 'autre' => ['Autre', 'linear-gradient(135deg,#f472b6,#60a5fa)'],
         ],
         'conditions' => ['occasion' => 'Occasion', 'neuf' => 'Neuf', 'reconditionne' => 'Reconditionne'],
+        // Acompte pour reserver un vehicule a vendre (deduit du prix chez le vendeur).
+        'sale_deposit' => (int) env('VOITURE_SALE_DEPOSIT', 100000),
+        // Simulation de mensualite (indicative) : apport, duree, taux annuel.
+        'finance' => ['down_payment_percent' => 20, 'months' => 36, 'annual_rate' => 12],
         'fuels' => ['essence' => 'Essence', 'diesel' => 'Diesel', 'hybride' => 'Hybride', 'electrique' => 'Electrique', 'gpl' => 'GPL'],
         'categories' => [
             'citadine' => 'Citadine', 'berline' => 'Berline', 'suv' => 'SUV', '4x4' => '4x4', 'pickup' => 'Pick-up',

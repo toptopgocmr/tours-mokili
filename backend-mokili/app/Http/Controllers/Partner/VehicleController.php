@@ -32,6 +32,7 @@ class VehicleController extends Controller
     {
         $data = $this->validated($request);
         $data['image'] = $this->resolveImagePath($request, null, 'voiture');
+        $data['gallery'] = $this->gallery($request, []);
         $data['status'] = $this->resolveStatus($request);
 
         $request->user()->vehicles()->create($data);
@@ -56,6 +57,7 @@ class VehicleController extends Controller
 
         $data = $this->validated($request);
         $data['image'] = $this->resolveImagePath($request, $vehicle->image, 'voiture');
+        $data['gallery'] = $this->gallery($request, $vehicle->gallery ?? []);
         $data['status'] = $this->resolveStatus($request, $vehicle->status);
         $data['rejection_reason'] = $data['status'] === 'pending' ? null : $vehicle->rejection_reason;
 
@@ -77,9 +79,34 @@ class VehicleController extends Controller
         abort_unless($vehicle->owner_id === request()->user()->id, 403);
     }
 
+    /** Galerie : photos ajoutees (max 15 au total), photos retirees. */
+    protected function gallery(Request $request, array $existing): array
+    {
+        $remove = (array) $request->input('remove_gallery', []);
+        foreach (array_intersect($existing, $remove) as $path) {
+            if (! str_starts_with($path, 'http')) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+            }
+        }
+        $kept = array_values(array_diff($existing, $remove));
+        foreach ((array) $request->file('gallery', []) as $file) {
+            if (count($kept) >= 15) {
+                break;
+            }
+            $kept[] = $file->store('voiture', 'public');
+        }
+
+        return $kept;
+    }
+
     protected function validated(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
+            'gallery' => ['nullable', 'array', 'max:15'],
+            'gallery.*' => ['image', 'max:4096'],
+            'remove_gallery' => ['nullable', 'array'],
+            'version' => ['nullable', 'string', 'max:120'],
+            'warranty_months' => ['nullable', 'integer', 'min:0', 'max:120'],
             'title' => ['required', 'string', 'max:255'],
             'offer_type' => ['required', 'in:'.implode(',', array_keys(config('catalogue.voiture.offer_types')))],
             'description' => ['nullable', 'string', 'max:3000'],
@@ -110,5 +137,8 @@ class VehicleController extends Controller
             'image' => ['nullable', 'image', 'max:4096'],
             'remove_image' => ['boolean'],
         ]);
+        unset($data['gallery'], $data['remove_gallery']);
+
+        return $data;
     }
 }

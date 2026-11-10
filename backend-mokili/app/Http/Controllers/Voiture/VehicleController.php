@@ -38,6 +38,8 @@ class VehicleController extends Controller
             ->when($request->input('vehicule') === 'utilitaires', fn ($q) => $q->where('category', 'utilitaire'))
             ->when($request->input('vehicule') === 'voitures', fn ($q) => $q->where(fn ($w) => $w->whereNull('category')->orWhere('category', '!=', 'utilitaire')))
             ->when($request->filled('brand'), fn ($q) => $q->where('brand', $request->string('brand')))
+            // Favoris (ids enregistres dans le navigateur).
+            ->when($request->filled('ids'), fn ($q) => $q->whereIn('id', collect(explode(',', (string) $request->input('ids')))->map(fn ($i) => (int) $i)->filter()))
             ->when($request->filled('model'), fn ($q) => $q->where('model', 'like', '%'.$request->string('model').'%'))
             ->when($request->filled('color'), fn ($q) => $q->where('color', $request->string('color')))
             ->when($request->filled('condition'), fn ($q) => $q->where('condition', $request->string('condition')))
@@ -72,15 +74,25 @@ class VehicleController extends Controller
         $pool = (clone $base)->get(['brand', 'fuel', 'transmission', 'category', 'color', 'condition']);
         $count = fn ($col) => $pool->pluck($col)->filter()->countBy()->sortKeys()->map(fn ($n, $k) => ['key' => $k, 'count' => $n])->values();
 
+        $page = $query->paginate(12)->withQueryString();
+        // Vente : vehicules deja reserves par un acompte.
+        $reserved = $type === 'vente' ? \App\Models\Booking::query()->where('bookable_type', Vehicle::class)
+            ->whereIn('bookable_id', $page->getCollection()->pluck('id'))->where('meta->kind', 'acompte_vente')
+            ->where(fn ($q) => $q->whereIn('status', ['confirmed', 'paid', 'completed'])
+                ->orWhere(fn ($w) => $w->where('status', 'awaiting_payment')->where('created_at', '>=', now()->subMinutes(SaleController::HOLD_MINUTES))))
+            ->pluck('bookable_id')->unique()->values() : [];
+
         return Inertia::render('Voiture/Index', [
-            'vehicles' => $query->paginate(12)->withQueryString(),
+            'vehicles' => $page,
+            'reservedIds' => $reserved,
+            'finance' => config('catalogue.voiture.finance'),
             // Mecanique : les garages partenaires en plus des annonces.
             'garages' => $type === 'mecanique'
                 ? Business::query()->active()->where('category', 'garage')
                     ->when($request->filled('city'), fn ($q) => $q->where('city', 'like', '%'.$request->string('city').'%'))
                     ->orderByDesc('is_featured')->orderBy('name')->limit(24)->get()
                 : [],
-            'filters' => (object) ($request->only('city', 'q', 'start', 'end', 'start_time', 'end_time', 'vehicule', 'brand', 'model', 'color', 'condition', 'doors', 'first_owner', 'fuel', 'transmission', 'category', 'seats', 'price_min', 'price_max', 'year_min', 'km_max', 'sort', 'age', 'return_city') + ['type' => $type]),
+            'filters' => (object) ($request->only('city', 'q', 'start', 'end', 'start_time', 'end_time', 'vehicule', 'brand', 'model', 'color', 'condition', 'doors', 'first_owner', 'fuel', 'transmission', 'category', 'seats', 'price_min', 'price_max', 'year_min', 'km_max', 'sort', 'age', 'return_city', 'ids') + ['type' => $type]),
             'offerTypes' => $types,
             'facets' => ['brands' => $count('brand'), 'fuels' => $count('fuel'), 'transmissions' => $count('transmission'), 'categories' => $count('category'), 'colors' => $count('color'), 'conditions' => $count('condition')],
             'sorts' => self::SORTS,
@@ -90,11 +102,24 @@ class VehicleController extends Controller
     public function show(Vehicle $vehicle): Response
     {
         abort_unless($vehicle->is_active && $vehicle->status === 'published', 404);
+        // Compteur de vues (une fois par session).
+        $seen = session('vehicles_seen', []);
+        if (! in_array($vehicle->id, $seen, true)) {
+            $vehicle->increment('views');
+            session(['vehicles_seen' => [...$seen, $vehicle->id]]);
+        }
 
         return Inertia::render('Voiture/Show', [
             'vehicle' => $vehicle,
             'busyDays' => $vehicle->offer_type === 'location' ? \App\Services\Voiture\VehicleAvailability::busyDays($vehicle) : [],
             'pickupModes' => \App\Http\Controllers\Voiture\RentalController::PICKUP,
+            'idTypes' => \App\Http\Controllers\Voiture\RentalController::ID_TYPES,
+            'sale' => $vehicle->offer_type === 'vente' ? [
+                'reserved' => SaleController::isReserved($vehicle),
+                'deposit' => SaleController::deposit($vehicle),
+                'finance' => config('catalogue.voiture.finance'),
+                'seller' => $vehicle->owner ? ['name' => $vehicle->owner->company_name ?: $vehicle->owner->name, 'verified' => (bool) $vehicle->owner->partner_verified_at, 'since' => optional($vehicle->owner->created_at)->year] : null,
+            ] : null,
             'search' => request()->only(['start', 'end', 'start_time', 'end_time', 'age', 'return_city']),
             'similar' => Vehicle::query()->active()->where('offer_type', $vehicle->offer_type)
                 ->whereKeyNot($vehicle->id)->latest()->limit(4)->get(),

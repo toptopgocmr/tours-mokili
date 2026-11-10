@@ -33,15 +33,23 @@ class TravelOffer extends Model
         'destination_city', 'destination_country', 'airline', 'departure_at', 'arrival_at',
         'return_at', 'price', 'discount_percent', 'currency', 'seats_available',
         'image', 'is_featured', 'is_active', 'owner_id', 'promo_label', 'promo_ends_at',
+        'arrival_point', 'amenities',
     ];
 
     // Exposed on every JSON/Inertia response (web + API) so both
     // frontends can read the post-discount price directly.
     protected $appends = ['discounted_price', 'image_url', 'transport_mode_label', 'trip_scope_label'];
 
+    // Services a bord proposes aux transporteurs.
+    public const AMENITIES = [
+        'wifi' => 'Wi-Fi', 'prises' => 'Prises electriques', 'clim' => 'Climatisation', 'toilettes' => 'Toilettes',
+        'bagages' => 'Bagage en soute inclus', 'collation' => 'Collation', 'tv' => 'Ecrans / TV', 'gilets' => 'Gilets de sauvetage',
+    ];
+
     protected function casts(): array
     {
         return [
+            'amenities' => 'array',
             'departure_at' => 'datetime',
             'arrival_at' => 'datetime',
             'return_at' => 'datetime',

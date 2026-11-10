@@ -8,6 +8,7 @@ import RideSearchBar from '@/Components/RideSearchBar.vue';
 import PhotoHero from '@/Components/PhotoHero.vue';
 import { dayHeading, RIDE_MODES, RIDE_PAGES, rideHour, rideMinutes, TIME_SLOTS } from '@/utils/rides';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { cityPhoto, PHOTO_CREDIT } from '@/utils/cityPhotos';
 import { computed, ref } from 'vue';
 
 defineOptions({ layout: MainLayout });
@@ -21,7 +22,15 @@ const props = defineProps({
     popularAirports: { type: Array, default: () => [] },
     tripScopes: { type: Object, default: () => ({}) },
     departments: { type: Array, default: () => [] },
+    dayPrices: { type: Object, default: () => ({}) },
+    popularRoutes: { type: Array, default: () => [] },
 });
+const MODE_PLURAL = { bus: 'bus', train: 'trains', canot: 'canots rapides', bateau: 'bateaux', taxi: 'taxis' };
+const routeTitle = computed(() => (from.value && destination.value ? `Horaires des ${MODE_PLURAL[mode.value] ?? 'trajets'} ${from.value} → ${destination.value}` : null));
+const popularTitle = computed(() => `Decouvrez nos trajets ${mode.value ? `en ${MODE_PLURAL[mode.value] ?? mode.value} ` : ''}les plus populaires aux prix les plus bas`);
+const earliestId = computed(() => (filteredRides.value.length > 1 ? [...filteredRides.value].sort((a, b) => String(a.departure_at).localeCompare(String(b.departure_at)))[0].id : null));
+const brokenPhotos = ref([]);
+const routeTo = (from_, to_) => { from.value = from_; destination.value = to_; search(); };
 
 const destination = ref(props.filters.destination ?? '');
 const type = ref(props.filters.type ?? '');
@@ -67,11 +76,12 @@ const tomorrowIso = (() => { const d = new Date(); d.setDate(d.getDate() + 1); r
 const cheapest = computed(() => (props.offers.data.length ? Math.min(...props.offers.data.map((o) => Number(o.discounted_price ?? o.price))) : null));
 
 // Bandeau des 7 prochains jours.
-const nextDays = computed(() => Array.from({ length: 7 }, (_, i) => {
+const nextDays = computed(() => Array.from({ length: 8 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
-    const iso = d.toISOString().slice(0, 10);
-    return { iso, label: i === 0 ? "Aujourd'hui" : i === 1 ? 'Demain' : d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) };
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const label = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+    return { iso, label: label.charAt(0).toUpperCase() + label.slice(1), price: props.dayPrices?.[iso] ?? null };
 }));
 const pickDate = (iso) => { date.value = date.value === iso ? '' : iso; search(); };
 const pickRoute = ([a, b]) => { from.value = a; destination.value = b; search(); };
@@ -310,30 +320,68 @@ const cardSubtitle = (offer) => {
                 <p class="mt-1 text-navy-600">{{ ridePage.subtitle }}</p>
             </div>
 
-            <!-- 7 prochains jours -->
-            <div class="mb-6 flex gap-2 overflow-x-auto pb-1">
+            <!-- Trajets populaires (avant toute recherche) -->
+            <section v-if="!from && !destination && popularRoutes.length" class="mb-10">
+                <h2 class="text-center text-2xl font-extrabold text-navy-900 sm:text-3xl">{{ popularTitle }}</h2>
+                <div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    <article v-for="r in popularRoutes.slice(0, 8)" :key="r.to" class="overflow-hidden rounded-2xl bg-white shadow-[0_2px_10px_rgba(5,15,33,0.10)]">
+                        <button type="button" class="block w-full text-left" @click="routeTo(r.from, r.to)">
+                            <div class="h-40 overflow-hidden bg-navy-800">
+                                <img v-if="cityPhoto(r.to, mode) && !brokenPhotos.includes(r.to)" :src="cityPhoto(r.to, mode)" alt="" class="h-full w-full object-cover transition duration-500 hover:scale-105" loading="lazy" @error="brokenPhotos.push(r.to)" />
+                                <div v-else class="flex h-full items-center justify-center bg-gradient-to-br from-navy-900 to-sky-700 text-2xl font-extrabold text-white">{{ r.to }}</div>
+                            </div>
+                            <div class="flex items-center justify-between gap-3 p-5">
+                                <div class="min-w-0">
+                                    <div class="grid grid-cols-[14px_1fr] items-center gap-x-3 gap-y-0.5">
+                                        <span class="h-3 w-3 rounded-full border-2 border-navy-900" /><span class="truncate font-bold text-navy-900">{{ r.from }}</span>
+                                        <span class="mx-auto h-4 w-0.5 bg-navy-900" /><span />
+                                        <span class="h-3 w-3 rounded-full border-2 border-navy-900" /><span class="truncate font-bold text-navy-900">{{ r.to }}</span>
+                                    </div>
+                                    <p class="mt-3 text-sm text-navy-600">Des</p>
+                                    <p class="text-2xl font-extrabold text-navy-900">{{ r.price.toLocaleString('fr-FR') }} <span class="text-sm">XAF</span></p>
+                                </div>
+                                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#2f6fe4] text-xl text-white">→</span>
+                            </div>
+                        </button>
+                        <div v-if="r.others.length" class="border-t border-navy-50 px-5 py-3">
+                            <p class="font-bold text-navy-900">Vers {{ r.to }} depuis</p>
+                            <button v-for="o in r.others" :key="o.from" type="button" class="flex w-full items-center justify-between py-1.5 text-sm hover:text-sky-700" @click="routeTo(o.from, r.to)">
+                                <span class="font-medium">{{ o.from }}</span>
+                                <span class="font-bold">{{ o.price.toLocaleString('fr-FR') }} XAF ›</span>
+                            </button>
+                        </div>
+                    </article>
+                </div>
+                <p class="mt-2 text-right text-[10px] text-navy-400">{{ PHOTO_CREDIT }}</p>
+            </section>
+
+            <h2 v-if="routeTitle" class="mb-5 text-center text-2xl font-extrabold text-navy-900 sm:text-3xl">{{ routeTitle }}</h2>
+
+            <!-- 8 prochains jours avec le prix le plus bas (facon BlaBlaCar) -->
+            <div class="mb-6 flex justify-start gap-1 overflow-x-auto pb-1 sm:justify-center">
                 <button
                     v-for="d in nextDays"
                     :key="d.iso"
                     type="button"
-                    class="shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition"
-                    :class="date === d.iso ? 'border-sky-500 bg-sky-500 text-white' : 'border-gray-200 bg-white text-navy-800 hover:border-sky-400'"
+                    class="shrink-0 rounded-xl px-4 py-2 text-center transition"
+                    :class="date === d.iso ? 'bg-navy-900 text-white' : 'text-navy-700 hover:bg-navy-50'"
                     @click="pickDate(d.iso)"
                 >
-                    {{ d.label }}
+                    <span class="block text-sm font-medium">{{ d.label }}</span>
+                    <span class="block text-base font-bold" :class="date === d.iso ? 'text-white' : d.price ? 'text-[#2f6fe4]' : 'text-navy-300'">{{ d.price ? `Des ${d.price.toLocaleString('fr-FR')}` : '—' }}</span>
                 </button>
             </div>
 
             <div v-if="offers.data.length" class="grid gap-8 lg:grid-cols-[260px_1fr]">
                 <!-- Filtres -->
                 <button type="button" class="flex items-center justify-center gap-2 rounded-full border-2 border-sky-700 py-2 text-sm font-semibold text-sky-700 lg:hidden" @click="showFilters = !showFilters">
-                    ⚙ {{ showFilters ? 'Masquer les filtres' : 'Filtrer et trier' }}<span v-if="rideSlots.length + rideOperators.length" class="rounded-full bg-sky-700 px-1.5 text-xs text-white">{{ rideSlots.length + rideOperators.length }}</span>
+                    {{ showFilters ? 'Masquer les filtres' : 'Filtrer et trier' }}<span v-if="rideSlots.length + rideOperators.length" class="rounded-full bg-sky-700 px-1.5 text-xs text-white">{{ rideSlots.length + rideOperators.length }}</span>
                 </button>
                 <aside class="space-y-6 text-sm lg:block" :class="showFilters ? 'block' : 'hidden'">
                     <div>
                         <p class="mb-2 text-base font-extrabold text-navy-900">Trier par</p>
-                        <label v-for="o in [['departure', 'Depart le plus tot', '🕒'], ['price', 'Prix le plus bas', '💰'], ['duration', 'Trajet le plus court', '⏱️']]" :key="o[0]" class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 hover:bg-navy-50">
-                            <span class="flex items-center gap-2 font-medium text-navy-900"><span>{{ o[2] }}</span>{{ o[1] }}</span>
+                        <label v-for="o in [['departure', 'Depart le plus tot', ''], ['price', 'Prix le plus bas', ''], ['duration', 'Trajet le plus court', '']]" :key="o[0]" class="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 hover:bg-navy-50">
+                            <span class="font-medium text-navy-900">{{ o[1] }}</span>
                             <input v-model="rideSort" type="radio" :value="o[0]" class="text-sky-500 focus:ring-sky-500" />
                         </label>
                     </div>
@@ -370,7 +418,7 @@ const cardSubtitle = (offer) => {
                     <section v-for="g in rideDays" :key="g.key" class="mb-6">
                         <h3 class="mb-3 text-lg font-extrabold text-navy-900">{{ g.label }}</h3>
                         <div class="space-y-3">
-                            <RideCard v-for="o in g.items" :key="o.id" :offer="o" :passengers="passengers" :cheapest="o.id === cheapestId" :fastest="o.id === fastestId && o.id !== cheapestId" />
+                            <RideCard v-for="o in g.items" :key="o.id" :offer="o" :passengers="passengers" :cheapest="o.id === cheapestId" :fastest="o.id === fastestId" :earliest="o.id === earliestId" />
                         </div>
                     </section>
                     <p v-if="!filteredRides.length" class="rounded-2xl bg-navy-50/60 p-6 text-center text-navy-700">Aucun trajet ne correspond a ces filtres.</p>

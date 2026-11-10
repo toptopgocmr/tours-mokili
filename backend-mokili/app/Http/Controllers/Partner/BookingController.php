@@ -47,6 +47,13 @@ class BookingController extends Controller
                 'notes' => $b->notes,
                 'client' => $b->user ? ['name' => $b->user->name, 'phone' => $b->user->phone, 'email' => $b->user->email] : null,
                 'item' => self::describe($b),
+                // Location : identite et permis du conducteur.
+                'driver' => isset($b->meta['driver']) ? [
+                    'id' => ($b->meta['driver']['id_type_label'] ?? '').' n° '.($b->meta['driver']['id_number'] ?? ''),
+                    'license' => $b->meta['driver']['license_number'] ? 'Permis n° '.$b->meta['driver']['license_number'].' (obtenu le '.\Carbon\Carbon::parse($b->meta['driver']['license_date'])->format('d/m/Y').')' : 'Avec chauffeur',
+                    'id_url' => route('rental.document', [$b->id, 'id_document']),
+                    'license_url' => ! empty($b->meta['driver']['license_document']) ? route('rental.document', [$b->id, 'license_document']) : null,
+                ] : null,
             ]);
 
         $paid = (clone $base)->whereIn('status', self::PAID);

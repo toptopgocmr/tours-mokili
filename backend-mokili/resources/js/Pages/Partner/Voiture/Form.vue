@@ -38,7 +38,30 @@ const form = useForm({
     first_owner: props.vehicle?.first_owner ?? false,
     engine: props.vehicle?.engine ?? '',
     options: props.vehicle?.options ?? [],
+    version: props.vehicle?.version ?? '',
+    warranty_months: props.vehicle?.warranty_months ?? '',
+    gallery: [],
+    remove_gallery: [],
 });
+// Galerie : photos existantes (chemins) + nouvelles photos.
+const existingGallery = ref((props.vehicle?.gallery ?? []).map((path, i) => ({ path, url: props.vehicle.gallery_urls?.[i + (props.vehicle.image ? 1 : 0)] ?? path })));
+const newPreviews = ref([]);
+const onGallery = (e) => {
+    for (const file of e.target.files) {
+        if (existingGallery.value.length + form.gallery.length >= 15) break;
+        form.gallery.push(file);
+        newPreviews.value.push(URL.createObjectURL(file));
+    }
+    e.target.value = '';
+};
+const removeExisting = (g) => {
+    form.remove_gallery.push(g.path);
+    existingGallery.value = existingGallery.value.filter((x) => x.path !== g.path);
+};
+const removeNew = (i) => {
+    form.gallery.splice(i, 1);
+    newPreviews.value.splice(i, 1);
+};
 
 // Listes communes (config/catalogue.php > voiture).
 const cat = computed(() => usePage().props.catalogue?.voiture ?? {});
@@ -62,8 +85,9 @@ const onImageChange = (e) => {
 
 const submit = (intent) => {
     form.intent = intent;
-    if (isEdit.value) form.put(`/partner/voiture/${props.vehicle.id}`);
-    else form.post('/partner/voiture');
+    // Fichiers + PUT : envoi en POST avec _method=put (PHP ne lit pas le multipart en PUT).
+    if (isEdit.value) form.transform((d) => ({ ...d, _method: 'put' })).post(`/partner/voiture/${props.vehicle.id}`, { forceFormData: true });
+    else form.post('/partner/voiture', { forceFormData: true });
 };
 </script>
 
@@ -178,6 +202,14 @@ const submit = (intent) => {
         </template>
         <template v-if="form.offer_type === 'vente'">
             <div>
+                <label class="text-sm font-medium text-slate-700">Version / finition</label>
+                <input v-model="form.version" type="text" placeholder="ex. 2.5 Hybrid Dynamic" class="mt-1 w-full rounded border-slate-300" />
+            </div>
+            <div>
+                <label class="text-sm font-medium text-slate-700">Garantie (mois)</label>
+                <input v-model.number="form.warranty_months" type="number" min="0" max="120" placeholder="ex. 12" class="mt-1 w-full rounded border-slate-300" />
+            </div>
+            <div>
                 <label class="text-sm font-medium text-slate-700">Etat</label>
                 <select v-model="form.condition" class="mt-1 w-full rounded border-slate-300">
                     <option v-for="(label, key) in cat.conditions" :key="key" :value="key">{{ label }}</option>
@@ -198,6 +230,25 @@ const submit = (intent) => {
         <div>
             <label class="text-sm font-medium text-slate-700">Telephone / WhatsApp</label>
             <input v-model="form.phone" type="tel" class="mt-1 w-full rounded border-slate-300" />
+        </div>
+        <div v-if="form.offer_type !== 'mecanique'" class="sm:col-span-2">
+            <label class="text-sm font-medium text-slate-700">Autres photos (galerie, 15 max)</label>
+            <p class="text-xs text-slate-500">Exterieur avant / arriere / profil, interieur, tableau de bord, compteur, coffre, moteur.</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+                <div v-for="g in existingGallery" :key="g.path" class="relative h-20 w-28 overflow-hidden rounded border">
+                    <img :src="g.url" alt="" class="h-full w-full object-cover" />
+                    <button type="button" class="absolute right-1 top-1 rounded bg-black/60 px-1.5 text-xs text-white" @click="removeExisting(g)">×</button>
+                </div>
+                <div v-for="(u, i) in newPreviews" :key="u" class="relative h-20 w-28 overflow-hidden rounded border border-green-400">
+                    <img :src="u" alt="" class="h-full w-full object-cover" />
+                    <button type="button" class="absolute right-1 top-1 rounded bg-black/60 px-1.5 text-xs text-white" @click="removeNew(i)">×</button>
+                </div>
+                <label class="flex h-20 w-28 cursor-pointer items-center justify-center rounded border-2 border-dashed border-slate-300 text-xs text-slate-500 hover:border-slate-500">
+                    + Ajouter
+                    <input type="file" accept="image/*" multiple class="hidden" @change="onGallery" />
+                </label>
+            </div>
+            <p v-if="form.errors.gallery || form.errors['gallery.0']" class="mt-1 text-xs text-red-600">{{ form.errors.gallery || form.errors['gallery.0'] }}</p>
         </div>
         <div class="sm:col-span-2">
             <label class="text-sm font-medium text-slate-700">Description</label>

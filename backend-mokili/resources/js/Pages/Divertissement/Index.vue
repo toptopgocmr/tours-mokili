@@ -83,8 +83,9 @@ const eventDate = (e) => new Date(e.starts_at).toLocaleDateString('fr-FR', { wee
                     :class="tab === key ? 'bg-navy-900 text-white' : 'text-navy-700 hover:bg-navy-50'"
                     @click="setTab(key)"
                 >
-                    <span class="mr-1">{{ ICONS[key] }}</span>{{ label }}
+                    {{ label }}
                 </button>
+                <Link href="/tourisme/monde" class="rounded-full bg-gold-500 px-4 py-1.5 text-sm font-semibold text-navy-900 transition hover:bg-gold-400">Decouvrir le monde</Link>
             </div>
             <form class="mt-3 flex flex-col gap-2 sm:flex-row" @submit.prevent="submit">
                 <input v-model="search.city" type="text" placeholder="Ville (ex: Brazzaville, Pointe-Noire...)" class="flex-1 rounded-full border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600" />

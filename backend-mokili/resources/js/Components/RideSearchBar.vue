@@ -90,79 +90,59 @@ const submit = () => {
             </button>
         </div>
 
-        <!-- Barre de recherche -->
-        <form
-            class="mt-5 grid items-stretch gap-0 rounded-3xl border border-navy-100 bg-white shadow-[0_2px_10px_rgba(5,15,33,0.08)] lg:flex lg:rounded-full"
-            @submit.prevent="submit"
-        >
-            <div class="relative flex flex-1 items-stretch border-b border-navy-100 lg:border-b-0">
-                <label class="flex min-w-0 flex-1 cursor-text flex-col justify-center px-5 py-3 lg:px-6 lg:py-4">
-                    <span class="text-sm text-navy-900">Depart</span>
-                    <input v-model="from" type="text" placeholder="Gare, ville, lieu..." class="w-full border-0 p-0 text-base text-navy-900 placeholder:text-navy-400 focus:ring-0" />
+        <!-- Barre de recherche facon BlaBlaCar : De <-> Vers | Depart | Retour | Passagers | Rechercher -->
+        <form class="mt-5 overflow-visible rounded-2xl border-2 border-[#2f6fe4] bg-white shadow-[0_4px_20px_rgba(5,15,33,0.15)] lg:flex" @submit.prevent="submit">
+            <div class="relative flex items-stretch border-b border-navy-100 lg:w-[44%] lg:border-b-0">
+                <label class="flex min-w-0 flex-1 cursor-text flex-col justify-center px-4 py-3">
+                    <span class="text-xs font-semibold text-navy-500">De</span>
+                    <input v-model="from" type="text" placeholder="Ville, gare, lieu" class="w-full border-0 p-0 text-base font-semibold text-navy-900 placeholder:font-normal placeholder:text-navy-400 focus:ring-0" />
                 </label>
-                <button
-                    type="button"
-                    class="absolute left-1/2 top-1/2 z-10 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-navy-50 text-navy-700 hover:bg-navy-100"
-                    title="Inverser depart et arrivee"
-                    @click="swap"
-                >
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h12l-3-3M17 17H5l3 3" /></svg>
+                <button type="button" class="flex w-10 shrink-0 items-center justify-center text-[#2f6fe4] hover:text-navy-900" title="Inverser" @click="swap">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h12l-3-3M17 17H5l3 3" /></svg>
                 </button>
-                <label class="flex min-w-0 flex-1 cursor-text flex-col justify-center py-3 pl-8 pr-4 lg:py-4 lg:pl-9 lg:pr-6">
-                    <span class="text-sm text-navy-900">Arrivee</span>
-                    <input v-model="to" type="text" placeholder="Gare, ville, lieu..." class="w-full border-0 p-0 text-base text-navy-900 placeholder:text-navy-400 focus:ring-0" />
+                <div class="my-3 w-px bg-navy-200" />
+                <label class="flex min-w-0 flex-1 cursor-text flex-col justify-center px-4 py-3">
+                    <span class="text-xs font-semibold text-navy-500">Vers</span>
+                    <input v-model="to" type="text" placeholder="Ville, gare, lieu" class="w-full border-0 p-0 text-base font-semibold text-navy-900 placeholder:font-normal placeholder:text-navy-400 focus:ring-0" />
                 </label>
             </div>
-
-            <div class="flex min-w-0 flex-wrap items-stretch border-b border-navy-100 lg:flex-nowrap lg:border-b-0">
+            <div class="grid grid-cols-2 border-b border-navy-100 lg:flex lg:flex-1 lg:border-b-0">
                 <div class="my-3 hidden w-px bg-navy-200 lg:block" />
-                <label class="relative flex min-w-0 cursor-pointer flex-col justify-center px-6 py-3 lg:py-4">
-                    <span class="text-sm text-navy-900">Aller</span>
-                    <span class="whitespace-nowrap text-base text-navy-900">{{ departLabel }}</span>
-                    <div class="mt-1 flex flex-wrap gap-2">
-                        <input v-model="date" type="date" :min="today" class="rounded-md border-navy-200 py-1 text-xs text-navy-900 focus:border-sky-500 focus:ring-sky-500" aria-label="Date de depart" />
-                        <select v-model="time" class="rounded-md border-navy-200 py-1 pr-7 text-xs text-navy-900 focus:border-sky-500 focus:ring-sky-500" aria-label="Partir a partir de">
-                            <option value="">Toute heure</option>
-                            <option v-for="h in HOURS" :key="h" :value="String(h)">des {{ h }}h</option>
-                        </select>
-                    </div>
+                <label class="flex min-w-0 flex-col justify-center px-4 py-3 lg:flex-1">
+                    <span class="text-xs font-semibold text-navy-500">Depart</span>
+                    <input v-model="date" type="date" :min="today" class="w-full border-0 p-0 text-base font-semibold text-navy-900 focus:ring-0" />
+                    <select v-model="time" class="mt-0.5 w-full border-0 p-0 text-xs text-navy-500 focus:ring-0" aria-label="Partir a partir de">
+                        <option value="">Toute la journee</option>
+                        <option v-for="h in HOURS" :key="h" :value="String(h)">a partir de {{ h }}h</option>
+                    </select>
                 </label>
-                <div v-if="!showReturn" class="flex items-center gap-2 px-6 pb-3 lg:px-0 lg:pb-0 lg:pr-6">
-                    <button type="button" class="text-left text-sm font-medium leading-tight text-sky-700 hover:underline" @click="addReturn">Ajouter<br class="hidden lg:inline" /> le retour</button>
-                    <button type="button" class="flex h-6 w-6 items-center justify-center rounded-full bg-sky-700 text-lg leading-none text-white" aria-label="Ajouter le retour" @click="addReturn">+</button>
-                </div>
-                <label v-else class="flex flex-col justify-center px-6 py-3 lg:px-0 lg:py-4 lg:pr-6">
-                    <span class="flex items-center gap-2 text-sm text-navy-900">Retour
-                        <button type="button" class="text-xs text-navy-400 hover:text-rose-600" aria-label="Retirer le retour" @click="removeReturn">✕</button>
+                <div class="my-3 hidden w-px bg-navy-200 lg:block" />
+                <label class="flex min-w-0 flex-col justify-center border-l border-navy-100 px-4 py-3 lg:flex-1 lg:border-l-0">
+                    <span class="flex items-center justify-between text-xs font-semibold text-navy-500">Retour
+                        <button v-if="returnDate" type="button" class="text-navy-400 hover:text-rose-600" aria-label="Retirer le retour" @click="removeReturn">✕</button>
                     </span>
-                    <span class="whitespace-nowrap text-base text-navy-900">{{ dateLabel(returnDate) }}</span>
-                    <input v-model="returnDate" type="date" :min="date || today" class="mt-1 rounded-md border-navy-200 py-1 text-xs text-navy-900 focus:border-sky-500 focus:ring-sky-500" aria-label="Date de retour" />
+                    <input v-model="returnDate" type="date" :min="date || today" class="w-full border-0 p-0 text-base font-semibold text-navy-900 focus:ring-0" :class="!returnDate && 'text-navy-400'" />
                 </label>
-            </div>
-
-            <div class="flex min-w-0 items-center justify-between gap-3 px-3 py-3 lg:py-2 lg:pl-0">
-                <div class="my-1 hidden w-px self-stretch bg-navy-200 lg:block" />
-                <div class="relative">
-                    <button type="button" class="flex flex-col px-3 text-left" @click="openPax = !openPax">
-                        <span class="text-sm text-navy-900">Voyageurs</span>
-                        <span class="whitespace-nowrap text-base text-navy-900">{{ passengers }} voyageur{{ passengers > 1 ? 's' : '' }}</span>
+                <div class="my-3 hidden w-px bg-navy-200 lg:block" />
+                <div class="relative col-span-2 flex flex-col justify-center border-t border-navy-100 px-4 py-3 lg:flex-1 lg:border-t-0">
+                    <button type="button" class="text-left" @click="openPax = !openPax">
+                        <span class="block text-xs font-semibold text-navy-500">Passagers</span>
+                        <span class="block whitespace-nowrap text-base font-semibold text-navy-900">{{ passengers }} {{ passengers > 1 ? 'adultes' : 'adulte' }}</span>
                     </button>
-                    <div v-if="openPax" class="absolute right-0 top-full z-20 mt-3 w-60 rounded-2xl border border-navy-100 bg-white p-4 shadow-xl">
+                    <div v-if="openPax" class="absolute right-0 top-full z-30 mt-2 w-60 rounded-2xl border border-navy-100 bg-white p-4 shadow-xl">
                         <div class="flex items-center justify-between">
-                            <span class="font-semibold text-navy-900">Voyageurs</span>
+                            <span class="font-semibold text-navy-900">Passagers</span>
                             <div class="flex items-center gap-3">
-                                <button type="button" class="h-8 w-8 rounded-full border border-navy-200 text-lg disabled:opacity-30" :disabled="passengers <= 1" @click="passengers--">−</button>
+                                <button type="button" class="h-8 w-8 rounded-full border border-[#2f6fe4] text-lg text-[#2f6fe4] disabled:opacity-30" :disabled="passengers <= 1" @click="passengers--">−</button>
                                 <span class="w-4 text-center font-bold">{{ passengers }}</span>
-                                <button type="button" class="h-8 w-8 rounded-full border border-navy-200 text-lg disabled:opacity-30" :disabled="passengers >= 8" @click="passengers++">+</button>
+                                <button type="button" class="h-8 w-8 rounded-full border border-[#2f6fe4] text-lg text-[#2f6fe4] disabled:opacity-30" :disabled="passengers >= 8" @click="passengers++">+</button>
                             </div>
                         </div>
-                        <button type="button" class="mt-3 w-full rounded-full bg-navy-900 py-2 text-sm font-semibold text-white" @click="openPax = false">OK</button>
+                        <button type="button" class="mt-3 w-full rounded-full bg-[#2f6fe4] py-2 text-sm font-semibold text-white" @click="openPax = false">OK</button>
                     </div>
                 </div>
-                <button type="submit" class="shrink-0 rounded-full border-2 border-sky-700 px-5 py-2.5 text-base font-semibold text-sky-700 transition hover:bg-sky-700 hover:text-white">
-                    Rechercher
-                </button>
             </div>
+            <button type="submit" class="w-full bg-[#2f6fe4] px-10 py-4 text-lg font-bold text-white transition hover:bg-[#1f5ad0] lg:w-auto lg:rounded-r-xl">Rechercher</button>
         </form>
 
         <!-- Liens rapides -->

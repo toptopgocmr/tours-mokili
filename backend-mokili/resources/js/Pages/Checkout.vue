@@ -194,6 +194,11 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                         <div v-if="booking.bookable.return_date" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Retour</dt><dd>{{ fmtDate(booking.bookable.return_date) }}</dd></div>
                         <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Passagers</dt><dd>{{ booking.bookable.passenger_count }}</dd></div>
                     </template>
+                    <template v-else-if="booking.meta?.kind === 'acompte_vente'">
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Objet</dt><dd class="font-semibold">Acompte de reservation du vehicule</dd></div>
+                        <div v-if="booking.meta.sale_price" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Prix du vehicule</dt><dd>{{ money(booking.meta.sale_price) }} {{ booking.currency }}</dd></div>
+                        <div v-if="booking.meta.sale_price" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Reste a regler au vendeur</dt><dd class="font-semibold">{{ money(booking.meta.sale_price - booking.total_amount) }} {{ booking.currency }}</dd></div>
+                    </template>
                     <template v-else-if="item.isVehicle && booking.starts_at">
                         <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Prise en charge</dt><dd class="text-right font-semibold">{{ fmtDate(booking.starts_at) }} a {{ new Date(booking.starts_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }}</dd></div>
                         <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Restitution</dt><dd class="text-right font-semibold">{{ fmtDate(booking.ends_at) }} a {{ new Date(booking.ends_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }}<span v-if="booking.meta?.return_place" class="block text-xs font-normal text-navy-500">{{ booking.meta.return_place }}</span></dd></div>

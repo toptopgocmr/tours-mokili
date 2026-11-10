@@ -120,10 +120,12 @@ Route::prefix('logement')->name('logement.')->group(function () {
 
 Route::prefix('voiture')->name('voiture.')->group(function () {
     Route::get('/', [VehicleController::class, 'index'])->name('index');
+    Route::get('/comparer', [\App\Http\Controllers\Voiture\SaleController::class, 'compare'])->name('compare');
     Route::get('/{vehicle:slug}', [VehicleController::class, 'show'])->name('show');
     // Location : disponibilite en direct + reservation et paiement.
     Route::get('/{vehicle:slug}/disponibilite', [\App\Http\Controllers\Voiture\RentalController::class, 'availability'])->middleware('throttle:60,1')->name('availability');
     Route::middleware('auth')->post('/{vehicle:slug}/reserver', [\App\Http\Controllers\Voiture\RentalController::class, 'store'])->name('book');
+    Route::middleware(['auth', 'throttle:10,1'])->post('/{vehicle:slug}/reserver-achat', [\App\Http\Controllers\Voiture\SaleController::class, 'reserve'])->name('reserve');
 });
 
 Route::prefix('divertissement')->name('divertissement.')->group(function () {
@@ -136,6 +138,9 @@ Route::prefix('divertissement')->name('divertissement.')->group(function () {
 
     Route::get('/{event:slug}', [EventController::class, 'show'])->name('show');
 });
+
+// TOURISME > Monde : sites touristiques de toutes les villes du monde (Wikipedia).
+Route::get('/tourisme/monde', [\App\Http\Controllers\Tourisme\WorldController::class, 'index'])->middleware('throttle:60,1')->name('tourisme.monde');
 
 // TOURISME = rubrique Divertissement renommee (adresses /divertissement conservees).
 Route::get('/tourisme', fn (\Illuminate\Http\Request $r) => redirect('/divertissement'.($r->getQueryString() ? '?'.$r->getQueryString() : '')))->name('tourisme');
@@ -200,6 +205,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/checkout/{booking}/payer', [CheckoutController::class, 'pay'])->name('checkout.pay');
     Route::get('/checkout/{booking}/statut', [CheckoutController::class, 'status'])->name('checkout.status');
     Route::get('/checkout/{booking}/recu', [CheckoutController::class, 'receipt'])->name('checkout.receipt');
+    Route::get('/location/{booking}/documents/{doc}', [\App\Http\Controllers\Voiture\RentalController::class, 'document'])->name('rental.document');
 });
 
 // --- Separate, non-public login entry points for staff/partners ---

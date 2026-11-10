@@ -87,6 +87,8 @@ class RideBoard
             'origin' => $o->origin_city,
             'destination' => $o->destination_city,
             'departure_point' => $o->departure_point,
+            'arrival_point' => $o->arrival_point,
+            'amenities' => $o->amenities ?? [],
             'departure_at' => $o->departure_at?->format('Y-m-d\TH:i'),
             'arrival_at' => $o->arrival_at?->format('Y-m-d\TH:i'),
             'seats' => (int) $o->seats_available,

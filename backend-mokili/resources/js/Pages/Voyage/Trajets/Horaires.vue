@@ -134,6 +134,7 @@ const STATUS = {
 };
 const status = (r) => STATUS[r.status] ?? STATUS.scheduled;
 const counts = computed(() => Object.fromEntries(MODES.map((m) => [m.value, m.value ? props.rides.filter((r) => r.mode === m.value).length : props.rides.length])));
+const AMEN = { wifi: 'Wi-Fi', prises: 'Prises', clim: 'Climatisation', toilettes: 'Toilettes', bagages: 'Bagage inclus', collation: 'Collation', tv: 'Ecrans', gilets: 'Gilets' };
 </script>
 
 <template>
@@ -302,11 +303,11 @@ const counts = computed(() => Object.fromEntries(MODES.map((m) => [m.value, m.va
                     v-for="m in MODES"
                     :key="m.value"
                     type="button"
-                    class="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition"
+                    class="rounded-full border px-4 py-1.5 text-sm font-semibold transition"
                     :class="mode === m.value ? 'border-navy-900 bg-navy-900 text-white' : 'border-navy-100 text-navy-700 hover:border-navy-400'"
                     @click="go({ mode: m.value || undefined })"
                 >
-                    <span>{{ m.icon }}</span>{{ m.label }}
+                    {{ m.label }}
                 </button>
             </div>
         </div>
@@ -330,7 +331,6 @@ const counts = computed(() => Object.fromEntries(MODES.map((m) => [m.value, m.va
         </p>
 
         <div v-if="!rides.length" class="mt-4 rounded-2xl border border-navy-100 bg-white p-8 text-center">
-            <p class="text-3xl">{{ MODES.find((m) => m.value === mode)?.icon ?? '🧭' }}</p>
             <p class="mt-2 font-bold text-navy-900">Aucun {{ arrivals ? 'arrivee' : 'depart' }} programme ce jour-la</p>
             <p class="mt-1 text-sm text-navy-600">Essayez un autre jour, une autre ville ou un autre moyen de transport.</p>
         </div>
@@ -351,7 +351,7 @@ const counts = computed(() => Object.fromEntries(MODES.map((m) => [m.value, m.va
                         <p class="text-lg font-extrabold tabular-nums text-navy-900">{{ time(r.departure_at) }}</p>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <span class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold text-white" :class="MODE_COLORS[r.mode] ?? 'bg-navy-700'">{{ RIDE_ICONS[r.mode] ?? '🧭' }} {{ r.mode_label }}</span>
+                        <span class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold text-white" :class="MODE_COLORS[r.mode] ?? 'bg-navy-700'">{{ r.mode_label }}</span>
                         <p class="mt-1 truncate font-semibold text-navy-900">{{ r.operator || 'Transporteur partenaire' }} · {{ arrivals ? r.origin : r.destination }}</p>
                     </div>
                     <p class="hidden text-sm font-semibold text-navy-900 sm:block">{{ Number(r.price).toLocaleString('fr-FR') }} {{ r.currency }}</p>
@@ -362,7 +362,7 @@ const counts = computed(() => Object.fromEntries(MODES.map((m) => [m.value, m.va
 
         <div v-if="rides.length" class="mt-3 overflow-hidden rounded-2xl border border-navy-100 bg-white shadow-sm">
             <div class="hidden grid-cols-[80px_1.2fr_1.3fr_110px_120px] gap-3 bg-navy-900 px-4 py-2 text-xs font-bold uppercase tracking-wide text-gold-400 md:grid">
-                <span>Heure</span><span>Transport</span><span>{{ arrivals ? 'Provenance' : 'Destination' }}</span><span>Places</span><span class="text-right">Statut</span>
+                <span>Heure</span><span>Transport</span><span>{{ arrivals ? 'Provenance' : 'Destination' }}</span><span>Prix</span><span class="text-right">Statut</span>
             </div>
             <component
                 :is="r.bookable ? Link : 'div'"
@@ -378,17 +378,19 @@ const counts = computed(() => Object.fromEntries(MODES.map((m) => [m.value, m.va
                     <p v-else-if="!arrivals && r.arrival_at" class="text-[11px] text-navy-400">arr. {{ time(r.arrival_at) }}</p>
                 </div>
                 <div class="min-w-0">
-                    <span class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold text-white" :class="MODE_COLORS[r.mode] ?? 'bg-navy-700'">{{ RIDE_ICONS[r.mode] ?? '🧭' }} {{ r.mode_label }}</span>
+                    <span class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold text-white" :class="MODE_COLORS[r.mode] ?? 'bg-navy-700'">{{ r.mode_label }}</span>
                     <p class="mt-1 truncate font-semibold text-navy-900">{{ r.operator || 'Transporteur partenaire' }}</p>
                     <p class="truncate text-xs text-navy-500 md:hidden">{{ arrivals ? r.origin : r.destination }}</p>
                 </div>
                 <div class="hidden min-w-0 md:block">
                     <p class="truncate font-semibold text-navy-900">{{ arrivals ? r.origin : r.destination }}</p>
                     <p v-if="!arrivals && r.departure_point" class="truncate text-xs text-navy-500">Depart : {{ r.departure_point }}</p>
+                    <p v-if="!arrivals && r.arrival_point" class="truncate text-xs text-navy-500">Arrivee : {{ r.arrival_point }}</p>
+                    <p v-if="r.amenities?.length" class="truncate text-[11px] text-navy-400">{{ r.amenities.map((a) => AMEN[a] ?? a).join(' · ') }}</p>
                 </div>
                 <div class="hidden md:block">
-                    <p class="text-sm font-semibold" :class="r.seats === 0 ? 'text-rose-600' : r.seats <= 3 ? 'text-amber-700' : 'text-emerald-700'">{{ r.seats === 0 ? 'Complet' : `${r.seats} place${r.seats > 1 ? 's' : ''}` }}</p>
-                    <p class="text-xs text-navy-500">{{ Number(r.price).toLocaleString('fr-FR') }} {{ r.currency }}</p>
+                    <p class="text-base font-extrabold text-navy-900">{{ Number(r.price).toLocaleString('fr-FR') }} <span class="text-xs">{{ r.currency }}</span></p>
+                    <p class="text-xs font-semibold" :class="r.seats === 0 ? 'text-rose-600' : r.seats <= 3 ? 'text-amber-700' : 'text-emerald-700'">{{ r.seats === 0 ? 'Complet' : `${r.seats} place${r.seats > 1 ? 's' : ''}` }}</p>
                 </div>
                 <div class="text-right">
                     <span class="whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold" :class="status(r)[1]">{{ status(r)[0] }}</span>

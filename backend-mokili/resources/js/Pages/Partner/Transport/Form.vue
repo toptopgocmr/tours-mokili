@@ -30,6 +30,8 @@ const form = useForm({
     destination_city: o.destination_city ?? '',
     destination_country: o.destination_country ?? (isFlight.value ? '' : 'CG'),
     departure_point: o.departure_point ?? '',
+    arrival_point: o.arrival_point ?? '',
+    amenities: o.amenities ?? [],
     trip_scope: o.trip_scope ?? '',
     airline: o.airline ?? props.company,
     description: o.description ?? '',
@@ -99,6 +101,8 @@ const submit = () => {
     }));
     form.post(isEdit.value ? `/partner/transport/${props.offer.id}` : '/partner/transport', { forceFormData: true });
 };
+const AMENITY_LIST = { wifi: 'Wi-Fi', prises: 'Prises electriques', clim: 'Climatisation', toilettes: 'Toilettes', bagages: 'Bagage en soute inclus', collation: 'Collation', tv: 'Ecrans / TV', gilets: 'Gilets de sauvetage' };
+const toggleAmenity = (k) => { const i = form.amenities.indexOf(k); i >= 0 ? form.amenities.splice(i, 1) : form.amenities.push(k); };
 </script>
 
 <template>
@@ -140,9 +144,17 @@ const submit = () => {
                     <input v-model="form.destination_city" type="text" :placeholder="isFlight ? 'Paris, Dubai...' : ph[1]" class="mt-1 w-full rounded border-slate-300" required />
                     <span v-if="form.errors.destination_city" class="text-xs text-red-600">{{ form.errors.destination_city }}</span>
                 </label>
-                <label v-if="!isFlight" class="text-sm font-medium text-slate-700 sm:col-span-2">Point de depart (gare, agence, port)
+                <label v-if="!isFlight" class="text-sm font-medium text-slate-700">Point de depart (gare, agence, port)
                     <input v-model="form.departure_point" type="text" :placeholder="ph[2]" class="mt-1 w-full rounded border-slate-300" />
                 </label>
+                <label v-if="!isFlight" class="text-sm font-medium text-slate-700">Point d'arrivee (gare, agence, port)
+                    <input v-model="form.arrival_point" type="text" placeholder="Ex : Gare routiere, agence centre-ville..." class="mt-1 w-full rounded border-slate-300" />
+                </label>
+                <div v-if="!isFlight" class="text-sm font-medium text-slate-700 sm:col-span-2">Services a bord
+                    <div class="mt-2 grid grid-cols-2 gap-2 font-normal sm:grid-cols-4">
+                        <label v-for="(lbl, k) in AMENITY_LIST" :key="k" class="flex items-center gap-2"><input type="checkbox" :checked="form.amenities.includes(k)" @change="toggleAmenity(k)" /> {{ lbl }}</label>
+                    </div>
+                </div>
                 <label v-if="isFlight" class="text-sm font-medium text-slate-700">Pays d'arrivee (code ISO)
                     <input v-model="form.destination_country" type="text" maxlength="2" placeholder="FR, AE, TR..." class="mt-1 w-full rounded border-slate-300 uppercase" />
                 </label>
