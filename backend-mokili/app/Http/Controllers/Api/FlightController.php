@@ -36,7 +36,9 @@ class FlightController extends Controller
     /** Programme des vols : ?airport=BZV&direction=departures|arrivals&to=CDG */
     public function schedules(Request $request, \App\Services\Flights\Schedules\AirLabsSchedules $airlabs): JsonResponse
     {
-        return response()->json(app(WebFlightController::class)->scheduleData($request, $airlabs));
+        $web = app(WebFlightController::class);
+
+        return response()->json($web->scheduleData($request, $airlabs) + ['airport_list' => $web->airportList()]);
     }
 
     public function search(FlightSearchRequest $request): JsonResponse

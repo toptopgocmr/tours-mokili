@@ -106,7 +106,9 @@ class TravelpayoutsAndSchedulesTest extends TestCase
             ->assertInertia(fn ($p) => $p->component('Voyage/Vols/Horaires')->where('airport', 'BZV')
                 ->has('flights', 2)->where('flights.0.flight', 'ET832')->where('flights.1.delay_minutes', 20));
 
-        $this->getJson('/api/flights/schedules?airport=BZV&direction=arrivals')->assertOk()->assertJsonPath('direction', 'arrivals');
+        $this->getJson('/api/flights/schedules?airport=BZV&direction=arrivals')->assertOk()->assertJsonPath('direction', 'arrivals')
+            ->assertJsonFragment(['iata_code' => 'BZV', 'city' => 'Brazzaville']);
+        $this->get('/voyage/vols/horaires')->assertInertia(fn ($p) => $p->has('airportList'));
         Http::assertSent(fn (Request $r) => $r['api_key'] === 'al_xxx' && ($r['arr_iata'] ?? null) === 'BZV');
     }
 

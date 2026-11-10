@@ -4,6 +4,7 @@
 // (escales avec prix "a partir de", bagages, horaires, duree, aeroports
 // d'escale, compagnies), onglets Les meilleurs / Les moins chers / Les plus
 // rapides et cartes de vols. Les filtres s'appliquent instantanement.
+import PhotoHero from '@/Components/PhotoHero.vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import FlightSearchForm from '@/Components/FlightSearchForm.vue';
 import FlightOfferCard from '@/Components/FlightOfferCard.vue';
@@ -157,7 +158,7 @@ const moveReturn = (n) => research({ return_date: shift(props.search.return_date
     <Head :title="`Vols ${title}`" />
 
     <!-- Bandeau recherche -->
-    <section class="bg-navy-900 px-4 pb-5 pt-4 text-white sm:px-6">
+    <PhotoHero class="px-4 pb-5 pt-4 text-white sm:px-6" veil="full">
         <div class="mx-auto max-w-7xl">
             <div class="mb-3 flex items-center gap-2 text-sm">
                 <Link href="/voyage?type=vol" class="rounded-full bg-white/10 px-3 py-1 font-semibold hover:bg-white/20">✈ Vols</Link>
@@ -184,7 +185,7 @@ const moveReturn = (n) => research({ return_date: shift(props.search.return_date
                 <FlightSearchForm :initial="{ ...search, direct_only: f.stops.length === 1 && f.stops[0] === 'direct' }" :labels="labels" :cabins="cabins" :airports="airports" />
             </div>
         </div>
-    </section>
+    </PhotoHero>
 
     <div class="bg-navy-50/50">
         <div class="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[280px_1fr]">

@@ -68,7 +68,7 @@ const submit = () => {
 <template>
     <div>
         <!-- Onglets -->
-        <div class="mx-auto flex w-fit max-w-full gap-1 overflow-x-auto rounded-2xl border border-navy-100 bg-navy-50/60 p-1.5">
+        <div class="mx-auto flex w-fit max-w-full gap-1 overflow-x-auto rounded-2xl border border-white/40 bg-white/90 p-1.5 shadow-sm backdrop-blur">
             <button
                 v-for="t in TABS"
                 :key="t.label"
@@ -167,13 +167,13 @@ const submit = () => {
         <!-- Liens rapides -->
         <div class="mt-4 flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm">
             <template v-for="q in quick" :key="q[0]">
-                <Link v-if="q[1]" :href="q[1]" class="inline-flex items-center gap-2 text-sky-700 hover:underline">
+                <Link v-if="q[1]" :href="q[1]" class="inline-flex items-center gap-2 text-white drop-shadow hover:underline">
                     {{ q[0] }}
-                    <span class="flex h-4 w-4 items-center justify-center rounded-full bg-sky-700 text-[10px] text-white">›</span>
+                    <span class="flex h-4 w-4 items-center justify-center rounded-full bg-gold-500 text-[10px] text-navy-900">›</span>
                 </Link>
-                <button v-else type="button" class="inline-flex items-center gap-2 text-sky-700 hover:underline" @click="pickRoute(q[2])">
+                <button v-else type="button" class="inline-flex items-center gap-2 text-white drop-shadow hover:underline" @click="pickRoute(q[2])">
                     {{ q[0] }}
-                    <span class="flex h-4 w-4 items-center justify-center rounded-full bg-sky-700 text-[10px] text-white">›</span>
+                    <span class="flex h-4 w-4 items-center justify-center rounded-full bg-gold-500 text-[10px] text-navy-900">›</span>
                 </button>
             </template>
         </div>

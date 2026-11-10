@@ -1,4 +1,5 @@
 <script setup>
+import PhotoHero from '@/Components/PhotoHero.vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -39,7 +40,7 @@ const submit = () => {
 <template>
     <Head title="Suivi de colis" />
 
-    <div class="bg-navy-900 py-10">
+    <PhotoHero tag="div" class="py-12" veil="full">
         <div class="mx-auto max-w-3xl px-6 text-center">
             <h1 class="text-2xl font-bold text-white">Suivez votre expedition</h1>
             <p class="mt-1 text-sm text-navy-200">Entrez votre code de suivi (ex. FRT-XXXXXXXXXX), sans connexion requise.</p>
@@ -53,7 +54,7 @@ const submit = () => {
                 <button type="submit" class="btn-gold whitespace-nowrap px-6">Suivre</button>
             </form>
         </div>
-    </div>
+    </PhotoHero>
 
     <div class="mx-auto max-w-3xl px-6 py-10">
         <div v-if="notFound" class="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-700">

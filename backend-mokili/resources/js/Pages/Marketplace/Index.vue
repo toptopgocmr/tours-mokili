@@ -1,4 +1,5 @@
 <script setup>
+import PhotoHero from '@/Components/PhotoHero.vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import PartnersSection from '@/Components/PartnersSection.vue';
 import ProductCard from '@/Components/ProductCard.vue';
@@ -38,7 +39,7 @@ const reset = () => {
 <template>
     <Head title="Marketplace - petites annonces" />
 
-    <section class="bg-gradient-to-r from-pink-700 to-navy-900 px-6 py-8 text-white">
+    <PhotoHero class="px-6 py-8 text-white">
         <div class="mx-auto max-w-6xl">
             <div class="flex flex-wrap items-end justify-between gap-3">
                 <div>
@@ -57,7 +58,7 @@ const reset = () => {
                 <button type="submit" class="btn-gold sm:px-8">Rechercher</button>
             </form>
         </div>
-    </section>
+    </PhotoHero>
 
     <div class="mx-auto max-w-6xl px-6 py-6">
         <div class="flex gap-2 overflow-x-auto pb-2">

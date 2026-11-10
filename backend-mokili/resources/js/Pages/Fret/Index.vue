@@ -1,4 +1,5 @@
 <script setup>
+import PhotoHero from '@/Components/PhotoHero.vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import ListingImage from '@/Components/ListingImage.vue';
 import Paginator from '@/Components/Paginator.vue';
@@ -59,7 +60,7 @@ const parcelEstimate = computed(() => {
 <template>
     <Head title="Fret & logistique" />
 
-    <div class="bg-navy-900 py-8">
+    <PhotoHero tag="div" class="py-10" veil="full">
         <div class="mx-auto max-w-3xl px-6 text-center">
             <h1 class="text-2xl font-bold text-white">Suivez votre expedition</h1>
             <p class="mt-1 text-sm text-navy-200">Entrez votre code de suivi, sans connexion requise.</p>
@@ -76,7 +77,7 @@ const parcelEstimate = computed(() => {
                 Voir toutes mes expeditions &rarr;
             </Link>
         </div>
-    </div>
+    </PhotoHero>
 
     <div class="mx-auto max-w-7xl px-6 py-12">
         <!-- Colis & documents -->

@@ -5,6 +5,7 @@ import DestinationImage from '@/Components/DestinationImage.vue';
 import FlightSearchForm from '@/Components/FlightSearchForm.vue';
 import RideCard from '@/Components/RideCard.vue';
 import RideSearchBar from '@/Components/RideSearchBar.vue';
+import PhotoHero from '@/Components/PhotoHero.vue';
 import { dayHeading, RIDE_MODES, RIDE_PAGES, rideHour, rideMinutes, TIME_SLOTS } from '@/utils/rides';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -171,14 +172,14 @@ const cardSubtitle = (offer) => {
          dessus la photo, onglets de type comme leurs onglets Vols/
          Hebergements/Voitures). -->
     <!-- TRAJETS : accueil facon SNCF Connect (fond clair, titre centre). -->
-    <section v-if="isRides" class="bg-[#f3f6fb] px-4 pb-10 pt-6 sm:px-6">
+    <PhotoHero v-if="isRides" class="px-4 pb-10 pt-6 sm:px-6" veil="full">
         <div class="mx-auto max-w-6xl">
             <div class="mb-6 flex flex-wrap justify-center gap-2 whitespace-nowrap text-sm">
-                <button type="button" class="rounded-full px-4 py-1.5 font-semibold text-navy-700 hover:bg-white" @click="setType('vol')">✈ Vols</button>
-                <span class="rounded-full bg-navy-900 px-4 py-1.5 font-semibold text-white">Trains, bus et canots</span>
-                <button type="button" class="rounded-full px-4 py-1.5 font-semibold text-navy-700 hover:bg-white" @click="setType('')">Toutes les offres</button>
+                <button type="button" class="rounded-full px-4 py-1.5 font-semibold text-white hover:bg-white/15" @click="setType('vol')">✈ Vols</button>
+                <span class="rounded-full bg-gold-500 px-4 py-1.5 font-semibold text-navy-900">Trains, bus et canots</span>
+                <button type="button" class="rounded-full px-4 py-1.5 font-semibold text-white hover:bg-white/15" @click="setType('')">Toutes les offres</button>
             </div>
-            <h1 class="text-center text-2xl font-extrabold text-navy-900 sm:text-4xl">Trains, bus, canots : trouvez facilement votre trajet</h1>
+            <h1 class="text-center text-2xl font-extrabold text-white drop-shadow sm:text-4xl">Trains, bus, canots : trouvez facilement votre trajet</h1>
             <div class="mt-6">
                 <RideSearchBar
                     v-model:mode="mode"
@@ -193,7 +194,7 @@ const cardSubtitle = (offer) => {
                 />
             </div>
         </div>
-    </section>
+    </PhotoHero>
 
     <template v-else>
     <section class="relative h-[260px] overflow-hidden sm:h-[300px]">
