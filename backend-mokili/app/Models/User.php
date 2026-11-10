@@ -23,6 +23,9 @@ class User extends Authenticatable
         'provider',
         'provider_id',
         'phone_verified_at',
+        'company_name',
+        'partner_activity',
+        'partner_verified_at',
     ];
 
     protected $hidden = [
@@ -35,6 +38,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'phone_verified_at' => 'datetime',
+            'partner_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -97,6 +101,45 @@ class User extends Authenticatable
     public function lodgingListings()
     {
         return $this->hasMany(\App\Models\Logement\LodgingListing::class, 'owner_id');
+    }
+
+    /** Activites des partenaires (inscription, menu de l'espace partenaire). */
+    public const PARTNER_ACTIVITIES = [
+        'transport_routier' => 'Compagnie de bus / cars',
+        'transport_ferroviaire' => 'Compagnie de train',
+        'canot_rapide' => 'Canots rapides / transport fluvial',
+        'taxi_vtc' => 'Taxis & VTC',
+        'compagnie_aerienne' => 'Compagnie aerienne',
+        'agence_billets' => 'Agence de voyage / vente de billets',
+        'garage' => 'Garage / mecanique',
+        'location_voiture' => 'Location de voitures',
+        'vente_voiture' => 'Vente de voitures (concession, revendeur)',
+        'hotel' => 'Hotel',
+        'appartement' => 'Appartements / villas meubles',
+        'organisateur_evenements' => 'Concerts & spectacles (organisateur, salle)',
+        'cinema' => 'Cinema',
+        'parc_loisirs' => "Parc d'attractions / loisirs",
+        'tourisme' => 'Restaurant, bar, visites touristiques',
+        'commerce' => 'Commerce / boutique',
+        'fret' => 'Transport de marchandises (fret)',
+    ];
+
+    /** Moyen de transport par defaut des trajets selon l'activite. */
+    public const ACTIVITY_MODES = [
+        'transport_routier' => 'bus',
+        'transport_ferroviaire' => 'train',
+        'canot_rapide' => 'canot',
+        'taxi_vtc' => 'taxi',
+    ];
+
+    public function travelOffers()
+    {
+        return $this->hasMany(\App\Models\Voyage\TravelOffer::class, 'owner_id');
+    }
+
+    public function isVerifiedPartner(): bool
+    {
+        return $this->role === 'partner' && $this->partner_verified_at !== null;
     }
 
     public function vehicles()

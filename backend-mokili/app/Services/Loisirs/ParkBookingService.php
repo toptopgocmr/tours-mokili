@@ -23,8 +23,9 @@ class ParkBookingService
 
         $adults = (int) ($data['adults'] ?? 0);
         $children = (int) ($data['children'] ?? 0);
-        $adultPrice = (float) $park->price_adult;
-        $childPrice = $park->childPrice();
+        // Promotion en cours comprise.
+        $adultPrice = (float) $park->final_price_adult;
+        $childPrice = (float) $park->final_price_child;
         $total = $adults * $adultPrice + $children * $childPrice;
         $visitDate = Carbon::parse($data['visit_date'])->startOfDay();
 

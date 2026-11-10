@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
  */
 class AttractionPark extends Model
 {
+    use \App\Models\Concerns\HasPromotion;
     public const CATEGORIES = [
         'parc_attractions' => "Parc d'attractions",
         'parc_aquatique' => 'Parc aquatique',
@@ -29,10 +30,25 @@ class AttractionPark extends Model
         'name', 'slug', 'category', 'city', 'district', 'address', 'country',
         'description', 'activities', 'opening_hours', 'price_adult', 'price_child',
         'currency', 'min_age', 'phone', 'website', 'latitude', 'longitude',
-        'image', 'gallery', 'is_featured', 'is_active',
+        'image', 'gallery', 'is_featured', 'is_active', 'owner_id', 'discount_percent', 'promo_label', 'promo_ends_at',
     ];
 
-    protected $appends = ['image_url', 'gallery_urls', 'category_label', 'is_bookable'];
+    protected $appends = ['image_url', 'gallery_urls', 'category_label', 'is_bookable', 'promo', 'final_price_adult', 'final_price_child'];
+
+    public function getFinalPriceAdultAttribute(): ?float
+    {
+        return $this->promoPrice($this->price_adult);
+    }
+
+    public function getFinalPriceChildAttribute(): ?float
+    {
+        return $this->promoPrice($this->childPrice());
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'owner_id');
+    }
 
     protected function casts(): array
     {
@@ -41,6 +57,7 @@ class AttractionPark extends Model
             'gallery' => 'array',
             'price_adult' => 'decimal:2',
             'price_child' => 'decimal:2',
+            'promo_ends_at' => 'datetime',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'is_featured' => 'boolean',

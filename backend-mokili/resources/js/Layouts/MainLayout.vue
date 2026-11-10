@@ -108,6 +108,7 @@ const navLinks = [
                     <p class="space-x-4">
                         <span class="text-navy-50/30">Acces professionnel :</span>
                         <Link href="/partner/login" class="hover:text-gold-600">Espace partenaire</Link>
+                        <Link href="/devenir-partenaire" class="font-semibold text-gold-500 hover:text-gold-400">Devenir partenaire</Link>
                         <Link href="/admin/login" class="hover:text-gold-600">Administration</Link>
                     </p>
                 </div>

@@ -10,7 +10,8 @@ const isEdit = computed(() => !!props.listing);
 
 const form = useForm({
     title: props.listing?.title ?? '',
-    property_type: props.listing?.property_type ?? 'appartement',
+    // ?type=hotel|appartement|villa depuis le tableau de bord.
+    property_type: props.listing?.property_type ?? (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('type') || 'appartement'),
     description: props.listing?.description ?? '',
     city: props.listing?.city ?? '',
     country: props.listing?.country ?? '',

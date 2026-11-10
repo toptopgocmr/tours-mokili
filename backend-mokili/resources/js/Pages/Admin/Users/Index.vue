@@ -8,6 +8,7 @@ defineOptions({ layout: AdminLayout });
 const props = defineProps({
     users: { type: Object, required: true },
     filters: { type: Object, default: () => ({}) },
+    activities: { type: Object, default: () => ({}) },
 });
 
 const role = ref(props.filters.role ?? '');
@@ -53,7 +54,9 @@ const roleBadgeClass = (r) => ({
                     <th>Nom</th>
                     <th>Email</th>
                     <th>Role</th>
+                    <th>Societe / activite</th>
                     <th>Inscrit le</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -61,9 +64,24 @@ const roleBadgeClass = (r) => ({
                     <td class="font-medium text-slate-900">{{ u.name }}</td>
                     <td>{{ u.email }}</td>
                     <td><span :class="roleBadgeClass(u.role)">{{ u.role }}</span></td>
+                    <td>
+                        <template v-if="u.role === 'partner'">
+                            <p class="font-medium text-slate-900">{{ u.company_name || '—' }}</p>
+                            <p class="text-xs text-slate-500">{{ activities[u.partner_activity] || '' }}</p>
+                        </template>
+                    </td>
                     <td>{{ new Date(u.created_at).toLocaleDateString('fr-FR') }}</td>
+                    <td class="text-right">
+                        <template v-if="u.role === 'partner'">
+                            <span v-if="u.partner_verified_at" class="console-badge console-badge-success mr-2">Valide</span>
+                            <span v-else class="console-badge console-badge-pending mr-2">A valider</span>
+                            <button class="font-semibold hover:underline" :class="u.partner_verified_at ? 'text-red-600' : 'text-[#0972D3]'" @click="router.post(`/admin/utilisateurs/${u.id}/valider-partenaire`, {}, { preserveScroll: true })">
+                                {{ u.partner_verified_at ? 'Suspendre' : 'Valider' }}
+                            </button>
+                        </template>
+                    </td>
                 </tr>
-                <tr v-if="!users.data.length"><td colspan="4" class="py-6 text-center text-slate-400">Aucun compte.</td></tr>
+                <tr v-if="!users.data.length"><td colspan="6" class="py-6 text-center text-slate-400">Aucun compte.</td></tr>
             </tbody>
         </table>
     </div>

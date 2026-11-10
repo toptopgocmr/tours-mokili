@@ -13,14 +13,21 @@ use Illuminate\Support\Str;
 class Event extends Model
 {
     use HasPublishingStatus;
+    use \App\Models\Concerns\HasPromotion;
 
     protected $fillable = [
         'organizer_id', 'title', 'slug', 'category', 'description', 'venue',
         'city', 'country', 'starts_at', 'ends_at', 'price', 'currency',
-        'capacity', 'image', 'is_active', 'status', 'rejection_reason',
+        'capacity', 'image', 'is_active', 'status', 'rejection_reason', 'discount_percent', 'promo_label', 'promo_ends_at',
     ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'promo', 'final_price'];
+
+    /** Prix du billet apres promotion. */
+    public function getFinalPriceAttribute(): ?float
+    {
+        return $this->promoPrice($this->price);
+    }
 
     protected function casts(): array
     {
@@ -29,6 +36,7 @@ class Event extends Model
             'ends_at' => 'datetime',
             'price' => 'decimal:2',
             'is_active' => 'boolean',
+            'promo_ends_at' => 'datetime',
         ];
     }
 

@@ -1,4 +1,5 @@
 <script setup>
+import PromoBadge from '@/Components/PromoBadge.vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import PartnersSection from '@/Components/PartnersSection.vue';
 import ListingImage from '@/Components/ListingImage.vue';
@@ -97,7 +98,8 @@ const price = (v) => (v.display_price ? `${v.display_price.suffix === 'a partir 
                     <p class="text-xs text-navy-500">
                         {{ [v.year, v.mileage_km ? `${Number(v.mileage_km).toLocaleString('fr-FR')} km` : null, v.fuel, v.city].filter(Boolean).join(' · ') }}
                     </p>
-                    <p class="mt-1 text-sm font-semibold text-gold-600">{{ price(v) }}</p>
+                    <p class="mt-1 text-sm font-semibold text-gold-600"><span v-if="v.display_price?.original" class="mr-1 text-xs font-normal text-navy-400 line-through">{{ Number(v.display_price.original).toLocaleString('fr-FR') }}</span>{{ price(v) }}</p>
+                    <PromoBadge :promo="v.promo" class="mt-1" />
                 </div>
             </Link>
         </div>

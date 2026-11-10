@@ -34,6 +34,11 @@ use App\Http\Controllers\Partner\FreightOfferController as PartnerFreightOfferCo
 use App\Http\Controllers\Partner\LodgingListingController as PartnerLodgingListingController;
 use App\Http\Controllers\Partner\ProductController as PartnerProductController;
 use App\Http\Controllers\Partner\VehicleController as PartnerVehicleController;
+use App\Http\Controllers\Partner\TransportController as PartnerTransportController;
+use App\Http\Controllers\Partner\PromotionController as PartnerPromotionController;
+use App\Http\Controllers\Partner\BookingController as PartnerBookingController;
+use App\Http\Controllers\Partner\CompanyController as PartnerCompanyController;
+use App\Http\Controllers\Partner\ParkController as PartnerParkController;
 use App\Http\Controllers\Voiture\VehicleController;
 use App\Http\Controllers\Voyage\BookingController as VoyageBookingController;
 use App\Http\Controllers\Voyage\FlightController;
@@ -201,6 +206,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/admin/login', [AdminAuthenticatedSessionController::class, 'store']);
 
     Route::get('/partner/login', [PartnerAuthenticatedSessionController::class, 'create'])->name('partner.login');
+    // Inscription en ligne des societes partenaires (transport, agences, garages...).
+    Route::get('/devenir-partenaire', [\App\Http\Controllers\Partner\RegisterController::class, 'create'])->name('partner.register');
+    Route::post('/devenir-partenaire', [\App\Http\Controllers\Partner\RegisterController::class, 'store'])->middleware('throttle:5,1');
     Route::post('/partner/login', [PartnerAuthenticatedSessionController::class, 'store']);
 });
 
@@ -276,11 +284,38 @@ Route::middleware(['auth', 'role:admin,agent'])->prefix('admin')->name('admin.')
     Route::get('/utilisateurs', [AdminUserController::class, 'index'])->name('users.index');
     Route::get('/utilisateurs/creer', [AdminUserController::class, 'create'])->name('users.create');
     Route::post('/utilisateurs', [AdminUserController::class, 'store'])->name('users.store');
+    Route::post('/utilisateurs/{user}/valider-partenaire', [AdminUserController::class, 'verifyPartner'])->name('users.verify-partner');
 });
 
 // --- PARTNER space (role: partner) - manage own listings ---
 Route::middleware(['auth', 'role:partner'])->prefix('partner')->name('partner.')->group(function () {
     Route::get('/', PartnerDashboardController::class)->name('dashboard');
+
+    // Transporteurs (bus, train, canots, taxis) et compagnies / agences (offres vols).
+    Route::get('/transport', [PartnerTransportController::class, 'index'])->name('transport.index');
+    Route::get('/transport/creer', [PartnerTransportController::class, 'create'])->name('transport.create');
+    Route::post('/transport', [PartnerTransportController::class, 'store'])->name('transport.store');
+    Route::get('/transport/{offer}/editer', [PartnerTransportController::class, 'edit'])->name('transport.edit');
+    Route::put('/transport/{offer}', [PartnerTransportController::class, 'update'])->name('transport.update');
+    Route::delete('/transport/{offer}', [PartnerTransportController::class, 'destroy'])->name('transport.destroy');
+    Route::get('/transport/{offer}/passagers', [PartnerTransportController::class, 'passengers'])->name('transport.passengers');
+
+    // Parcs d'attractions / loisirs du partenaire (Tourisme > Parcs).
+    Route::get('/parcs', [PartnerParkController::class, 'index'])->name('parcs.index');
+    Route::get('/parcs/creer', [PartnerParkController::class, 'create'])->name('parcs.create');
+    Route::post('/parcs', [PartnerParkController::class, 'store'])->name('parcs.store');
+    Route::get('/parcs/{park}/editer', [PartnerParkController::class, 'edit'])->name('parcs.edit');
+    Route::put('/parcs/{park}', [PartnerParkController::class, 'update'])->name('parcs.update');
+    Route::delete('/parcs/{park}', [PartnerParkController::class, 'destroy'])->name('parcs.destroy');
+
+    Route::get('/promotions', [PartnerPromotionController::class, 'index'])->name('promotions.index');
+    Route::post('/promotions', [PartnerPromotionController::class, 'store'])->name('promotions.store');
+    Route::delete('/promotions', [PartnerPromotionController::class, 'destroy'])->name('promotions.destroy');
+
+    Route::get('/reservations', [PartnerBookingController::class, 'index'])->name('bookings.index');
+
+    Route::get('/entreprise', [PartnerCompanyController::class, 'edit'])->name('company.edit');
+    Route::put('/entreprise', [PartnerCompanyController::class, 'update'])->name('company.update');
 
     Route::get('/logement', [PartnerLodgingListingController::class, 'index'])->name('logement.index');
     Route::get('/logement/creer', [PartnerLodgingListingController::class, 'create'])->name('logement.create');

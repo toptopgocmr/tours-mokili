@@ -1,4 +1,5 @@
 <script setup>
+import PromoBadge from '@/Components/PromoBadge.vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import ListingImage from '@/Components/ListingImage.vue';
 import ContactButtons from '@/Components/ContactButtons.vue';
@@ -44,7 +45,8 @@ const price = computed(() => (v.value.display_price
             </div>
         </div>
         <aside class="h-fit space-y-4 rounded-2xl border p-6 shadow-sm">
-            <p class="text-2xl font-bold text-gold-600">{{ price }}</p>
+            <PromoBadge :promo="v.promo" show-end class="mb-1" />
+            <p class="text-2xl font-bold text-gold-600"><span v-if="v.display_price?.original" class="mr-1 text-base font-normal text-navy-400 line-through">{{ Number(v.display_price.original).toLocaleString('fr-FR') }}</span>{{ price }}</p>
             <ContactButtons :phone="v.phone" :message="`Bonjour, je suis interesse(e) par votre annonce MOKILI TOUR : ${v.title}`" />
         </aside>
 

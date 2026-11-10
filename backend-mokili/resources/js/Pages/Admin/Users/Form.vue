@@ -3,6 +3,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 
 defineOptions({ layout: AdminLayout });
+defineProps({ activities: { type: Object, default: () => ({}) } });
 
 // This admin-only form is how MOKILI TOUR staff provisions the two
 // non-self-service roles: agent (internal staff) and partner
@@ -13,6 +14,8 @@ const form = useForm({
     phone: '',
     role: 'agent',
     password: '',
+    company_name: '',
+    partner_activity: '',
 });
 
 const submit = () => form.post('/admin/utilisateurs');
@@ -34,6 +37,19 @@ const submit = () => form.post('/admin/utilisateurs');
                 <option value="admin">Admin</option>
             </select>
         </div>
+        <template v-if="form.role === 'partner'">
+            <div>
+                <label class="text-sm font-medium text-slate-700">Societe</label>
+                <input v-model="form.company_name" type="text" placeholder="ex. Ocean du Nord" class="mt-1 w-full rounded border-slate-300" />
+            </div>
+            <div>
+                <label class="text-sm font-medium text-slate-700">Activite</label>
+                <select v-model="form.partner_activity" class="mt-1 w-full rounded border-slate-300">
+                    <option value="">— Choisir —</option>
+                    <option v-for="(label, key) in activities" :key="key" :value="key">{{ label }}</option>
+                </select>
+            </div>
+        </template>
         <div>
             <label class="text-sm font-medium text-slate-700">Nom complet</label>
             <input v-model="form.name" type="text" class="mt-1 w-full rounded border-slate-300" required />

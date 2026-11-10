@@ -84,7 +84,7 @@ const href = computed(() => `/voyage/${props.offer.slug}${props.passengers > 1 ?
                 <div class="sm:text-right">
                     <p class="text-xs text-navy-500">{{ passengers > 1 ? `${passengers} voyageurs` : 'par voyageur' }}</p>
                     <p class="text-2xl font-bold text-navy-900">{{ (passengers > 1 ? total : price).toLocaleString('fr-FR') }}<span class="ml-1 text-sm font-semibold">{{ offer.currency }}</span></p>
-                    <p v-if="Number(offer.discount_percent) > 0" class="inline-block rounded bg-rose-600 px-1.5 text-[10px] font-bold text-white">-{{ offer.discount_percent }}%</p>
+                    <p v-if="Number(offer.discount_percent) > 0" class="inline-block rounded bg-rose-600 px-1.5 text-[10px] font-bold text-white">-{{ offer.discount_percent }}%<span v-if="offer.promo_label"> · {{ offer.promo_label }}</span></p>
                 </div>
                 <span class="rounded-full border-2 border-sky-700 px-5 py-1.5 text-sm font-semibold text-sky-700 transition group-hover:bg-sky-700 group-hover:text-white">
                     {{ full ? 'Complet' : 'Choisir' }}

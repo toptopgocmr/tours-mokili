@@ -1,4 +1,5 @@
 <script setup>
+import PromoBadge from '@/Components/PromoBadge.vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import ListingImage from '@/Components/ListingImage.vue';
 import { Head, useForm } from '@inertiajs/vue3';
@@ -26,7 +27,8 @@ const nights = computed(() => {
     return diff > 0 ? Math.round(diff) : 0;
 });
 
-const total = computed(() => nights.value * Number(props.listing.price_per_night));
+const night = computed(() => Number(props.listing.final_price_per_night ?? props.listing.price_per_night));
+const total = computed(() => nights.value * night.value);
 
 const amenities = computed(() => (Array.isArray(props.listing.amenities) ? props.listing.amenities : []));
 
@@ -69,8 +71,10 @@ const submit = () => form.post(`/logement/${props.listing.slug}/reserver`);
         </div>
 
         <div class="h-fit rounded-2xl border p-6 shadow-sm">
+            <PromoBadge :promo="listing.promo" show-end class="mb-2" />
             <p class="text-2xl font-bold text-gold-600">
-                {{ Number(listing.price_per_night).toLocaleString('fr-FR') }} {{ listing.currency }}
+                <span v-if="listing.promo" class="mr-1 text-base font-normal text-navy-400 line-through">{{ Number(listing.price_per_night).toLocaleString('fr-FR') }}</span>
+                {{ night.toLocaleString('fr-FR') }} {{ listing.currency }}
                 <span class="text-sm font-normal text-navy-500">/ nuit</span>
             </p>
 
@@ -99,7 +103,7 @@ const submit = () => form.post(`/logement/${props.listing.slug}/reserver`);
 
                 <div v-if="nights > 0" class="rounded-lg bg-navy-50 p-3 text-sm text-navy-700">
                     <div class="flex justify-between">
-                        <span>{{ Number(listing.price_per_night).toLocaleString('fr-FR') }} {{ listing.currency }} x {{ nights }} nuit(s)</span>
+                        <span>{{ night.toLocaleString('fr-FR') }} {{ listing.currency }} x {{ nights }} nuit(s)</span>
                         <span class="font-semibold">{{ total.toLocaleString('fr-FR') }} {{ listing.currency }}</span>
                     </div>
                 </div>

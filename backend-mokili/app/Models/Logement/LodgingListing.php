@@ -14,14 +14,21 @@ use Illuminate\Support\Str;
 class LodgingListing extends Model
 {
     use HasPublishingStatus;
+    use \App\Models\Concerns\HasPromotion;
 
     protected $fillable = [
         'owner_id', 'title', 'property_type', 'slug', 'description', 'city', 'country', 'address',
         'price_per_night', 'currency', 'bedrooms', 'bathrooms', 'max_guests',
-        'amenities', 'image', 'is_active', 'status', 'rejection_reason',
+        'amenities', 'image', 'is_active', 'status', 'rejection_reason', 'discount_percent', 'promo_label', 'promo_ends_at',
     ];
 
-    protected $appends = ['image_url', 'property_type_label'];
+    protected $appends = ['image_url', 'property_type_label', 'promo', 'final_price_per_night'];
+
+    /** Prix par nuit apres promotion. */
+    public function getFinalPricePerNightAttribute(): ?float
+    {
+        return $this->promoPrice($this->price_per_night);
+    }
 
     public function getPropertyTypeLabelAttribute(): ?string
     {
@@ -34,6 +41,7 @@ class LodgingListing extends Model
             'amenities' => 'array',
             'price_per_night' => 'decimal:2',
             'is_active' => 'boolean',
+            'promo_ends_at' => 'datetime',
         ];
     }
 

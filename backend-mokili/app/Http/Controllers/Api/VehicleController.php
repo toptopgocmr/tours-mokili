@@ -47,7 +47,7 @@ class VehicleController extends Controller
             $request,
             $vehicle,
             Vehicle::class,
-            (float) $vehicle->price_per_day,
+            $vehicle->discountedDayPrice(),
             $vehicle->currency,
         );
 

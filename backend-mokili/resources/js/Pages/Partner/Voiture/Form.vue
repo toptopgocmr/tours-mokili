@@ -10,7 +10,8 @@ const isEdit = computed(() => !!props.vehicle);
 
 const form = useForm({
     title: props.vehicle?.title ?? '',
-    offer_type: props.vehicle?.offer_type ?? 'location',
+    // ?type=mecanique : garages (prestations de mecanique) depuis le tableau de bord.
+    offer_type: props.vehicle?.offer_type ?? (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('type') || 'location'),
     description: props.vehicle?.description ?? '',
     sale_price: props.vehicle?.sale_price ?? '',
     mileage_km: props.vehicle?.mileage_km ?? '',

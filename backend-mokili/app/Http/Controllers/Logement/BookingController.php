@@ -30,7 +30,7 @@ class BookingController extends Controller
 
         $booking = DB::transaction(function () use ($data, $lodgingListing) {
             $nights = max(1, Carbon::parse($data['starts_at'])->diffInDays(Carbon::parse($data['ends_at'])));
-            $unitPrice = $lodgingListing->price_per_night;
+            $unitPrice = $lodgingListing->final_price_per_night; // promotion en cours comprise
 
             return Booking::create([
                 'user_id' => Auth::id(),

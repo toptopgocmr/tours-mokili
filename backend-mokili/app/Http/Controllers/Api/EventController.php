@@ -46,7 +46,7 @@ class EventController extends Controller
             $request,
             $event,
             Event::class,
-            (float) $event->price,
+            (float) $event->final_price,
             $event->currency,
             $event->starts_at,
             $event->ends_at,

@@ -48,7 +48,7 @@ class LodgingListingController extends Controller
             $request,
             $listing,
             LodgingListing::class,
-            (float) $listing->price_per_night,
+            (float) $listing->final_price_per_night,
             $listing->currency,
         );
 

@@ -1,4 +1,5 @@
 <script setup>
+import PromoBadge from '@/Components/PromoBadge.vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import ListingImage from '@/Components/ListingImage.vue';
 import ParkCard from '@/Components/ParkCard.vue';
@@ -115,7 +116,7 @@ const eventDate = (e) => new Date(e.starts_at).toLocaleDateString('fr-FR', { wee
                         <div class="p-4">
                             <p class="text-xs font-semibold uppercase text-purple-700">{{ eventDate(e) }} · {{ e.city }}</p>
                             <p class="font-semibold text-navy-900">{{ e.title }}</p>
-                            <p class="mt-1 text-sm font-semibold text-gold-600">{{ Number(e.price).toLocaleString('fr-FR') }} {{ e.currency }}</p>
+                            <p class="mt-1 text-sm font-semibold text-gold-600"><span v-if="e.promo" class="mr-1 text-xs font-normal text-navy-400 line-through">{{ Number(e.price).toLocaleString('fr-FR') }}</span>{{ Number(e.final_price ?? e.price).toLocaleString('fr-FR') }} {{ e.currency }} <PromoBadge :promo="e.promo" /></p>
                         </div>
                     </Link>
                 </template>
@@ -143,7 +144,7 @@ const eventDate = (e) => new Date(e.starts_at).toLocaleDateString('fr-FR', { wee
                         <div class="p-4">
                             <p class="text-xs font-semibold uppercase text-purple-700">{{ eventDate(e) }} · {{ e.city }}</p>
                             <p class="font-semibold text-navy-900">{{ e.title }}</p>
-                            <p class="mt-1 text-sm font-semibold text-gold-600">{{ Number(e.price).toLocaleString('fr-FR') }} {{ e.currency }}</p>
+                            <p class="mt-1 text-sm font-semibold text-gold-600"><span v-if="e.promo" class="mr-1 text-xs font-normal text-navy-400 line-through">{{ Number(e.price).toLocaleString('fr-FR') }}</span>{{ Number(e.final_price ?? e.price).toLocaleString('fr-FR') }} {{ e.currency }} <PromoBadge :promo="e.promo" /></p>
                         </div>
                     </Link>
                 </div>

@@ -32,7 +32,7 @@ class TravelOffer extends Model
         'departure_point', 'duration_label', 'trip_scope', 'origin_department', 'destination_department',
         'destination_city', 'destination_country', 'airline', 'departure_at', 'arrival_at',
         'return_at', 'price', 'discount_percent', 'currency', 'seats_available',
-        'image', 'is_featured', 'is_active',
+        'image', 'is_featured', 'is_active', 'owner_id', 'promo_label', 'promo_ends_at',
     ];
 
     // Exposed on every JSON/Inertia response (web + API) so both
@@ -45,6 +45,7 @@ class TravelOffer extends Model
             'departure_at' => 'datetime',
             'arrival_at' => 'datetime',
             'return_at' => 'datetime',
+            'promo_ends_at' => 'datetime',
             'price' => 'decimal:2',
             'is_featured' => 'boolean',
             'is_active' => 'boolean',
@@ -61,6 +62,19 @@ class TravelOffer extends Model
     public function bookings()
     {
         return $this->morphMany(Booking::class, 'bookable');
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'owner_id');
+    }
+
+    /** Une promotion terminee (promo_ends_at passe) ne s'applique plus. */
+    public function getDiscountPercentAttribute($value): int
+    {
+        $end = $this->attributes['promo_ends_at'] ?? null;
+
+        return $end && \Carbon\Carbon::parse($end)->isPast() ? 0 : (int) $value;
     }
 
     public function getDiscountedPriceAttribute(): float

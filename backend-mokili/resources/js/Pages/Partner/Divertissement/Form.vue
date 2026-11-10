@@ -10,7 +10,8 @@ const isEdit = computed(() => !!props.event);
 
 const form = useForm({
     title: props.event?.title ?? '',
-    category: props.event?.category ?? '',
+    // ?categorie=concert|cinema|spectacle depuis le tableau de bord.
+    category: props.event?.category ?? (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('categorie') || ''),
     description: props.event?.description ?? '',
     venue: props.event?.venue ?? '',
     city: props.event?.city ?? '',

@@ -1,4 +1,5 @@
 <script setup>
+import PromoBadge from '@/Components/PromoBadge.vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import PartnersSection from '@/Components/PartnersSection.vue';
 import ListingImage from '@/Components/ListingImage.vue';
@@ -159,8 +160,10 @@ const bookingHref = (l) => {
                             <p class="font-semibold text-navy-900">{{ l.title }}</p>
                             <p class="text-xs text-navy-500"><span v-if="l.property_type_label" class="font-semibold text-green-700">{{ l.property_type_label }} · </span>{{ l.city }} - jusqu'a {{ l.max_guests }} voyageurs</p>
                             <p class="mt-1 text-sm font-semibold text-gold-600">
-                                {{ Number(l.price_per_night).toLocaleString('fr-FR') }} {{ l.currency }} / nuit
+                                <span v-if="l.promo" class="mr-1 text-xs font-normal text-navy-400 line-through">{{ Number(l.price_per_night).toLocaleString('fr-FR') }}</span>
+                                {{ Number(l.final_price_per_night ?? l.price_per_night).toLocaleString('fr-FR') }} {{ l.currency }} / nuit
                             </p>
+                            <PromoBadge :promo="l.promo" class="mt-1" />
                         </div>
                     </Link>
                 </div>

@@ -1,4 +1,5 @@
 <script setup>
+import PromoBadge from '@/Components/PromoBadge.vue';
 import MainLayout from '@/Layouts/MainLayout.vue';
 import ListingImage from '@/Components/ListingImage.vue';
 import { Head } from '@inertiajs/vue3';
@@ -13,7 +14,11 @@ defineProps({ event: { type: Object, required: true } });
         </div>
         <h1 class="mt-6 text-2xl font-bold text-navy-900">{{ event.title }}</h1>
         <p class="mt-2 text-navy-700">{{ event.description }}</p>
-        <p class="mt-4 text-xl font-bold text-gold-600">{{ Number(event.price).toLocaleString('fr-FR') }} {{ event.currency }}</p>
+        <PromoBadge :promo="event.promo" show-end class="mt-4" />
+        <p class="mt-2 text-xl font-bold text-gold-600">
+            <span v-if="event.promo" class="mr-1 text-base font-normal text-navy-400 line-through">{{ Number(event.price).toLocaleString('fr-FR') }}</span>
+            {{ Number(event.final_price ?? event.price).toLocaleString('fr-FR') }} {{ event.currency }}
+        </p>
         <p class="mt-6 rounded-lg bg-navy-50 p-4 text-sm text-navy-700">Module en cours de finalisation - la billetterie suivra le meme flux que Voyage (booking + verification Peex).</p>
     </div>
 </template>

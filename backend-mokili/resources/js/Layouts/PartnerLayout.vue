@@ -11,6 +11,13 @@ import {
     CubeIcon,
     MagnifyingGlassIcon,
     BellIcon,
+    MapIcon,
+    PaperAirplaneIcon,
+    ReceiptPercentIcon,
+    ClipboardDocumentListIcon,
+    BuildingStorefrontIcon,
+    WrenchScrewdriverIcon,
+    SparklesIcon,
     ArrowRightOnRectangleIcon,
 } from '@heroicons/vue/24/outline';
 
@@ -19,19 +26,38 @@ const user = computed(() => page.props.auth?.user);
 const flash = computed(() => page.props.flash ?? {});
 const currentUrl = computed(() => page.url);
 
+// Menu : ventes (trajets, vols, promotions, reservations) puis autres rubriques.
 const links = [
     { href: '/partner', label: 'Tableau de bord', icon: HomeIcon },
-    { href: '/partner/logement', label: 'Logement', icon: BuildingOfficeIcon },
-    { href: '/partner/voiture', label: 'Voiture', icon: TruckIcon },
-    { href: '/partner/divertissement', label: 'Tourisme', icon: TicketIcon },
+    { href: '/partner/reservations', label: 'Reservations', icon: ClipboardDocumentListIcon },
+    { href: '/partner/promotions', label: 'Promotions', icon: ReceiptPercentIcon },
+    { section: 'Transport & billets' },
+    { href: '/partner/transport', label: 'Trajets & horaires', icon: MapIcon },
+    { href: '/partner/transport?vue=vols', label: 'Offres vols', icon: PaperAirplaneIcon },
+
+    { section: 'Hebergement, voitures, loisirs' },
+    { href: '/partner/logement', label: 'Hotels & logements', icon: BuildingOfficeIcon },
+    { href: '/partner/voiture', label: 'Voitures & garage', icon: WrenchScrewdriverIcon },
+    { href: '/partner/divertissement', label: 'Concerts, cinema...', icon: TicketIcon },
+    { href: '/partner/parcs', label: "Parcs d'attractions", icon: SparklesIcon },
+    { section: 'Autres rubriques' },
     { href: '/partner/marketplace', label: 'Marketplace', icon: ShoppingBagIcon },
     { href: '/partner/fret', label: 'Fret', icon: CubeIcon },
+    { section: 'Compte' },
+    { href: '/partner/entreprise', label: 'Mon entreprise', icon: BuildingStorefrontIcon },
 ];
+const navLinks = links.filter((l) => l.href);
 
-const isActive = (href) => currentUrl.value === href || (href !== '/partner' && currentUrl.value.startsWith(href));
+const isActive = (href) => {
+    const url = currentUrl.value;
+    if (href === '/partner') return url === '/partner';
+    if (href.includes('?')) return url.startsWith(href);
+    if (href === '/partner/transport') return url.startsWith('/partner/transport') && !url.includes('vue=vols');
+    return url.startsWith(href);
+};
 
 const breadcrumb = computed(() => {
-    const active = links.find((l) => isActive(l.href));
+    const active = navLinks.find((l) => isActive(l.href));
     return active?.label ?? 'Tableau de bord';
 });
 </script>
@@ -74,21 +100,35 @@ const breadcrumb = computed(() => {
             <!-- Sidebar -->
             <aside class="hidden w-60 shrink-0 border-r border-slate-200 bg-white md:block">
                 <nav class="space-y-0.5 p-3">
-                    <Link
-                        v-for="link in links"
-                        :key="link.href"
-                        :href="link.href"
-                        class="console-nav-link"
-                        :class="{ 'console-nav-link-active': isActive(link.href) }"
-                    >
-                        <component :is="link.icon" class="h-5 w-5" />
-                        {{ link.label }}
-                    </Link>
+                    <template v-for="(link, i) in links" :key="link.href ?? `s${i}`">
+                        <p v-if="link.section" class="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{{ link.section }}</p>
+                        <Link
+                            v-else
+                            :href="link.href"
+                            class="console-nav-link"
+                            :class="{ 'console-nav-link-active': isActive(link.href) }"
+                        >
+                            <component :is="link.icon" class="h-5 w-5" />
+                            {{ link.label }}
+                        </Link>
+                    </template>
                 </nav>
             </aside>
 
             <!-- Content -->
             <div class="min-w-0 flex-1">
+                <!-- Menu mobile (le menu lateral est masque sur petit ecran) -->
+                <nav class="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-3 py-2 md:hidden">
+                    <Link
+                        v-for="link in navLinks"
+                        :key="link.href"
+                        :href="link.href"
+                        class="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold"
+                        :class="isActive(link.href) ? 'bg-[#0F1B2A] text-white' : 'bg-slate-100 text-slate-700'"
+                    >
+                        <component :is="link.icon" class="h-4 w-4" />{{ link.label }}
+                    </Link>
+                </nav>
                 <div class="border-b border-slate-200 bg-white px-6 py-2 text-xs text-slate-500">
                     Espace partenaire <span class="mx-1.5 text-slate-300">/</span> <span class="font-medium text-slate-700">{{ breadcrumb }}</span>
                 </div>
