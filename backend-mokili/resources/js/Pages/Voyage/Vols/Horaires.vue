@@ -16,7 +16,26 @@ const props = defineProps({
     flights: { type: Array, default: () => [] },
     error: { type: String, default: null },
     airports: { type: Object, default: () => ({}) },
+    airportList: { type: Array, default: () => [] },
 });
+
+// Aeroports regroupes par pays (Congo en premier) pour les listes deroulantes.
+const groups = computed(() => {
+    const map = new Map();
+    for (const a of props.airportList) {
+        const k = a.country_name || 'Autres';
+        if (!map.has(k)) map.set(k, []);
+        map.get(k).push(a);
+    }
+    const first = ['Congo', 'Republique du Congo', 'Congo-Brazzaville', 'RD Congo', 'Republique democratique du Congo'];
+    return [...map.entries()].sort(([a], [b]) => {
+        const ia = first.findIndex((f) => a.toLowerCase().startsWith(f.toLowerCase()));
+        const ib = first.findIndex((f) => b.toLowerCase().startsWith(f.toLowerCase()));
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b);
+    });
+});
+const cityOf = (code) => props.airportList.find((a) => a.iata_code === code)?.city ?? code;
+const known = computed(() => new Set(props.airportList.map((a) => a.iata_code)));
 
 const QUICK = ['BZV', 'PNR', 'FIH', 'DLA', 'LBV', 'ADD', 'CDG', 'DXB', 'IST', 'JNB'];
 const form = reactive({ airport: props.airport, to: props.to ?? '' });
@@ -48,25 +67,38 @@ const status = (f) => STATUS[f.status] ?? [f.status, 'bg-navy-50 text-navy-700']
 <template>
     <Head :title="`Programme des vols - ${city(airport)}`" />
 
-    <section class="bg-navy-900 px-4 pb-10 pt-8 text-white">
-        <div class="mx-auto max-w-5xl">
+    <section class="relative overflow-hidden px-4 pb-10 pt-8 text-white">
+        <!-- Meme photo que la page d'accueil -->
+        <img src="/images/hero.jpg" alt="" class="absolute inset-0 h-full w-full object-cover object-[center_30%]" />
+        <div class="absolute inset-0 bg-gradient-to-r from-navy-900/90 via-navy-900/70 to-navy-900/30" />
+        <div class="relative mx-auto max-w-5xl">
             <Link href="/voyage?type=vol" class="text-sm text-navy-200 hover:text-white">← Rechercher un vol</Link>
             <h1 class="mt-2 text-2xl font-extrabold sm:text-3xl">Programme des vols</h1>
             <p class="mt-1 text-navy-200">Departs et arrivees en direct, mis a jour regulierement.</p>
 
             <form class="mt-5 flex flex-wrap items-end gap-3" @submit.prevent="go()">
-                <label class="flex flex-col text-xs font-semibold text-navy-200">
-                    Aeroport (code IATA)
-                    <input v-model="form.airport" maxlength="3" class="mt-1 w-32 rounded-lg border-0 px-3 py-2.5 text-base font-bold uppercase text-navy-900" @input="form.airport = form.airport.toUpperCase()" />
+                <label class="flex flex-col text-xs font-semibold text-navy-100">
+                    Aeroport
+                    <select v-model="form.airport" class="mt-1 w-72 max-w-full rounded-lg border-0 py-2.5 pl-3 pr-9 text-sm font-semibold text-navy-900 focus:ring-2 focus:ring-gold-500" @change="go({ airport: form.airport })">
+                        <option v-if="!known.has(form.airport)" :value="form.airport">{{ form.airport }}</option>
+                        <optgroup v-for="[country, list] in groups" :key="country" :label="country">
+                            <option v-for="a in list" :key="a.iata_code" :value="a.iata_code">{{ a.city }} ({{ a.iata_code }}) — {{ a.name }}</option>
+                        </optgroup>
+                    </select>
                 </label>
-                <label class="flex flex-col text-xs font-semibold text-navy-200">
+                <label class="flex flex-col text-xs font-semibold text-navy-100">
                     {{ arrivals ? 'En provenance de' : 'Vers' }} (optionnel)
-                    <input v-model="form.to" maxlength="3" placeholder="ex. CDG" class="mt-1 w-32 rounded-lg border-0 px-3 py-2.5 text-base font-bold uppercase text-navy-900" @input="form.to = form.to.toUpperCase()" />
+                    <select v-model="form.to" class="mt-1 w-72 max-w-full rounded-lg border-0 py-2.5 pl-3 pr-9 text-sm font-semibold text-navy-900 focus:ring-2 focus:ring-gold-500">
+                        <option value="">Toutes les destinations</option>
+                        <optgroup v-for="[country, list] in groups" :key="country" :label="country">
+                            <option v-for="a in list" :key="a.iata_code" :value="a.iata_code" :disabled="a.iata_code === form.airport">{{ a.city }} ({{ a.iata_code }})</option>
+                        </optgroup>
+                    </select>
                 </label>
                 <button class="rounded-lg bg-gold-500 px-5 py-2.5 font-bold text-navy-900 hover:bg-gold-400">Afficher</button>
             </form>
             <div class="mt-3 flex flex-wrap gap-2">
-                <button v-for="c in QUICK" :key="c" type="button" class="rounded-full px-3 py-1 text-xs font-semibold" :class="c === airport ? 'bg-gold-500 text-navy-900' : 'bg-white/10 hover:bg-white/20'" @click="pick(c)">{{ c }}</button>
+                <button v-for="c in QUICK" :key="c" type="button" class="rounded-full px-3 py-1 text-xs font-semibold backdrop-blur" :class="c === airport ? 'bg-gold-500 text-navy-900' : 'bg-white/15 hover:bg-white/25'" @click="pick(c)">{{ cityOf(c) }} · {{ c }}</button>
             </div>
         </div>
     </section>

@@ -57,6 +57,10 @@ class FlightController extends Controller
     public function schedules(Request $request, \App\Services\Flights\Schedules\AirLabsSchedules $airlabs): Response
     {
         $data = $this->scheduleData($request, $airlabs);
+        // Liste des aeroports (ville + code IATA) pour les listes deroulantes.
+        $data['airportList'] = Airport::query()->active()
+            ->orderBy('country_name')->orderByDesc('popularity')->orderBy('city')
+            ->get(['iata_code', 'city', 'name', 'country_name']);
 
         return Inertia::render('Voyage/Vols/Horaires', $data);
     }
