@@ -68,6 +68,21 @@ class TravelOfferController extends Controller
         return response()->json($board->board($request));
     }
 
+    /** Gares du monde (Transitland) : ?q=Paris Gare de Lyon */
+    public function worldStations(Request $request, \App\Services\Voyage\WorldTransitBoard $world): JsonResponse
+    {
+        return response()->json($world->stations((string) $request->query('q', '')) + ['configured' => \App\Services\Voyage\WorldTransitBoard::configured()]);
+    }
+
+    /** Departs d'une gare du monde : ?gare=<onestop_id>&mode=train|bus|metro|ferry&date=YYYY-MM-DD */
+    public function worldDepartures(Request $request, \App\Services\Voyage\WorldTransitBoard $world): JsonResponse
+    {
+        $family = array_key_exists((string) $request->query('mode'), \App\Services\Voyage\WorldTransitBoard::FAMILIES) ? (string) $request->query('mode') : '';
+        $date = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $request->query('date')) ? (string) $request->query('date') : null;
+
+        return response()->json($world->departures((string) $request->query('gare', ''), $family, $date) + ['configured' => \App\Services\Voyage\WorldTransitBoard::configured()]);
+    }
+
     public function modes(): JsonResponse
     {
         return response()->json(collect(TravelOffer::TRANSPORT_MODES)

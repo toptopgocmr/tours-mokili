@@ -76,9 +76,33 @@ class TravelOfferController extends Controller
     }
 
     /** Programme des departs / arrivees : trains, bus, canots rapides, taxis. */
-    public function schedules(Request $request, \App\Services\Voyage\RideBoard $board): Response
+    public function schedules(Request $request, \App\Services\Voyage\RideBoard $board, \App\Services\Voyage\WorldTransitBoard $world): Response
     {
-        return Inertia::render('Voyage/Trajets/Horaires', $board->board($request));
+        // Onglet "Monde" : gares du monde entier (Transitland).
+        if ($request->query('zone') === 'monde') {
+            $stop = (string) $request->query('gare', '');
+            $family = array_key_exists((string) $request->query('mode'), \App\Services\Voyage\WorldTransitBoard::FAMILIES) ? (string) $request->query('mode') : '';
+            $date = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $request->query('date')) ? (string) $request->query('date') : null;
+
+            return Inertia::render('Voyage/Trajets/Horaires', [
+                'zone' => 'monde',
+                'world' => [
+                    'configured' => \App\Services\Voyage\WorldTransitBoard::configured(),
+                    'gare' => $stop,
+                    'gare_name' => (string) $request->query('nom', ''),
+                    'mode' => $family,
+                    'date' => $date,
+                ] + ($stop !== '' ? $world->departures($stop, $family, $date) : ['station' => null, 'departures' => [], 'error' => null]),
+            ]);
+        }
+
+        return Inertia::render('Voyage/Trajets/Horaires', ['zone' => 'congo'] + $board->board($request));
+    }
+
+    /** Recherche de gares du monde (autocompletion, JSON). */
+    public function worldStations(Request $request, \App\Services\Voyage\WorldTransitBoard $world): \Illuminate\Http\JsonResponse
+    {
+        return response()->json($world->stations((string) $request->query('q', '')));
     }
 
     /** Heure de depart minimale (?time=16 ou 16:00), entre 0 et 23. */

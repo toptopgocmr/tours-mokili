@@ -56,6 +56,8 @@ Route::get('/tourisme', [CatalogueController::class, 'tourisme']);
 Route::get('/voyage/offers', [TravelOfferController::class, 'index']);
 Route::get('/voyage/transport-modes', [TravelOfferController::class, 'modes']);
 Route::get('/voyage/schedules', [TravelOfferController::class, 'schedules'])->middleware('throttle:60,1');
+Route::get('/voyage/world/stations', [TravelOfferController::class, 'worldStations'])->middleware('throttle:60,1');
+Route::get('/voyage/world/departures', [TravelOfferController::class, 'worldDepartures'])->middleware('throttle:60,1');
 Route::get('/voyage/offers/{travelOffer:slug}', [TravelOfferController::class, 'show']);
 
 // Billetterie aerienne (moteur central, meme logique que le site).

@@ -58,6 +58,16 @@ return [
 
     // Custom URL scheme the Flutter app registers (android/ios) to catch
     // the OAuth redirect - see lib/features/auth/services/auth_repository.dart.
+    // TRANSITLAND (transit.land) : horaires des trains, bus, metros et ferries
+    // du monde entier (GTFS / GTFS-RT). Plan gratuit "Explorer", ouvert aux
+    // usages commerciaux de petite taille ; mention "Transitland" obligatoire.
+    // Cle : transit.land > Sign up > API key -> TRANSITLAND_API_KEY.
+    'transitland' => [
+        'key' => env('TRANSITLAND_API_KEY'),
+        'endpoint' => env('TRANSITLAND_ENDPOINT', 'https://transit.land/api/v2/rest'),
+        'timeout' => (int) env('TRANSITLAND_TIMEOUT', 15),
+    ],
+
     'mobile_app' => [
         'scheme' => env('MOBILE_APP_SCHEME', 'mokilitour'),
     ],

@@ -95,6 +95,7 @@ Route::prefix('voyage')->name('voyage.')->group(function () {
     });
     // Programme des trains, bus, canots rapides et taxis (avant le joker {slug}).
     Route::get('/trajets/horaires', [TravelOfferController::class, 'schedules'])->middleware('throttle:60,1')->name('rides.schedules');
+    Route::get('/trajets/gares', [TravelOfferController::class, 'worldStations'])->middleware('throttle:60,1')->name('rides.stations');
     Route::get('/{travelOffer:slug}', [TravelOfferController::class, 'show'])->name('show');
 
     Route::middleware('auth')->group(function () {

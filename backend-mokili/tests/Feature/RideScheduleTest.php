@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Voyage\TravelOffer;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /** Programme des departs / arrivees : trains, bus, canots rapides, taxis. */
@@ -46,5 +48,60 @@ class RideScheduleTest extends TestCase
         $this->getJson('/api/voyage/schedules?mode=canot')->assertOk()->assertJsonCount(1, 'rides')->assertJsonPath('rides.0.destination', 'Kinshasa');
         $this->getJson('/api/voyage/schedules?city=Pointe-Noire&direction=arrivals')->assertOk()->assertJsonCount(4, 'rides');
         $this->getJson('/api/voyage/schedules?date=2026-11-11')->assertJsonCount(1, 'rides')->assertJsonPath('rides.0.departure_at', '2026-11-11T07:00');
+    }
+
+    public function test_empty_day_shows_next_departures(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-10 09:00:00', 'UTC'));
+        $this->ride(['title' => 'Vendredi', 'departure_at' => '2026-11-13 07:00']);
+        $this->ride(['title' => 'Dans un mois', 'departure_at' => '2026-12-20 07:00']);
+
+        $this->get('/voyage/trajets/horaires')->assertInertia(fn ($p) => $p->where('zone', 'congo')->has('rides', 0)
+            ->has('upcoming', 1)->where('upcoming.0.departure_at', '2026-11-13T07:00'));
+    }
+
+    public function test_world_board_uses_transitland(): void
+    {
+        config(['services.transitland.key' => 'tl_xxx']);
+        Http::fake([
+            'transit.land/api/v2/rest/stops?*' => Http::response(['stops' => [
+                ['onestop_id' => 's-u09-quai1', 'stop_name' => 'Paris Gare de Lyon', 'location_type' => 0, 'place' => ['adm0_name' => 'France', 'adm0_iso' => 'FR']],
+                ['onestop_id' => 's-u09-gdl', 'stop_name' => 'Paris Gare de Lyon', 'location_type' => 1, 'place' => ['adm0_name' => 'France', 'adm0_iso' => 'FR', 'adm1_name' => 'Ile-de-France']],
+            ]]),
+            'transit.land/api/v2/rest/stops/s-u09-gdl/departures*' => Http::response(['stops' => [[
+                'onestop_id' => 's-u09-gdl', 'stop_name' => 'Paris Gare de Lyon', 'stop_timezone' => 'Europe/Paris', 'platform_code' => 'K',
+                'place' => ['adm0_name' => 'France'],
+                'departures' => [
+                    ['departure_time' => '18:12:00', 'date' => '2026-11-10', 'stop_headsign' => 'Marseille St-Charles',
+                        'departure' => ['scheduled' => '18:12:00', 'estimated' => '18:20:00', 'estimated_delay' => 480],
+                        'trip' => ['trip_headsign' => 'Marseille', 'trip_short_name' => '6107', 'route' => ['route_short_name' => 'TGV INOUI', 'route_type' => 2, 'route_color' => 'A1006B', 'agency' => ['agency_name' => 'SNCF']]]],
+                    ['departure_time' => '18:05:00', 'date' => '2026-11-10',
+                        'departure' => ['scheduled' => '18:05:00'],
+                        'trip' => ['trip_headsign' => 'Gare du Nord', 'route' => ['route_short_name' => '91', 'route_type' => 3, 'agency' => ['agency_name' => 'RATP']]]],
+                ],
+            ]]]),
+        ]);
+
+        $this->getJson('/voyage/trajets/gares?q=gare de lyon')->assertOk()
+            ->assertJsonCount(1, 'stations')->assertJsonPath('stations.0.id', 's-u09-gdl')->assertJsonPath('stations.0.kind', 'Gare');
+
+        $this->get('/voyage/trajets/horaires?zone=monde&gare=s-u09-gdl&nom=Paris')->assertOk()->assertInertia(fn ($p) => $p
+            ->where('zone', 'monde')->where('world.configured', true)->where('world.station.timezone', 'Europe/Paris')
+            ->has('world.departures', 2)
+            ->where('world.departures.0.time', '18:05')->where('world.departures.0.family', 'bus')
+            ->where('world.departures.1.line', 'TGV INOUI')->where('world.departures.1.delay_minutes', 8)
+            ->where('world.departures.1.color', '#A1006B')->where('world.departures.1.headsign', 'Marseille St-Charles'));
+
+        $this->getJson('/api/voyage/world/departures?gare=s-u09-gdl&mode=train')->assertOk()->assertJsonCount(1, 'departures');
+        Http::assertSent(fn (Request $r) => $r->hasHeader('apikey', 'tl_xxx'));
+    }
+
+    public function test_world_board_without_key_does_not_call_transitland(): void
+    {
+        config(['services.transitland.key' => null]);
+        Http::fake();
+        $this->get('/voyage/trajets/horaires?zone=monde&gare=s-u09-gdl')->assertInertia(fn ($p) => $p->where('world.configured', false));
+        $this->getJson('/api/voyage/world/stations?q=paris')->assertJsonPath('configured', false);
+        Http::assertNothingSent();
     }
 }

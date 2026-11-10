@@ -47,33 +47,53 @@ class RideBoard
             ->orderBy($direction === 'arrivals' ? 'arrival_at' : 'departure_at')
             ->limit(150)
             ->get()
-            ->map(fn (TravelOffer $o) => [
-                'id' => $o->id,
-                'slug' => $o->slug,
-                'mode' => $o->transport_mode,
-                'mode_label' => $o->transport_mode_label,
-                'operator' => $o->airline,
-                'origin' => $o->origin_city,
-                'destination' => $o->destination_city,
-                'departure_point' => $o->departure_point,
-                'departure_at' => $o->departure_at?->format('Y-m-d\TH:i'),
-                'arrival_at' => $o->arrival_at?->format('Y-m-d\TH:i'),
-                'seats' => (int) $o->seats_available,
-                'price' => round((float) $o->discounted_price),
-                'currency' => $o->currency,
-                'status' => $this->status($o, $now),
-                'bookable' => $o->departure_at && $o->departure_at->greaterThan($now) && $o->seats_available > 0,
-            ])
+            ->map(fn (TravelOffer $o) => $this->row($o, $now))
             ->values()
             ->all();
 
+        // Rien ce jour-la : prochains departs des jours suivants (14 jours).
+        $upcoming = [];
+        if (! $rides) {
+            $upcoming = TravelOffer::query()->active()
+                ->where('type', 'circuit')
+                ->whereIn('transport_mode', $mode ? [$mode] : self::MODES)
+                ->where($direction === 'arrivals' ? 'destination_city' : 'origin_city', 'like', '%'.$city.'%')
+                ->where('departure_at', '>', Carbon::parse($date.' 23:59:59', config('app.timezone'))->max($now))
+                ->where('departure_at', '<=', Carbon::parse($date, config('app.timezone'))->addDays(15))
+                ->orderBy('departure_at')->limit(8)->get()
+                ->map(fn (TravelOffer $o) => $this->row($o, $now))->values()->all();
+        }
+
         return [
             'city' => $city,
+            'upcoming' => $upcoming,
             'direction' => $direction,
             'mode' => $mode,
             'date' => $date,
             'rides' => $rides,
             'cities' => $this->cities(),
+        ];
+    }
+
+    /** Ligne du panneau pour un trajet. */
+    public function row(TravelOffer $o, CarbonInterface $now): array
+    {
+        return [
+            'id' => $o->id,
+            'slug' => $o->slug,
+            'mode' => $o->transport_mode,
+            'mode_label' => $o->transport_mode_label,
+            'operator' => $o->airline,
+            'origin' => $o->origin_city,
+            'destination' => $o->destination_city,
+            'departure_point' => $o->departure_point,
+            'departure_at' => $o->departure_at?->format('Y-m-d\TH:i'),
+            'arrival_at' => $o->arrival_at?->format('Y-m-d\TH:i'),
+            'seats' => (int) $o->seats_available,
+            'price' => round((float) $o->discounted_price),
+            'currency' => $o->currency,
+            'status' => $this->status($o, $now),
+            'bookable' => $o->departure_at && $o->departure_at->greaterThan($now) && $o->seats_available > 0,
         ];
     }
 
