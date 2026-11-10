@@ -1,6 +1,8 @@
 <script setup>
 import MainLayout from '@/Layouts/MainLayout.vue';
 import OperatorBadge from '@/Components/OperatorBadge.vue';
+import CountryPicker from '@/Components/CountryPicker.vue';
+import 'flag-icons/css/flag-icons.min.css';
 import { bankCards, detectCardBrand } from '@/data/cemac';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
@@ -26,6 +28,21 @@ const STATUS_LABELS = { pending: 'En attente', awaiting_payment: 'En attente de 
 const statusLabel = computed(() => STATUS_LABELS[String(props.booking.status).toLowerCase()] ?? props.booking.status);
 
 const countries = computed(() => props.methods?.countries ?? []);
+const flagClass = (code) => (code ? `fi fi-${String(code).toLowerCase()}` : null);
+const imgBroken = ref(false);
+const money = (v) => Number(v ?? 0).toLocaleString('fr-FR');
+const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }) : '');
+// Recapitulatif generique (logement, voiture, evenement, parc...).
+const item = computed(() => {
+    const b = props.booking.bookable ?? {};
+    return {
+        title: b.title ?? b.name ?? props.booking.meta?.park ?? 'Votre reservation',
+        place: [b.city ?? props.booking.meta?.city, b.country].filter(Boolean).join(', '),
+        image: b.image_url ?? null,
+        isLodging: String(props.booking.bookable_type ?? '').endsWith('LodgingListing'),
+    };
+});
+const STATUS_STYLE = { awaiting_payment: 'bg-amber-100 text-amber-800', pending: 'bg-amber-100 text-amber-800', confirmed: 'bg-green-100 text-green-800', paid: 'bg-green-100 text-green-800', completed: 'bg-green-100 text-green-800', cancelled: 'bg-red-100 text-red-700', failed: 'bg-red-100 text-red-700' };
 const gatewayLabels = computed(() =>
     Object.fromEntries((props.methods?.gateways ?? []).map((g) => [g.key, g.label])),
 );
@@ -153,28 +170,51 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                     <span class="shrink-0 whitespace-nowrap rounded-full bg-navy-50 px-2.5 py-1 text-xs font-semibold text-navy-700">{{ booking.quantity }} voyageur{{ booking.quantity > 1 ? 's' : '' }}</span>
                 </div>
             </div>
-            <h1 class="text-2xl font-bold text-navy-900">Recapitulatif de la reservation</h1>
-            <div class="mt-4 space-y-2 rounded-2xl border p-5 text-sm">
-                <p><span class="text-navy-500">Reference :</span> <span class="font-semibold">{{ booking.reference }}</span></p>
-                <p><span class="text-navy-500">Statut :</span> <span class="font-semibold">{{ statusLabel }}</span></p>
-                <template v-if="isFlight">
-                    <p><span class="text-navy-500">Dossier billetterie :</span> <span class="font-semibold">{{ booking.bookable.reference }}</span></p>
-                    <p><span class="text-navy-500">Vol :</span> {{ booking.bookable.title }}</p>
-                    <p><span class="text-navy-500">Depart le :</span> {{ new Date(booking.bookable.depart_date).toLocaleDateString('fr-FR') }}</p>
-                    <p v-if="booking.bookable.return_date"><span class="text-navy-500">Retour le :</span> {{ new Date(booking.bookable.return_date).toLocaleDateString('fr-FR') }}</p>
-                    <p><span class="text-navy-500">Passagers :</span> {{ booking.bookable.passenger_count }}</p>
-                    <p class="rounded-lg bg-navy-50/60 p-2 text-xs text-navy-700">Le prix a ete confirme aupres de la compagnie. Apres le paiement, la reservation puis l'emission du billet sont suivies dans votre dossier.</p>
-                </template>
-                <p v-if="booking.meta?.park"><span class="text-navy-500">Parc :</span> {{ booking.meta.park }} ({{ booking.meta.city }})</p>
-                <p v-if="booking.meta?.park && booking.starts_at"><span class="text-navy-500">Visite le :</span> {{ new Date(booking.starts_at).toLocaleDateString('fr-FR') }}</p>
-                <p v-if="booking.meta?.adults !== undefined">
-                    <span class="text-navy-500">Billets :</span> {{ booking.meta.adults }} adulte(s), {{ booking.meta.children ?? 0 }} enfant(s)
-                </p>
-                <p v-else-if="!isFlight && !ride"><span class="text-navy-500">Quantite :</span> {{ booking.quantity }}</p>
-                <p class="text-lg font-bold text-gold-600">
-                    Total : {{ Number(booking.total_amount).toLocaleString('fr-FR') }} {{ booking.currency }}
-                </p>
+            <h1 class="text-2xl font-extrabold text-navy-900">Recapitulatif</h1>
+            <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div v-if="!ride && !isFlight" class="flex gap-4 border-b border-slate-100 p-4">
+                    <img v-if="item.image && !imgBroken" :src="item.image" alt="" class="h-20 w-24 shrink-0 rounded-xl object-cover" @error="imgBroken = true" />
+                    <div class="min-w-0">
+                        <p class="font-bold leading-tight text-navy-900">{{ item.title }}</p>
+                        <p v-if="item.place" class="mt-0.5 text-sm text-navy-500">{{ item.place }}</p>
+                    </div>
+                </div>
+                <dl class="divide-y divide-slate-100 text-sm">
+                    <div class="flex items-center justify-between px-4 py-3"><dt class="text-navy-500">Reference</dt><dd class="font-mono font-semibold text-navy-900">{{ booking.reference }}</dd></div>
+                    <div class="flex items-center justify-between px-4 py-3">
+                        <dt class="text-navy-500">Statut</dt>
+                        <dd><span class="rounded-full px-2.5 py-1 text-xs font-semibold" :class="STATUS_STYLE[booking.status] ?? 'bg-slate-100 text-slate-700'">{{ statusLabel }}</span></dd>
+                    </div>
+                    <template v-if="isFlight">
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Dossier</dt><dd class="font-semibold">{{ booking.bookable.reference }}</dd></div>
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Vol</dt><dd class="text-right">{{ booking.bookable.title }}</dd></div>
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Depart</dt><dd>{{ fmtDate(booking.bookable.depart_date) }}</dd></div>
+                        <div v-if="booking.bookable.return_date" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Retour</dt><dd>{{ fmtDate(booking.bookable.return_date) }}</dd></div>
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Passagers</dt><dd>{{ booking.bookable.passenger_count }}</dd></div>
+                    </template>
+                    <template v-else-if="item.isLodging && booking.starts_at">
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Arrivee</dt><dd class="font-semibold">{{ fmtDate(booking.starts_at) }}</dd></div>
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Depart</dt><dd class="font-semibold">{{ fmtDate(booking.ends_at) }}</dd></div>
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Sejour</dt><dd>{{ booking.quantity }} nuit(s){{ booking.meta?.guests ? ` · ${booking.meta.guests} voyageur(s)` : '' }}</dd></div>
+                    </template>
+                    <template v-else>
+                        <div v-if="booking.meta?.park && booking.starts_at" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Visite le</dt><dd>{{ fmtDate(booking.starts_at) }}</dd></div>
+                        <div v-if="booking.meta?.adults !== undefined" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Billets</dt><dd>{{ booking.meta.adults }} adulte(s), {{ booking.meta.children ?? 0 }} enfant(s)</dd></div>
+                        <div v-else-if="!ride" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Quantite</dt><dd>{{ booking.quantity }}</dd></div>
+                    </template>
+                    <div v-if="Number(booking.unit_price) && booking.quantity > 1" class="flex justify-between gap-4 px-4 py-3 text-navy-600"><dt>{{ money(booking.unit_price) }} {{ booking.currency }} × {{ booking.quantity }}</dt><dd>{{ money(booking.total_amount) }} {{ booking.currency }}</dd></div>
+                </dl>
+                <div class="flex items-end justify-between bg-navy-900 px-4 py-4 text-white">
+                    <span class="text-sm text-white/80">Total a payer</span>
+                    <span class="text-2xl font-extrabold text-gold-400">{{ money(booking.total_amount) }} {{ booking.currency }}</span>
+                </div>
             </div>
+            <p v-if="isFlight" class="mt-3 rounded-xl bg-navy-50/70 p-3 text-xs text-navy-700">Le prix a ete confirme aupres de la compagnie. Apres le paiement, la reservation puis l'emission du billet sont suivies dans votre dossier.</p>
+            <ul class="mt-4 space-y-1.5 text-xs text-navy-600">
+                <li class="flex items-center gap-2"><span class="text-green-600">✓</span> Paiement securise, confirme sur votre telephone</li>
+                <li class="flex items-center gap-2"><span class="text-green-600">✓</span> Aucun frais cache : le montant affiche est le montant debite</li>
+                <li class="flex items-center gap-2"><span class="text-green-600">✓</span> Confirmation immediate apres validation</li>
+            </ul>
         </div>
 
         <div class="space-y-6">
@@ -222,7 +262,7 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                     </p>
                 </div>
 
-                <form v-else class="space-y-5 rounded-2xl border p-5" @submit.prevent="pay">
+                <form v-else class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" @submit.prevent="pay">
                     <div v-if="lastPayment?.status === 'failed'" class="rounded-lg bg-red-50 p-3 text-sm text-red-700">
                         Dernier essai refuse : {{ lastPayment.failure_reason ?? 'paiement non abouti' }}. Vous pouvez reessayer.
                     </div>
@@ -233,19 +273,12 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
 
                     <template v-else>
                         <div>
-                            <label class="text-xs font-semibold uppercase tracking-wide text-navy-500">1. Pays</label>
-                            <select v-model="form.country_code" class="mt-1 w-full rounded-lg border-gray-300 text-sm">
-                                <optgroup label="Paiement disponible">
-                                    <option v-for="c in payableCountries" :key="c.code" :value="c.code">{{ c.name }} (+{{ c.dial_code }})</option>
-                                </optgroup>
-                                <optgroup v-if="soonCountries.length" label="Bientot disponible">
-                                    <option v-for="c in soonCountries" :key="c.code" :value="c.code">{{ c.name }} (+{{ c.dial_code }})</option>
-                                </optgroup>
-                            </select>
+                            <label class="text-xs font-bold uppercase tracking-wide text-navy-700">1. Pays</label>
+                            <CountryPicker v-model="form.country_code" :countries="countries" class="mt-1.5" />
                         </div>
 
                         <div v-if="countryPayable && country?.networks?.length">
-                            <label class="text-xs font-semibold uppercase tracking-wide text-navy-500">2. Operateur</label>
+                            <label class="text-xs font-bold uppercase tracking-wide text-navy-700">2. Operateur</label>
                             <div class="mt-2 flex flex-wrap gap-2">
                                 <OperatorBadge
                                     v-for="n in country.networks"
@@ -259,10 +292,13 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                         </div>
 
                         <div>
-                            <label class="text-xs font-semibold uppercase tracking-wide text-navy-500">{{ countryPayable && country?.networks?.length ? 3 : 2 }}. Numero Mobile Money</label>
-                            <div class="mt-1 flex overflow-hidden rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-gold-400">
-                                <span class="flex items-center bg-navy-50 px-3 text-sm text-navy-700">+{{ country?.dial_code }}</span>
-                                <input v-model="form.phone" type="tel" inputmode="tel" placeholder="06 123 45 67" class="w-full border-0 text-sm focus:ring-0" required />
+                            <label class="text-xs font-bold uppercase tracking-wide text-navy-700">{{ countryPayable && country?.networks?.length ? 3 : 2 }}. Numero Mobile Money</label>
+                            <div class="mt-1.5 flex overflow-hidden rounded-xl border border-slate-300 bg-white focus-within:border-gold-400 focus-within:ring-2 focus-within:ring-gold-400">
+                                <span class="flex shrink-0 items-center gap-2 border-r border-slate-200 bg-slate-50 px-3 text-sm font-semibold tabular-nums text-navy-800">
+                                    <span v-if="flagClass(country?.code)" :class="flagClass(country?.code)" class="!h-4 !w-6 rounded-sm bg-cover ring-1 ring-black/10" />
+                                    +{{ country?.dial_code }}
+                                </span>
+                                <input v-model="form.phone" type="tel" inputmode="tel" placeholder="Votre numero Mobile Money" autocomplete="tel-national" class="w-full border-0 px-3 py-2.5 text-sm tracking-wide focus:ring-0" required />
                             </div>
                             <p v-if="form.errors.phone" class="mt-1 text-xs text-red-600">{{ form.errors.phone }}</p>
                         </div>
@@ -274,7 +310,7 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                             Utilisez un numero Mobile Money d'un pays disponible, ou contactez le service client MOKILI TOUR.
                         </div>
 
-                        <button type="submit" class="btn-gold w-full" :disabled="form.processing || !countryPayable || !form.gateway || !form.phone">
+                        <button type="submit" class="btn-gold w-full py-3.5 text-base disabled:cursor-not-allowed disabled:opacity-50" :disabled="form.processing || !countryPayable || !form.gateway || !form.phone">
                             {{ form.processing ? 'Envoi de la demande...' : `Payer ${Number(booking.total_amount).toLocaleString('fr-FR')} ${booking.currency}` }}
                         </button>
                         <p class="text-center text-xs text-navy-500">
