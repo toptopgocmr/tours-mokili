@@ -35,6 +35,7 @@ class RubricsTest extends TestCase
 
     public function test_voiture_location_vente_mecanique(): void
     {
+        Vehicle::query()->delete(); // catalogue d'exemple
         $base = ['brand' => 'Toyota', 'model' => 'RAV4', 'city' => 'Brazzaville', 'status' => 'published', 'is_active' => true];
         Vehicle::create($base + ['title' => 'RAV4 a louer', 'offer_type' => 'location', 'price_per_day' => 45000]);
         Vehicle::create($base + ['title' => 'RAV4 2018 a vendre', 'offer_type' => 'vente', 'sale_price' => 9500000, 'mileage_km' => 80000]);

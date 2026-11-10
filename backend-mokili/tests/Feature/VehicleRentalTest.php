@@ -167,4 +167,14 @@ class VehicleRentalTest extends TestCase
         $this->actingAs(User::factory()->create())->get("/location/{$b->id}/documents/id_document")->assertForbidden();
         $this->actingAs($owner)->get('/partner/reservations')->assertOk()->assertSee('P123');
     }
+
+    public function test_demo_catalogue_is_shown_but_not_reservable(): void
+    {
+        $this->get('/voiture?type=vente')->assertInertia(fn ($p) => $p->where('vehicles.total', 24));
+        $demo = Vehicle::where('is_demo', true)->where('brand', 'Toyota')->first();
+        $this->assertNotNull($demo->image);
+        $this->actingAs(User::factory()->create())->post("/voiture/{$demo->slug}/reserver-achat")->assertSessionHasErrors('reserve');
+        config(['catalogue.voiture.show_demo' => false]);
+        $this->get('/voiture?type=vente')->assertInertia(fn ($p) => $p->where('vehicles.total', 0));
+    }
 }

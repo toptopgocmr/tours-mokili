@@ -27,7 +27,8 @@ class VehicleController extends Controller
         $type = isset($types[$type]) ? $type : '';
         $priceCol = $type === 'location' ? 'price_per_day' : 'sale_price';
 
-        $base = Vehicle::query()->active()->when($type, fn ($q) => $q->where('offer_type', $type));
+        $base = Vehicle::query()->active()->when($type, fn ($q) => $q->where('offer_type', $type))
+            ->when(! config('catalogue.voiture.show_demo'), fn ($q) => $q->where(fn ($w) => $w->whereNull('is_demo')->orWhere('is_demo', false)));
         $query = (clone $base)
             ->when($request->filled('city'), fn ($q) => $q->where('city', 'like', '%'.$request->string('city').'%'))
             ->when($request->filled('q'), fn ($q) => $q->where(fn ($w) => $w

@@ -407,6 +407,7 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                                     <svg class="h-4 w-4" viewBox="0 0 24 24" :fill="isFav(v.id) ? '#f43f5e' : 'none'" :stroke="isFav(v.id) ? '#f43f5e' : 'currentColor'" stroke-width="2"><path d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3.3 5 6.9 5c2 0 3.4 1.1 4.1 2.2C11.7 6.1 13.1 5 15.1 5c3.6 0 5.7 3.6 4.4 6.8C19.5 16.4 12 21 12 21z" /></svg>
                                 </button>
                             </div>
+                            <span v-if="v.is_demo" class="absolute bottom-2 left-2 rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-600">Exemple</span>
                             <span v-if="reservedIds.includes(v.id)" class="absolute left-2 top-2 rounded-md bg-red-600 px-2 py-1 text-[11px] font-bold uppercase text-white">Reserve</span>
                             <PromoBadge v-else :promo="v.promo" class="absolute left-2 top-2" />
                         </div>

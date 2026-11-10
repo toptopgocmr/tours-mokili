@@ -137,6 +137,8 @@ return [
         ],
         'conditions' => ['occasion' => 'Occasion', 'neuf' => 'Neuf', 'reconditionne' => 'Reconditionne'],
         // Acompte pour reserver un vehicule a vendre (deduit du prix chez le vendeur).
+        // Annonces d'exemple (catalogue de demarrage) visibles sur le site.
+        'show_demo' => (bool) env('VOITURE_SHOW_DEMO', true),
         'sale_deposit' => (int) env('VOITURE_SALE_DEPOSIT', 100000),
         // Simulation de mensualite (indicative) : apport, duree, taux annuel.
         'finance' => ['down_payment_percent' => 20, 'months' => 36, 'annual_rate' => 12],

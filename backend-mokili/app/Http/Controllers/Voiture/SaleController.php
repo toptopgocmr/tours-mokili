@@ -41,6 +41,9 @@ class SaleController extends Controller
     public function reserve(Request $request, Vehicle $vehicle): RedirectResponse
     {
         abort_unless($vehicle->is_active && $vehicle->status === 'published' && $vehicle->offer_type === 'vente', 404);
+        if ($vehicle->is_demo) {
+            throw ValidationException::withMessages(['reserve' => "Annonce d'exemple : ce vehicule ne peut pas etre reserve."]);
+        }
         $data = $request->validate([
             'phone' => ['nullable', 'string', 'max:30'],
             'message' => ['nullable', 'string', 'max:1000'],
