@@ -34,7 +34,7 @@ class CheckoutController extends Controller
         return Inertia::render('Checkout', [
             'booking' => $booking->load('bookable'),
             'wallet' => Auth::user()->wallet,
-            'methods' => $this->manager->catalogue('collect'),
+            'methods' => $this->manager->catalogue('collect', true),
             'lastPayment' => $booking->payments()->latest()->first(),
         ]);
     }

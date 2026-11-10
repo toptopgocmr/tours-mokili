@@ -81,7 +81,7 @@ const PROFILES = [
                 <li>✅ <strong>Promotions</strong> : remise en %, libelle et date de fin, sur plusieurs departs d'un coup.</li>
                 <li>✅ <strong>Reservations</strong> : liste des passagers, places vendues, ventes du mois.</li>
                 <li>✅ <strong>Visibilite</strong> : vos departs dans la recherche, le Programme des departs et l'application mobile.</li>
-                <li>✅ <strong>Paiement</strong> : vos clients paient par Mobile Money (MaishaPay, Digitwace, Peex, pawaPay).</li>
+                <li>✅ <strong>Paiement</strong> : vos clients paient par Mobile Money.</li>
             </ul>
         </div>
 

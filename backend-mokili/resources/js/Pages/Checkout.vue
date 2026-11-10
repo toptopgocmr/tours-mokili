@@ -44,6 +44,9 @@ const form = useForm({
 });
 
 const country = computed(() => countries.value.find((c) => c.code === form.country_code));
+const payableCountries = computed(() => countries.value.filter((c) => c.gateways?.length));
+const soonCountries = computed(() => countries.value.filter((c) => !c.gateways?.length));
+const countryPayable = computed(() => (country.value?.gateways?.length ?? 0) > 0);
 
 // Passerelle par defaut = la premiere de la liste (ordre de priorite du
 // pays, ex. Congo : MaishaPay > Digitwace > Peex). Apres un echec, on
@@ -214,7 +217,7 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                     </div>
                     <p class="mt-2 text-sm">
                         Une demande de {{ Number(lastPayment.amount).toLocaleString('fr-FR') }} {{ lastPayment.currency }} a ete envoyee au
-                        <strong>+{{ lastPayment.phone }}</strong> via {{ gatewayLabels[lastPayment.provider] ?? lastPayment.provider }}.
+                        <strong>+{{ lastPayment.phone }}</strong>.
                         Composez votre code secret Mobile Money pour confirmer. Cette page se met a jour automatiquement.
                     </p>
                 </div>
@@ -232,11 +235,16 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                         <div>
                             <label class="text-xs font-semibold uppercase tracking-wide text-navy-500">1. Pays</label>
                             <select v-model="form.country_code" class="mt-1 w-full rounded-lg border-gray-300 text-sm">
-                                <option v-for="c in countries" :key="c.code" :value="c.code">{{ c.name }} (+{{ c.dial_code }})</option>
+                                <optgroup label="Paiement disponible">
+                                    <option v-for="c in payableCountries" :key="c.code" :value="c.code">{{ c.name }} (+{{ c.dial_code }})</option>
+                                </optgroup>
+                                <optgroup v-if="soonCountries.length" label="Bientot disponible">
+                                    <option v-for="c in soonCountries" :key="c.code" :value="c.code">{{ c.name }} (+{{ c.dial_code }})</option>
+                                </optgroup>
                             </select>
                         </div>
 
-                        <div v-if="country?.networks?.length">
+                        <div v-if="countryPayable && country?.networks?.length">
                             <label class="text-xs font-semibold uppercase tracking-wide text-navy-500">2. Operateur</label>
                             <div class="mt-2 flex flex-wrap gap-2">
                                 <OperatorBadge
@@ -251,7 +259,7 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                         </div>
 
                         <div>
-                            <label class="text-xs font-semibold uppercase tracking-wide text-navy-500">3. Numero Mobile Money</label>
+                            <label class="text-xs font-semibold uppercase tracking-wide text-navy-500">{{ countryPayable && country?.networks?.length ? 3 : 2 }}. Numero Mobile Money</label>
                             <div class="mt-1 flex overflow-hidden rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-gold-400">
                                 <span class="flex items-center bg-navy-50 px-3 text-sm text-navy-700">+{{ country?.dial_code }}</span>
                                 <input v-model="form.phone" type="tel" inputmode="tel" placeholder="06 123 45 67" class="w-full border-0 text-sm focus:ring-0" required />
@@ -259,25 +267,14 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                             <p v-if="form.errors.phone" class="mt-1 text-xs text-red-600">{{ form.errors.phone }}</p>
                         </div>
 
-                        <div>
-                            <label class="text-xs font-semibold uppercase tracking-wide text-navy-500">4. Payer avec</label>
-                            <div class="mt-2 grid grid-cols-2 gap-2">
-                                <button
-                                    v-for="g in country?.gateways ?? []"
-                                    :key="g"
-                                    type="button"
-                                    class="relative rounded-xl border px-3 py-2.5 text-left text-sm font-semibold transition"
-                                    :class="form.gateway === g ? 'border-navy-900 bg-navy-900 text-white' : 'border-gray-200 text-navy-900 hover:border-navy-400'"
-                                    @click="form.gateway = g"
-                                >
-                                    {{ gatewayLabels[g] ?? g }}
-                                    <span v-if="g === country.gateways[0]" class="mt-0.5 block text-[10px] font-medium uppercase tracking-wide" :class="form.gateway === g ? 'text-gold-400' : 'text-gold-600'">Recommande</span>
-                                </button>
-                            </div>
-                            <p v-if="form.errors.gateway" class="mt-1 text-xs text-red-600">{{ form.errors.gateway }}</p>
+                        <!-- La passerelle (agregateur) est choisie automatiquement : elle n'est pas affichee au client. -->
+                        <p v-if="form.errors.gateway" class="text-xs text-red-600">{{ form.errors.gateway }}</p>
+                        <div v-if="!countryPayable" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+                            Le paiement Mobile Money depuis <strong>{{ country?.name }}</strong> arrive bientot.
+                            Utilisez un numero Mobile Money d'un pays disponible, ou contactez le service client MOKILI TOUR.
                         </div>
 
-                        <button type="submit" class="btn-gold w-full" :disabled="form.processing || !form.gateway || !form.phone">
+                        <button type="submit" class="btn-gold w-full" :disabled="form.processing || !countryPayable || !form.gateway || !form.phone">
                             {{ form.processing ? 'Envoi de la demande...' : `Payer ${Number(booking.total_amount).toLocaleString('fr-FR')} ${booking.currency}` }}
                         </button>
                         <p class="text-center text-xs text-navy-500">

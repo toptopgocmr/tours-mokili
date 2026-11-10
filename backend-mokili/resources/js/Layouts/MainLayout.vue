@@ -95,7 +95,7 @@ const navLinks = [
                         <p class="mb-2 font-semibold text-gold-600">Support</p>
                         <ul class="space-y-1 text-sm text-navy-50/80">
                             <li>Assistance 24/7</li>
-                            <li>Paiement securise via Peex</li>
+                            <li>Paiement securise par Mobile Money</li>
                         </ul>
                     </div>
                     <div>

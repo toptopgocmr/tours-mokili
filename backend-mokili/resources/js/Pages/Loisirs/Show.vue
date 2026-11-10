@@ -104,7 +104,7 @@ const mapsUrl = computed(() => {
 
                         <button v-if="user" type="submit" class="btn-gold w-full" :disabled="form.processing || total <= 0">Reserver mes billets</button>
                         <Link v-else :href="`/login`" class="btn-gold block w-full text-center">Connectez-vous pour reserver</Link>
-                        <p class="text-center text-xs text-navy-500">Paiement Mobile Money : Peex, pawaPay, MaishaPay ou Digitwace.</p>
+                        <p class="text-center text-xs text-navy-500">Paiement Mobile Money : MTN MoMo, Airtel Money, Orange Money, M-Pesa…</p>
                     </form>
                 </template>
                 <template v-else>

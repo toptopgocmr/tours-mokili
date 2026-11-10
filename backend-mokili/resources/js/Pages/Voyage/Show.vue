@@ -185,7 +185,7 @@ const notePlaceholder = computed(() => ({
                     <button type="submit" class="mt-4 w-full rounded-full bg-sky-700 py-3 font-semibold text-white hover:bg-sky-800 disabled:opacity-50" :disabled="form.processing || seats === 0">
                         {{ seats === 0 ? 'Complet' : 'Continuer vers le paiement' }}
                     </button>
-                    <p class="mt-3 text-center text-xs text-navy-500">Paiement Mobile Money securise : MaishaPay, Digitwace, Peex, pawaPay.</p>
+                    <p class="mt-3 text-center text-xs text-navy-500">Paiement Mobile Money securise : MTN MoMo, Airtel Money, Orange Money, M-Pesa…</p>
                 </div>
             </form>
         </div>
@@ -238,7 +238,7 @@ const notePlaceholder = computed(() => ({
                 </div>
                 <button type="submit" class="btn-gold w-full" :disabled="form.processing">Reserver maintenant</button>
                 <p class="text-center text-xs text-navy-500">
-                    Paiement Mobile Money securise : Peex, pawaPay, MaishaPay ou Digitwace.
+                    Paiement Mobile Money securise : MTN MoMo, Airtel Money, Orange Money, M-Pesa…
                 </p>
             </form>
         </div>

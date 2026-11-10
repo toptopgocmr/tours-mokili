@@ -147,7 +147,7 @@ const features = [
 
     <section class="mx-auto max-w-5xl px-6 py-16 text-center">
         <h2 class="text-2xl font-bold text-navy-900">Decouvrez notre application mobile</h2>
-        <p class="mt-2 text-navy-700">Simple, rapide et securisee. Reservation en quelques clics, paiement securise via Peex.</p>
+        <p class="mt-2 text-navy-700">Simple, rapide et securisee. Reservation en quelques clics, paiement securise par Mobile Money.</p>
         <div class="mt-6 flex justify-center gap-4">
             <span class="btn-outline">Google Play</span>
             <span class="btn-outline">App Store</span>
@@ -160,7 +160,7 @@ const features = [
             <p class="mt-4 text-navy-700">
                 MOKILI TOUR reunit en une seule plateforme tous vos besoins de mobilite et de vie quotidienne :
                 voyage, logement, location de vehicule, divertissement, marketplace et fret. Une filiale de
-                Bilenium Conciergerie, avec des paiements verifies par portefeuille mobile money via Peex.
+                Bilenium Conciergerie, avec des paiements verifies par portefeuille mobile money.
             </p>
         </div>
     </section>

@@ -135,7 +135,7 @@ class PaymentGatewayManager
     }
 
     /** Catalogue envoye au site web et a l'app mobile pour construire l'ecran de paiement. */
-    public function catalogue(string $type = 'collect'): array
+    public function catalogue(string $type = 'collect', bool $allCountries = false): array
     {
         $countries = collect(config('payments.country_names'))
             ->map(function ($name, $code) use ($type) {
@@ -148,7 +148,10 @@ class PaymentGatewayManager
                     'preferred' => $this->preferredFor($code),
                 ];
             })
-            ->filter(fn ($c) => count($c['gateways']) > 0)
+            // Ecran de paiement : tous les pays (ceux sans passerelle sont
+            // affiches "bientot disponible"). API / back-office : pays payables.
+            ->filter(fn ($c) => $allCountries || count($c['gateways']) > 0)
+            ->sortBy(fn ($c) => count($c['gateways']) > 0 ? 0 : 1)
             ->values();
 
         $gateways = collect($this->names())->map(fn ($n) => [

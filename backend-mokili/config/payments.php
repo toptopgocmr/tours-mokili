@@ -54,7 +54,9 @@ return [
             'label' => 'pawaPay',
             'collect' => true,
             'payout' => true,
-            'countries' => ['CG', 'CM', 'GA', 'CD'],
+            'countries' => ['CG', 'CM', 'GA', 'CD', 'CI', 'SN', 'BJ', 'BF'],
+            // Afrique de l'Ouest : on debite en XOF (1 XAF = 1 XOF, parite fixe).
+            'xof_countries' => ['CI', 'SN', 'BJ', 'BF'],
             'env' => env('PAWAPAY_ENV', 'sandbox'),
             'base_url' => env('PAWAPAY_ENV', 'sandbox') === 'production'
                 ? env('PAWAPAY_PRODUCTION_URL', 'https://api.pawapay.io')
@@ -132,16 +134,70 @@ return [
             'AIRTEL' => ['label' => 'Airtel Money', 'pawapay' => null, 'maishapay' => null],
             'MOOV' => ['label' => 'Moov Money', 'pawapay' => null, 'maishapay' => null],
         ],
+        // Zone franc CFA de l'Ouest (XOF, meme parite que le XAF).
+        'CI' => [
+            'ORANGE' => ['label' => 'Orange Money', 'pawapay' => 'ORANGE_CIV', 'maishapay' => null],
+            'MTN' => ['label' => 'MTN Mobile Money', 'pawapay' => 'MTN_MOMO_CIV', 'maishapay' => null],
+            'MOOV' => ['label' => 'Moov Money', 'pawapay' => null, 'maishapay' => null],
+            'WAVE' => ['label' => 'Wave', 'pawapay' => null, 'maishapay' => null],
+        ],
+        'SN' => [
+            'ORANGE' => ['label' => 'Orange Money', 'pawapay' => 'ORANGE_SEN', 'maishapay' => null],
+            'FREE' => ['label' => 'Free Money', 'pawapay' => 'FREE_SEN', 'maishapay' => null],
+            'WAVE' => ['label' => 'Wave', 'pawapay' => null, 'maishapay' => null],
+        ],
+        'BJ' => [
+            'MTN' => ['label' => 'MTN Mobile Money', 'pawapay' => 'MTN_MOMO_BEN', 'maishapay' => null],
+            'MOOV' => ['label' => 'Moov Money', 'pawapay' => 'MOOV_BEN', 'maishapay' => null],
+        ],
+        'BF' => [
+            'ORANGE' => ['label' => 'Orange Money', 'pawapay' => 'ORANGE_BFA', 'maishapay' => null],
+            'MOOV' => ['label' => 'Moov Money', 'pawapay' => 'MOOV_BFA', 'maishapay' => null],
+        ],
+        'ML' => ['ORANGE' => ['label' => 'Orange Money', 'pawapay' => null, 'maishapay' => null], 'MOOV' => ['label' => 'Moov Money', 'pawapay' => null, 'maishapay' => null]],
+        'NE' => ['AIRTEL' => ['label' => 'Airtel Money', 'pawapay' => null, 'maishapay' => null], 'MOOV' => ['label' => 'Moov Money', 'pawapay' => null, 'maishapay' => null]],
+        'TG' => ['MOOV' => ['label' => 'Moov Money (Flooz)', 'pawapay' => null, 'maishapay' => null], 'TMONEY' => ['label' => 'T-Money', 'pawapay' => null, 'maishapay' => null]],
+        'GN' => ['ORANGE' => ['label' => 'Orange Money', 'pawapay' => null, 'maishapay' => null], 'MTN' => ['label' => 'MTN Mobile Money', 'pawapay' => null, 'maishapay' => null]],
+        'CF' => ['ORANGE' => ['label' => 'Orange Money', 'pawapay' => null, 'maishapay' => null], 'MOOV' => ['label' => 'Moov Money', 'pawapay' => null, 'maishapay' => null]],
+        'GQ' => ['GETESA' => ['label' => 'Muni Dinero', 'pawapay' => null, 'maishapay' => null]],
+        'GH' => ['MTN' => ['label' => 'MTN Mobile Money', 'pawapay' => null, 'maishapay' => null], 'VODAFONE' => ['label' => 'Telecel Cash', 'pawapay' => null, 'maishapay' => null], 'AIRTEL' => ['label' => 'AirtelTigo Money', 'pawapay' => null, 'maishapay' => null]],
+        'NG' => ['MTN' => ['label' => 'MTN MoMo PSB', 'pawapay' => null, 'maishapay' => null], 'AIRTEL' => ['label' => 'Airtel SmartCash', 'pawapay' => null, 'maishapay' => null]],
+        'KE' => ['MPESA' => ['label' => 'M-Pesa (Safaricom)', 'pawapay' => null, 'maishapay' => null], 'AIRTEL' => ['label' => 'Airtel Money', 'pawapay' => null, 'maishapay' => null]],
+        'UG' => ['MTN' => ['label' => 'MTN Mobile Money', 'pawapay' => null, 'maishapay' => null], 'AIRTEL' => ['label' => 'Airtel Money', 'pawapay' => null, 'maishapay' => null]],
+        'TZ' => ['MPESA' => ['label' => 'M-Pesa (Vodacom)', 'pawapay' => null, 'maishapay' => null], 'AIRTEL' => ['label' => 'Airtel Money', 'pawapay' => null, 'maishapay' => null], 'TIGO' => ['label' => 'Mixx by Yas', 'pawapay' => null, 'maishapay' => null]],
+        'RW' => ['MTN' => ['label' => 'MTN Mobile Money', 'pawapay' => null, 'maishapay' => null], 'AIRTEL' => ['label' => 'Airtel Money', 'pawapay' => null, 'maishapay' => null]],
+        'ZM' => ['MTN' => ['label' => 'MTN Mobile Money', 'pawapay' => null, 'maishapay' => null], 'AIRTEL' => ['label' => 'Airtel Money', 'pawapay' => null, 'maishapay' => null]],
+        'MZ' => ['MPESA' => ['label' => 'M-Pesa (Vodacom)', 'pawapay' => null, 'maishapay' => null], 'EMOLA' => ['label' => 'e-Mola', 'pawapay' => null, 'maishapay' => null]],
+        'MW' => ['AIRTEL' => ['label' => 'Airtel Money', 'pawapay' => null, 'maishapay' => null], 'TNM' => ['label' => 'TNM Mpamba', 'pawapay' => null, 'maishapay' => null]],
+        'MG' => ['MVOLA' => ['label' => 'MVola', 'pawapay' => null, 'maishapay' => null], 'ORANGE' => ['label' => 'Orange Money', 'pawapay' => null, 'maishapay' => null], 'AIRTEL' => ['label' => 'Airtel Money', 'pawapay' => null, 'maishapay' => null]],
     ],
 
     // Indicatif telephonique par pays (normalisation MSISDN).
     'dial_codes' => [
-        'CG' => '242', 'CM' => '237', 'GA' => '241', 'CD' => '243',
-        'TD' => '235', 'CF' => '236', 'GQ' => '240', 'CI' => '225', 'SN' => '221',
+        'CG' => '242', 'CM' => '237', 'GA' => '241', 'CD' => '243', 'TD' => '235', 'CF' => '236', 'GQ' => '240',
+        'CI' => '225', 'SN' => '221', 'BJ' => '229', 'BF' => '226', 'ML' => '223', 'NE' => '227', 'TG' => '228',
+        'GN' => '224', 'GW' => '245', 'SL' => '232', 'LR' => '231', 'GH' => '233', 'NG' => '234', 'GM' => '220',
+        'MR' => '222', 'KE' => '254', 'UG' => '256', 'TZ' => '255', 'RW' => '250', 'BI' => '257', 'ET' => '251',
+        'ZM' => '260', 'MW' => '265', 'MZ' => '258', 'ZW' => '263', 'AO' => '244', 'MG' => '261', 'KM' => '269',
+        'DJ' => '253', 'SO' => '252', 'SS' => '211', 'ZA' => '27', 'BW' => '267', 'NA' => '264', 'LS' => '266',
+        'SZ' => '268', 'MA' => '212', 'TN' => '216', 'DZ' => '213', 'EG' => '20', 'ST' => '239', 'CV' => '238',
+        'FR' => '33', 'BE' => '32', 'CH' => '41', 'CA' => '1', 'US' => '1', 'GB' => '44', 'CN' => '86', 'AE' => '971',
+        'TR' => '90', 'IN' => '91',
     ],
 
+    // Tous les pays proposes sur l'ecran de paiement Mobile Money. Ceux sans
+    // passerelle active s'affichent "bientot disponible".
     'country_names' => [
-        'CG' => 'Congo-Brazzaville', 'CM' => 'Cameroun', 'GA' => 'Gabon', 'CD' => 'RD Congo',
-        'TD' => 'Tchad', 'CF' => 'Centrafrique', 'GQ' => 'Guinee Equatoriale', 'CI' => "Cote d'Ivoire", 'SN' => 'Senegal',
+        'CG' => 'Congo-Brazzaville', 'CD' => 'RD Congo', 'CM' => 'Cameroun', 'GA' => 'Gabon', 'TD' => 'Tchad',
+        'CF' => 'Centrafrique', 'GQ' => 'Guinee Equatoriale', 'ST' => 'Sao Tome-et-Principe', 'AO' => 'Angola',
+        'CI' => "Cote d'Ivoire", 'SN' => 'Senegal', 'BJ' => 'Benin', 'BF' => 'Burkina Faso', 'ML' => 'Mali',
+        'NE' => 'Niger', 'TG' => 'Togo', 'GN' => 'Guinee', 'GW' => 'Guinee-Bissau', 'SL' => 'Sierra Leone',
+        'LR' => 'Liberia', 'GH' => 'Ghana', 'NG' => 'Nigeria', 'GM' => 'Gambie', 'MR' => 'Mauritanie', 'CV' => 'Cap-Vert',
+        'KE' => 'Kenya', 'UG' => 'Ouganda', 'TZ' => 'Tanzanie', 'RW' => 'Rwanda', 'BI' => 'Burundi', 'ET' => 'Ethiopie',
+        'DJ' => 'Djibouti', 'SO' => 'Somalie', 'SS' => 'Soudan du Sud', 'ZM' => 'Zambie', 'MW' => 'Malawi',
+        'MZ' => 'Mozambique', 'ZW' => 'Zimbabwe', 'MG' => 'Madagascar', 'KM' => 'Comores', 'ZA' => 'Afrique du Sud',
+        'BW' => 'Botswana', 'NA' => 'Namibie', 'LS' => 'Lesotho', 'SZ' => 'Eswatini', 'MA' => 'Maroc', 'TN' => 'Tunisie',
+        'DZ' => 'Algerie', 'EG' => 'Egypte', 'FR' => 'France', 'BE' => 'Belgique', 'CH' => 'Suisse', 'GB' => 'Royaume-Uni',
+        'CA' => 'Canada', 'US' => 'Etats-Unis', 'CN' => 'Chine', 'AE' => 'Emirats arabes unis', 'TR' => 'Turquie', 'IN' => 'Inde',
     ],
 ];

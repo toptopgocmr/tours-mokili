@@ -47,7 +47,7 @@ class PawaPayGateway extends AbstractGateway
                 ],
             ],
             'amount' => (string) $request->integerAmount(),
-            'currency' => $request->currency,
+            'currency' => $this->currencyFor($request),
             'clientReferenceId' => $request->reference,
             'customerMessage' => $this->customerMessage(),
         ]);
@@ -69,12 +69,19 @@ class PawaPayGateway extends AbstractGateway
                 ],
             ],
             'amount' => (string) $request->integerAmount(),
-            'currency' => $request->currency,
+            'currency' => $this->currencyFor($request),
             'clientReferenceId' => $request->reference,
             'customerMessage' => $this->customerMessage(),
         ]);
 
         return $this->initiationResult($response, 'payoutId');
+    }
+
+    /** XAF -> XOF pour l'Afrique de l'Ouest (meme parite, montant inchange). */
+    protected function currencyFor(PaymentRequest $request): string
+    {
+        return $request->currency === 'XAF' && in_array($request->country, $this->config('xof_countries') ?? [], true)
+            ? 'XOF' : $request->currency;
     }
 
     public function status(string $reference, ?string $providerReference, string $type = 'collect'): GatewayResult
