@@ -42,6 +42,11 @@ class VehicleController extends Controller
     public function book(StoreBookingRequest $request, Vehicle $vehicle): JsonResponse
     {
         abort_unless($vehicle->is_active && $vehicle->status === 'published', 404);
+        if ($vehicle->offer_type === 'location' && $request->filled('starts_at')) {
+            $start = \Carbon\Carbon::parse($request->input('starts_at'));
+            $end = \Carbon\Carbon::parse($request->input('ends_at') ?: $request->input('starts_at'));
+            abort_unless(\App\Services\Voiture\VehicleAvailability::isAvailable($vehicle, $start, $end), 422, 'Ce vehicule est deja reserve sur ces dates.');
+        }
 
         $booking = $this->createBooking(
             $request,

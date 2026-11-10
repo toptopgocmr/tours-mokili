@@ -17,7 +17,9 @@ const props = defineProps({
     offerTypes: { type: Object, default: () => ({}) },
 });
 
-const search = reactive({ type: props.filters.type ?? '', city: props.filters.city ?? '', q: props.filters.q ?? '' });
+const search = reactive({ type: props.filters.type ?? '', city: props.filters.city ?? '', q: props.filters.q ?? '', start: props.filters.start ?? '', end: props.filters.end ?? '' });
+const todayIso = new Date().toISOString().slice(0, 10);
+const detailHref = (slug) => `/voiture/${slug}` + (search.type === 'location' && search.start && search.end ? `?start=${search.start}&end=${search.end}` : '');
 const ICONS = { location: '🔑', vente: '🏷️', mecanique: '🔧' };
 const HERO = {
     '': ['Location, vente et mecanique', 'Louez, achetez ou faites entretenir votre vehicule.'],
@@ -67,7 +69,11 @@ const price = (v) => (v.display_price ? `${v.display_price.suffix === 'a partir 
             </div>
             <form class="mt-3 flex flex-col gap-2 sm:flex-row" @submit.prevent="submit">
                 <input v-model="search.q" type="text" placeholder="Marque, modele (ex. Toyota)..." class="flex-1 rounded-full border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600" />
-                <input v-model="search.city" type="text" placeholder="Ville" class="rounded-full border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600 sm:w-48" />
+                <input v-model="search.city" type="text" placeholder="Ville" class="rounded-full border-gray-200 text-sm focus:border-gold-600 focus:ring-gold-600 sm:w-40" />
+                <template v-if="search.type === 'location'">
+                    <label class="flex items-center gap-2 rounded-full border border-gray-200 px-3 text-xs text-navy-500">Du<input v-model="search.start" type="date" :min="todayIso" class="border-0 p-1 text-sm text-navy-900 focus:ring-0" /></label>
+                    <label class="flex items-center gap-2 rounded-full border border-gray-200 px-3 text-xs text-navy-500">au<input v-model="search.end" type="date" :min="search.start || todayIso" class="border-0 p-1 text-sm text-navy-900 focus:ring-0" /></label>
+                </template>
                 <button type="submit" class="btn-gold sm:px-10">Rechercher</button>
             </form>
         </div>
@@ -88,7 +94,7 @@ const price = (v) => (v.display_price ? `${v.display_price.suffix === 'a partir 
         </section>
 
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <Link v-for="v in vehicles.data" :key="v.id" :href="`/voiture/${v.slug}`" class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg">
+            <Link v-for="v in vehicles.data" :key="v.id" :href="detailHref(v.slug)" class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg">
                 <div class="relative">
                     <ListingImage :src="v.image_url" fallback-class="bg-orange-600">{{ v.brand }} {{ v.model }}</ListingImage>
                     <span class="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-semibold text-navy-900">{{ ICONS[v.offer_type] }} {{ v.offer_type_label }}</span>
@@ -100,6 +106,7 @@ const price = (v) => (v.display_price ? `${v.display_price.suffix === 'a partir 
                     </p>
                     <p class="mt-1 text-sm font-semibold text-gold-600"><span v-if="v.display_price?.original" class="mr-1 text-xs font-normal text-navy-400 line-through">{{ Number(v.display_price.original).toLocaleString('fr-FR') }}</span>{{ price(v) }}</p>
                     <PromoBadge :promo="v.promo" class="mt-1" />
+                    <p v-if="v.offer_type === 'location' && filters.start && filters.end" class="mt-1 text-xs font-semibold text-green-700">✓ Disponible sur vos dates</p>
                 </div>
             </Link>
         </div>

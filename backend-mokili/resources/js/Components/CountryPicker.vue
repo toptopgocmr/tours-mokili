@@ -56,7 +56,6 @@ onBeforeUnmount(() => document.removeEventListener('click', onDoc));
         >
             <span v-if="current" :class="flag(current.code)" class="!h-5 !w-7 shrink-0 rounded-sm bg-cover shadow-sm ring-1 ring-black/10" />
             <span class="min-w-0 flex-1 truncate text-sm font-semibold text-navy-900">{{ current?.name ?? 'Choisir un pays' }}</span>
-            <span v-if="current" class="shrink-0 rounded-md bg-navy-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-navy-700">+{{ current.dial_code }}</span>
             <svg class="h-4 w-4 shrink-0 text-slate-500 transition" :class="open && 'rotate-180'" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
         </button>
 

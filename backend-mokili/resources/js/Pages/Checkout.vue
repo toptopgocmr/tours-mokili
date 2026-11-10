@@ -16,6 +16,7 @@ const props = defineProps({
     wallet: { type: Object, default: null },
     methods: { type: Object, default: () => ({ countries: [], gateways: [] }) },
     lastPayment: { type: Object, default: null },
+    receiptUrl: { type: String, default: null },
 });
 
 // Onglet affiche : Mobile Money (Peex / pawaPay / MaishaPay / Digitwace) ou
@@ -40,6 +41,7 @@ const item = computed(() => {
         place: [b.city ?? props.booking.meta?.city, b.country].filter(Boolean).join(', '),
         image: b.image_url ?? null,
         isLodging: String(props.booking.bookable_type ?? '').endsWith('LodgingListing'),
+        isVehicle: String(props.booking.bookable_type ?? '').endsWith('Vehicle'),
     };
 });
 const STATUS_STYLE = { awaiting_payment: 'bg-amber-100 text-amber-800', pending: 'bg-amber-100 text-amber-800', confirmed: 'bg-green-100 text-green-800', paid: 'bg-green-100 text-green-800', completed: 'bg-green-100 text-green-800', cancelled: 'bg-red-100 text-red-700', failed: 'bg-red-100 text-red-700' };
@@ -106,7 +108,7 @@ const poll = async () => {
         const { data } = await axios.get(`/checkout/${props.booking.id}/statut`);
         if (data.payment && !['pending', 'processing'].includes(data.payment.status)) {
             stopPolling();
-            router.reload({ only: ['booking', 'lastPayment'] });
+            router.reload({ only: ['booking', 'lastPayment', 'receiptUrl'] });
         }
     } catch {
         /* reseau : on reessaie au prochain tour */
@@ -192,6 +194,13 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                         <div v-if="booking.bookable.return_date" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Retour</dt><dd>{{ fmtDate(booking.bookable.return_date) }}</dd></div>
                         <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Passagers</dt><dd>{{ booking.bookable.passenger_count }}</dd></div>
                     </template>
+                    <template v-else-if="item.isVehicle && booking.starts_at">
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Prise en charge</dt><dd class="text-right font-semibold">{{ fmtDate(booking.starts_at) }} a {{ new Date(booking.starts_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }}</dd></div>
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Restitution</dt><dd class="text-right font-semibold">{{ fmtDate(booking.ends_at) }}</dd></div>
+                        <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Duree</dt><dd>{{ booking.quantity }} jour(s)</dd></div>
+                        <div v-if="booking.meta?.pickup_label" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Remise</dt><dd class="text-right">{{ booking.meta.pickup_label }}<span v-if="booking.meta.pickup_address" class="block text-xs text-navy-500">{{ booking.meta.pickup_address }}</span></dd></div>
+                        <div v-if="booking.meta?.with_driver" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Chauffeur</dt><dd>Demande (tarif confirme par le loueur)</dd></div>
+                    </template>
                     <template v-else-if="item.isLodging && booking.starts_at">
                         <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Arrivee</dt><dd class="font-semibold">{{ fmtDate(booking.starts_at) }}</dd></div>
                         <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Depart</dt><dd class="font-semibold">{{ fmtDate(booking.ends_at) }}</dd></div>
@@ -248,6 +257,10 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                         <Link :href="`/voyage/vols/dossiers/${booking.bookable.reference}`" class="font-semibold underline">Suivre mon dossier</Link>
                     </p>
                     <p v-else class="mt-1 text-sm">Votre reservation {{ booking.reference }} est confirmee. Merci d'avoir choisi MOKILI TOUR !</p>
+                    <a v-if="receiptUrl" :href="receiptUrl" target="_blank" rel="noopener" class="mt-4 inline-flex items-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-800">
+                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a1 1 0 011 1v7.59l2.3-2.3a1 1 0 111.4 1.42l-4 4a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.42L9 10.59V3a1 1 0 011-1zM4 15a1 1 0 011 1v1h10v-1a1 1 0 112 0v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2a1 1 0 011-1z" /></svg>
+                        Voir et telecharger mon recu
+                    </a>
                 </div>
 
                 <div v-else-if="isPending" class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
