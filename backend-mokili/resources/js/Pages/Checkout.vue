@@ -278,7 +278,7 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
 
                 <form v-else class="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" @submit.prevent="pay">
                     <div v-if="lastPayment?.status === 'failed'" class="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                        Dernier essai refuse : {{ lastPayment.failure_reason ?? 'paiement non abouti' }}. Vous pouvez reessayer.
+                        Dernier essai refuse : {{ String(lastPayment.failure_reason ?? 'paiement non abouti').replace(/\.+$/, '') }}. Vous pouvez reessayer.
                     </div>
 
                     <div v-if="!countries.length" class="rounded-lg bg-slate-50 p-3 text-sm text-navy-700">
@@ -287,12 +287,12 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
 
                     <template v-else>
                         <div>
-                            <label class="text-xs font-bold uppercase tracking-wide text-navy-700">1. Pays</label>
+                            <label class="text-sm font-semibold text-navy-800">Pays</label>
                             <CountryPicker v-model="form.country_code" :countries="countries" class="mt-1.5" />
                         </div>
 
                         <div v-if="countryPayable && country?.networks?.length">
-                            <label class="text-xs font-bold uppercase tracking-wide text-navy-700">2. Operateur</label>
+                            <label class="text-sm font-semibold text-navy-800">Operateur</label>
                             <div class="mt-2 flex flex-wrap gap-2">
                                 <OperatorBadge
                                     v-for="n in country.networks"
@@ -306,7 +306,7 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                         </div>
 
                         <div>
-                            <label class="text-xs font-bold uppercase tracking-wide text-navy-700">{{ countryPayable && country?.networks?.length ? 3 : 2 }}. Numero Mobile Money</label>
+                            <label class="text-sm font-semibold text-navy-800">Numero Mobile Money</label>
                             <div class="mt-1.5 flex overflow-hidden rounded-xl border border-slate-300 bg-white focus-within:border-gold-400 focus-within:ring-2 focus-within:ring-gold-400">
                                 <span class="flex shrink-0 items-center gap-2 border-r border-slate-200 bg-slate-50 px-3 text-sm font-semibold tabular-nums text-navy-800">
                                     <span v-if="flagClass(country?.code)" :class="flagClass(country?.code)" class="!h-4 !w-6 rounded-sm bg-cover ring-1 ring-black/10" />

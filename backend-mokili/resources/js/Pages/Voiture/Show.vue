@@ -29,13 +29,19 @@ const price = computed(() => (v.value.display_price
     ? `${v.value.display_price.suffix === 'a partir de' ? 'A partir de ' : ''}${money(v.value.display_price.amount)} ${v.value.currency}`
     : 'Prix sur demande'));
 
+const cat = computed(() => usePage().props.catalogue?.voiture ?? {});
 const specs = computed(() => [
+    v.value.condition && ['Etat', cat.value.conditions?.[v.value.condition] ?? v.value.condition],
     v.value.year && ['Annee', v.value.year],
     v.value.seats && ['Places', `${v.value.seats} places`],
     v.value.offer_type !== 'mecanique' && v.value.transmission && ['Boite', v.value.transmission === 'manuelle' ? 'Manuelle' : 'Automatique'],
-    v.value.fuel && ['Carburant', v.value.fuel.charAt(0).toUpperCase() + v.value.fuel.slice(1)],
+    v.value.fuel && ['Carburant', cat.value.fuels?.[v.value.fuel] ?? v.value.fuel],
+    v.value.color && ['Couleur', cat.value.colors?.[v.value.color]?.[0] ?? v.value.color],
+    v.value.doors && ['Portes', `${v.value.doors} portes`],
+    v.value.engine && ['Moteur', v.value.engine],
+    v.value.offer_type === 'vente' && ['Premiere main', v.value.first_owner ? 'Oui' : 'Non'],
     v.value.mileage_km && ['Kilometrage', `${money(v.value.mileage_km)} km`],
-    v.value.category && ['Categorie', v.value.category === 'suv' ? 'SUV' : v.value.category.charAt(0).toUpperCase() + v.value.category.slice(1)],
+    v.value.category && ['Categorie', cat.value.categories?.[v.value.category] ?? v.value.category],
     v.value.city && ['Ville', v.value.city],
 ].filter(Boolean));
 
@@ -169,7 +175,7 @@ const CONDITIONS = [
 
                 <!-- Caracteristiques -->
                 <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <div v-for="[label, val] in specs" :key="label" class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                    <div v-for="[label, val] in specs.slice(0, 8)" :key="label" class="rounded-xl border border-slate-200 bg-white px-4 py-3">
                         <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{{ label }}</p>
                         <p class="mt-0.5 font-bold text-slate-900">{{ val }}</p>
                     </div>
@@ -185,6 +191,13 @@ const CONDITIONS = [
                 <section v-if="v.description" class="mt-8">
                     <h2 class="text-xl font-extrabold text-slate-900">Description</h2>
                     <p class="mt-2 whitespace-pre-line leading-relaxed text-slate-700">{{ v.description }}</p>
+                </section>
+
+                <section v-if="v.options?.length" class="mt-8">
+                    <h2 class="text-xl font-extrabold text-slate-900">Equipements</h2>
+                    <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        <span v-for="o in v.options" :key="o" class="flex items-center gap-2 text-sm text-slate-700"><span class="text-green-600">✓</span>{{ o }}</span>
+                    </div>
                 </section>
 
                 <section v-if="v.services?.length" class="mt-8">

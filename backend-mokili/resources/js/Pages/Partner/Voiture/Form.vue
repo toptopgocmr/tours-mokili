@@ -1,6 +1,6 @@
 <script setup>
 import PartnerLayout from '@/Layouts/PartnerLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 defineOptions({ layout: PartnerLayout });
@@ -32,7 +32,21 @@ const form = useForm({
     intent: 'draft',
     image: null,
     remove_image: false,
+    color: props.vehicle?.color ?? '',
+    doors: props.vehicle?.doors ?? '',
+    condition: props.vehicle?.condition ?? 'occasion',
+    first_owner: props.vehicle?.first_owner ?? false,
+    engine: props.vehicle?.engine ?? '',
+    options: props.vehicle?.options ?? [],
 });
+
+// Listes communes (config/catalogue.php > voiture).
+const cat = computed(() => usePage().props.catalogue?.voiture ?? {});
+const brandModels = computed(() => cat.value.brands?.[form.brand] ?? []);
+const toggleOption = (o) => {
+    const i = form.options.indexOf(o);
+    i >= 0 ? form.options.splice(i, 1) : form.options.push(o);
+};
 
 const statusLabels = { draft: 'Brouillon', pending: 'En attente de validation', published: 'Publie', rejected: 'Rejete' };
 const statusLabel = computed(() => statusLabels[props.vehicle?.status] ?? 'Brouillon');
@@ -93,11 +107,13 @@ const submit = (intent) => {
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Marque</label>
-            <input v-model="form.brand" type="text" class="mt-1 w-full rounded border-slate-300" required />
+            <input v-model="form.brand" type="text" list="mk-brands" placeholder="Choisir ou saisir" class="mt-1 w-full rounded border-slate-300" required />
+            <datalist id="mk-brands"><option v-for="(m, b) in cat.brands" :key="b" :value="b" /></datalist>
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Modele</label>
-            <input v-model="form.model" type="text" class="mt-1 w-full rounded border-slate-300" required />
+            <input v-model="form.model" type="text" list="mk-models" placeholder="Choisir ou saisir" class="mt-1 w-full rounded border-slate-300" required />
+            <datalist id="mk-models"><option v-for="m in brandModels" :key="m" :value="m" /></datalist>
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Annee</label>
@@ -106,11 +122,7 @@ const submit = (intent) => {
         <div>
             <label class="text-sm font-medium text-slate-700">Categorie</label>
             <select v-model="form.category" class="mt-1 w-full rounded border-slate-300">
-                <option value="citadine">Citadine</option>
-                <option value="berline">Berline</option>
-                <option value="suv">SUV</option>
-                <option value="utilitaire">Utilitaire</option>
-                <option value="luxe">Luxe</option>
+                <option v-for="(label, key) in cat.categories" :key="key" :value="key">{{ label }}</option>
             </select>
         </div>
         <div>
@@ -133,15 +145,55 @@ const submit = (intent) => {
             <input v-model.number="form.sale_price" type="number" min="0" step="1" class="mt-1 w-full rounded border-slate-300" :required="form.offer_type === 'vente'" />
             <p v-if="form.errors.sale_price" class="mt-1 text-xs text-red-600">{{ form.errors.sale_price }}</p>
         </div>
-        <div v-if="form.offer_type === 'vente'">
+        <div v-if="form.offer_type !== 'mecanique'">
             <label class="text-sm font-medium text-slate-700">Kilometrage</label>
             <input v-model.number="form.mileage_km" type="number" min="0" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div v-if="form.offer_type !== 'mecanique'">
             <label class="text-sm font-medium text-slate-700">Carburant</label>
             <select v-model="form.fuel" class="mt-1 w-full rounded border-slate-300">
-                <option value="">--</option><option value="essence">Essence</option><option value="diesel">Diesel</option><option value="hybride">Hybride</option><option value="electrique">Electrique</option>
+                <option value="">--</option>
+                <option v-for="(label, key) in cat.fuels" :key="key" :value="key">{{ label }}</option>
             </select>
+        </div>
+        <template v-if="form.offer_type !== 'mecanique'">
+            <div class="sm:col-span-2">
+                <label class="text-sm font-medium text-slate-700">Couleur</label>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <button v-for="(c, key) in cat.colors" :key="key" type="button" class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold" :class="form.color === key ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-700'" @click="form.color = form.color === key ? '' : key">
+                        <span class="h-3.5 w-3.5 rounded-full ring-1 ring-black/15" :style="{ background: c[1] }" />{{ c[0] }}
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-slate-700">Portes</label>
+                <select v-model="form.doors" class="mt-1 w-full rounded border-slate-300">
+                    <option value="">--</option><option :value="2">2 portes</option><option :value="3">3 portes</option><option :value="4">4 portes</option><option :value="5">5 portes</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-slate-700">Moteur</label>
+                <input v-model="form.engine" type="text" placeholder="ex. 2.0 L, V6, 150 ch" class="mt-1 w-full rounded border-slate-300" />
+            </div>
+        </template>
+        <template v-if="form.offer_type === 'vente'">
+            <div>
+                <label class="text-sm font-medium text-slate-700">Etat</label>
+                <select v-model="form.condition" class="mt-1 w-full rounded border-slate-300">
+                    <option v-for="(label, key) in cat.conditions" :key="key" :value="key">{{ label }}</option>
+                </select>
+            </div>
+            <label class="flex items-center gap-2 self-end pb-2 text-sm text-slate-700">
+                <input v-model="form.first_owner" type="checkbox" /> Premiere main
+            </label>
+        </template>
+        <div v-if="form.offer_type !== 'mecanique'" class="sm:col-span-2">
+            <label class="text-sm font-medium text-slate-700">Equipements</label>
+            <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <label v-for="o in cat.options" :key="o" class="flex items-center gap-2 text-sm text-slate-700">
+                    <input type="checkbox" :checked="form.options.includes(o)" @change="toggleOption(o)" /> {{ o }}
+                </label>
+            </div>
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Telephone / WhatsApp</label>

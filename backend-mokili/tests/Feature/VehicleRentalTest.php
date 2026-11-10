@@ -84,4 +84,26 @@ class VehicleRentalTest extends TestCase
         $this->get('/voiture?type=vente&year_min=2015&km_max=100000')->assertInertia(fn ($p) => $p->has('vehicles.data', 1)->where('vehicles.data.0.title', 'RAV4 a vendre'));
         $this->get('/voiture?type=vente&sort=prix_asc')->assertInertia(fn ($p) => $p->where('vehicles.data.0.title', 'Vieille Corolla')->has('facets.fuels', 2));
     }
+
+    public function test_seller_adds_sale_details_and_buyers_filter_them(): void
+    {
+        Vehicle::query()->delete();
+        $seller = User::factory()->create(['role' => 'partner', 'partner_verified_at' => now()]);
+        $this->actingAs($seller)->post('/partner/voiture', [
+            'title' => 'Toyota RAV4 2019', 'offer_type' => 'vente', 'brand' => 'Toyota', 'model' => 'RAV4', 'year' => 2019,
+            'category' => 'suv', 'transmission' => 'automatique', 'seats' => 5, 'sale_price' => 9500000, 'currency' => 'XAF',
+            'mileage_km' => 82000, 'fuel' => 'essence', 'color' => 'blanc', 'doors' => 5, 'condition' => 'occasion',
+            'first_owner' => true, 'engine' => '2.5 L', 'options' => ['GPS', 'Camera de recul'], 'is_active' => true, 'intent' => 'submit',
+        ])->assertRedirect();
+        $v = Vehicle::firstOrFail();
+        $this->assertSame('blanc', $v->color);
+        $this->assertTrue($v->first_owner);
+        $this->assertSame(['GPS', 'Camera de recul'], $v->options);
+
+        $v->update(['status' => 'published']);
+        $this->car(['title' => 'Noire', 'offer_type' => 'vente', 'price_per_day' => null, 'sale_price' => 5000000, 'color' => 'noir', 'fuel' => 'diesel']);
+        $this->get('/voiture?type=vente&color=blanc')->assertInertia(fn ($p) => $p->has('vehicles.data', 1)->where('vehicles.data.0.title', 'Toyota RAV4 2019'));
+        $this->get('/voiture?type=vente&brand=Toyota&model=RAV4&first_owner=1&doors=5')->assertInertia(fn ($p) => $p->has('vehicles.data', 1));
+        $this->get('/voiture?type=vente&fuel=diesel')->assertInertia(fn ($p) => $p->has('vehicles.data', 1)->where('vehicles.data.0.title', 'Noire'));
+    }
 }

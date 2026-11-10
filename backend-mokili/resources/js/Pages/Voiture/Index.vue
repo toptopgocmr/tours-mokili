@@ -6,7 +6,7 @@ import ListingImage from '@/Components/ListingImage.vue';
 import GuideCover from '@/Components/GuideCover.vue';
 import PhotoHero from '@/Components/PhotoHero.vue';
 import Paginator from '@/Components/Paginator.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 
 defineOptions({ layout: MainLayout });
@@ -45,6 +45,11 @@ const s = reactive({
     return_city: f.return_city ?? '',
     age: f.age ?? '30+',
     brand: f.brand ?? '',
+    model: f.model ?? '',
+    color: f.color ?? '',
+    condition: f.condition ?? '',
+    doors: f.doors ?? '',
+    first_owner: f.first_owner ? 1 : '',
     fuel: f.fuel ?? '',
     transmission: f.transmission ?? '',
     category: f.category ?? '',
@@ -58,7 +63,7 @@ const s = reactive({
 const query = () => {
     const keep = {
         location: ['type', 'city', 'vehicule', 'start', 'end', 'start_time', 'end_time', 'return_city', 'age', 'sort', 'transmission', 'category', 'price_max'],
-        vente: ['type', 'q', 'city', 'brand', 'fuel', 'transmission', 'category', 'price_min', 'price_max', 'year_min', 'km_max', 'sort'],
+        vente: ['type', 'q', 'city', 'brand', 'model', 'color', 'condition', 'doors', 'first_owner', 'fuel', 'transmission', 'category', 'price_min', 'price_max', 'year_min', 'km_max', 'sort'],
         mecanique: ['type', 'q', 'city'],
         '': ['type', 'q', 'city'],
     }[s.type] ?? ['type'];
@@ -79,7 +84,7 @@ const setType = (t) => {
     router.get('/voiture', query(), { preserveScroll: true, replace: true });
 };
 const resetVente = () => {
-    Object.assign(s, { q: '', brand: '', fuel: '', transmission: '', category: '', price_min: '', price_max: '', year_min: '', km_max: '' });
+    Object.assign(s, { q: '', brand: '', model: '', color: '', condition: '', doors: '', first_owner: '', fuel: '', transmission: '', category: '', price_min: '', price_max: '', year_min: '', km_max: '' });
     submit();
 };
 
@@ -97,7 +102,12 @@ const detailHref = (v) => {
 };
 const datesSearched = computed(() => s.type === 'location' && f.start && f.end);
 const filtersOpen = ref(false);
-const activeVente = computed(() => ['q', 'brand', 'fuel', 'transmission', 'category', 'price_min', 'price_max', 'year_min', 'km_max'].filter((k) => f[k]).length);
+const activeVente = computed(() => ['q', 'brand', 'model', 'color', 'condition', 'doors', 'first_owner', 'fuel', 'transmission', 'category', 'price_min', 'price_max', 'year_min', 'km_max'].filter((k) => f[k]).length);
+const cat = computed(() => usePage().props.catalogue?.voiture ?? {});
+const models = computed(() => cat.value.brands?.[s.brand] ?? []);
+const countOf = (list, key) => (props.facets[list] ?? []).find((x) => x.key === key)?.count ?? 0;
+const label = (group, key) => cat.value[group]?.[key] ?? cap(key);
+const colorOf = (key) => cat.value.colors?.[key];
 
 const HERO = {
     '': ['Location, vente et mecanique', 'Louez, achetez ou faites entretenir votre vehicule.'],
@@ -187,7 +197,33 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
             </div>
         </form>
 
-        <!-- ===== VENTE / TOUT / MECANIQUE : barre de recherche ===== -->
+        <!-- ===== VENTE : recherche facon La Centrale ===== -->
+        <form v-else-if="s.type === 'vente'" class="mx-auto max-w-6xl rounded-2xl bg-white p-5 shadow-[0_8px_30px_rgba(0,0,0,0.18)]" @submit.prevent="submit">
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+                <select v-model="s.brand" class="h-12 rounded-xl border-slate-300 text-sm" @change="s.model = ''">
+                    <option value="">Marque</option>
+                    <option v-for="(m, b) in cat.brands" :key="b" :value="b">{{ b }}</option>
+                </select>
+                <select v-model="s.model" class="h-12 rounded-xl border-slate-300 text-sm" :disabled="!models.length">
+                    <option value="">Modele</option>
+                    <option v-for="m in models" :key="m" :value="m">{{ m }}</option>
+                </select>
+                <select v-model="s.price_max" class="h-12 rounded-xl border-slate-300 text-sm">
+                    <option value="">Prix max</option>
+                    <option v-for="p in [1000000, 2000000, 3000000, 5000000, 7500000, 10000000, 15000000, 20000000, 30000000, 50000000]" :key="p" :value="p">{{ money(p) }} XAF</option>
+                </select>
+                <input v-model="s.city" type="text" placeholder="Ville" class="h-12 rounded-xl border-slate-300 text-sm" />
+                <button type="submit" class="h-12 rounded-xl bg-gold-500 px-8 font-bold text-navy-900 transition hover:bg-gold-400">Rechercher<span v-if="vehicles.total !== undefined"> ({{ vehicles.total }})</span></button>
+            </div>
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                <span class="text-slate-500">Carburant :</span>
+                <button v-for="(lbl, key) in cat.fuels" :key="key" type="button" class="rounded-full border px-3 py-1 text-xs font-semibold" :class="s.fuel === key ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700'" @click="s.fuel = s.fuel === key ? '' : key; submit()">{{ lbl }}</button>
+                <span class="ml-2 text-slate-500">Boite :</span>
+                <button v-for="[k, lbl] in [['automatique', 'Automatique'], ['manuelle', 'Manuelle']]" :key="k" type="button" class="rounded-full border px-3 py-1 text-xs font-semibold" :class="s.transmission === k ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700'" @click="s.transmission = s.transmission === k ? '' : k; submit()">{{ lbl }}</button>
+            </div>
+        </form>
+
+        <!-- ===== TOUT / MECANIQUE : barre de recherche ===== -->
         <form v-else class="mx-auto flex max-w-6xl flex-col gap-2 rounded-2xl bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.18)] sm:flex-row" @submit.prevent="submit">
             <input v-model="s.q" type="text" :placeholder="s.type === 'mecanique' ? 'Prestation, garage (ex. vidange)...' : 'Marque, modele (ex. Toyota RAV4)...'" class="h-12 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" />
             <input v-model="s.city" type="text" placeholder="Ville" class="h-12 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500 sm:w-52" />
@@ -233,9 +269,16 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                     </div>
                     <label class="block text-sm">
                         <span class="font-semibold text-slate-800">Marque</span>
-                        <select v-model="s.brand" class="mt-1 w-full rounded-lg border-slate-300 text-sm" @change="submit">
+                        <select v-model="s.brand" class="mt-1 w-full rounded-lg border-slate-300 text-sm" @change="s.model = ''; submit()">
                             <option value="">Toutes les marques</option>
-                            <option v-for="b in facets.brands" :key="b.key" :value="b.key">{{ b.key }} ({{ b.count }})</option>
+                            <option v-for="(m, b) in cat.brands" :key="b" :value="b">{{ b }}{{ countOf('brands', b) ? ` (${countOf('brands', b)})` : '' }}</option>
+                        </select>
+                    </label>
+                    <label v-if="models.length" class="block text-sm">
+                        <span class="font-semibold text-slate-800">Modele</span>
+                        <select v-model="s.model" class="mt-1 w-full rounded-lg border-slate-300 text-sm" @change="submit">
+                            <option value="">Tous les modeles</option>
+                            <option v-for="m in models" :key="m" :value="m">{{ m }}</option>
                         </select>
                     </label>
                     <div class="text-sm">
@@ -268,17 +311,40 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                             <button v-for="[k, label] in [['automatique', 'Automatique'], ['manuelle', 'Manuelle']]" :key="k" type="button" class="rounded-lg border px-2 py-2 text-xs font-semibold" :class="s.transmission === k ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700'" @click="s.transmission = s.transmission === k ? '' : k; submit()">{{ label }}</button>
                         </div>
                     </div>
-                    <div v-if="facets.fuels.length" class="text-sm">
+                    <div class="text-sm">
                         <span class="font-semibold text-slate-800">Carburant</span>
-                        <label v-for="x in facets.fuels" :key="x.key" class="mt-2 flex items-center gap-2 text-slate-700">
-                            <input type="radio" name="fuel" :checked="s.fuel === x.key" class="text-navy-900" @change="s.fuel = x.key; submit()" />
-                            <span class="flex-1">{{ cap(x.key) }}</span><span class="text-xs text-slate-400">{{ x.count }}</span>
+                        <label v-for="(lbl, key) in cat.fuels" :key="key" class="mt-2 flex items-center gap-2 text-slate-700">
+                            <input type="checkbox" :checked="s.fuel === key" class="rounded text-navy-900" @change="s.fuel = s.fuel === key ? '' : key; submit()" />
+                            <span class="flex-1">{{ lbl }}</span><span class="text-xs text-slate-400">{{ countOf('fuels', key) }}</span>
                         </label>
                     </div>
-                    <div v-if="facets.categories.length" class="text-sm">
+                    <div class="text-sm">
+                        <span class="font-semibold text-slate-800">Couleur</span>
+                        <div class="mt-2 grid grid-cols-6 gap-2">
+                            <button v-for="(c, key) in cat.colors" :key="key" type="button" :title="c[0]" class="h-8 w-8 rounded-full ring-1 ring-black/15 transition" :class="s.color === key ? 'ring-2 ring-offset-2 ring-navy-900' : 'hover:scale-110'" :style="{ background: c[1] }" @click="s.color = s.color === key ? '' : key; submit()" />
+                        </div>
+                        <p v-if="s.color" class="mt-1 text-xs text-slate-500">{{ colorOf(s.color)?.[0] }}</p>
+                    </div>
+                    <div class="text-sm">
+                        <span class="font-semibold text-slate-800">Etat</span>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <button v-for="(lbl, key) in cat.conditions" :key="key" type="button" class="rounded-full border px-3 py-1 text-xs font-semibold" :class="s.condition === key ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700'" @click="s.condition = s.condition === key ? '' : key; submit()">{{ lbl }}</button>
+                        </div>
+                        <label class="mt-2 flex items-center gap-2 text-slate-700">
+                            <input type="checkbox" :checked="!!s.first_owner" class="rounded text-navy-900" @change="s.first_owner = s.first_owner ? '' : 1; submit()" /> Premiere main uniquement
+                        </label>
+                    </div>
+                    <label class="block text-sm">
+                        <span class="font-semibold text-slate-800">Portes</span>
+                        <select v-model="s.doors" class="mt-1 w-full rounded-lg border-slate-300 text-sm" @change="submit">
+                            <option value="">Peu importe</option>
+                            <option v-for="n in [2, 3, 4, 5]" :key="n" :value="n">{{ n }} portes</option>
+                        </select>
+                    </label>
+                    <div class="text-sm">
                         <span class="font-semibold text-slate-800">Type de carrosserie</span>
                         <div class="mt-2 flex flex-wrap gap-1.5">
-                            <button v-for="x in facets.categories" :key="x.key" type="button" class="rounded-full border px-3 py-1 text-xs font-semibold" :class="s.category === x.key ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700'" @click="s.category = s.category === x.key ? '' : x.key; submit()">{{ cap(x.key) }}</button>
+                            <button v-for="(lbl, key) in cat.categories" :key="key" type="button" class="rounded-full border px-3 py-1 text-xs font-semibold" :class="s.category === key ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700'" @click="s.category = s.category === key ? '' : key; submit()">{{ lbl }}</button>
                         </div>
                     </div>
                 </div>
@@ -306,14 +372,17 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                                 <div class="mt-2 flex flex-wrap gap-1.5 text-xs font-semibold text-slate-700">
                                     <span v-if="v.year" class="rounded-md bg-slate-100 px-2 py-1">{{ v.year }}</span>
                                     <span v-if="v.mileage_km" class="rounded-md bg-slate-100 px-2 py-1">{{ money(v.mileage_km) }} km</span>
-                                    <span v-if="v.fuel" class="rounded-md bg-slate-100 px-2 py-1">{{ cap(v.fuel) }}</span>
+                                    <span v-if="v.fuel" class="rounded-md bg-slate-100 px-2 py-1">{{ label('fuels', v.fuel) }}</span>
                                     <span v-if="v.transmission" class="rounded-md bg-slate-100 px-2 py-1">{{ cap(v.transmission) }}</span>
-                                    <span v-if="v.category" class="rounded-md bg-slate-100 px-2 py-1">{{ cap(v.category) }}</span>
+                                    <span v-if="v.category" class="rounded-md bg-slate-100 px-2 py-1">{{ label('categories', v.category) }}</span>
+                                    <span v-if="v.color" class="flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1"><span class="h-2.5 w-2.5 rounded-full ring-1 ring-black/20" :style="{ background: colorOf(v.color)?.[1] }" />{{ colorOf(v.color)?.[0] ?? cap(v.color) }}</span>
+                                    <span v-if="v.condition === 'neuf'" class="rounded-md bg-green-100 px-2 py-1 text-green-800">Neuf</span>
+                                    <span v-if="v.first_owner" class="rounded-md bg-blue-100 px-2 py-1 text-blue-800">1re main</span>
                                 </div>
                                 <p v-if="v.description" class="mt-2 line-clamp-2 text-sm text-slate-500">{{ v.description }}</p>
                             </div>
                             <div class="flex items-end justify-between gap-3">
-                                <p class="text-sm text-slate-500">📍 {{ v.city }}</p>
+                                <p class="text-sm text-slate-500">{{ v.city }}</p>
                                 <div class="text-right">
                                     <p v-if="v.display_price?.original" class="text-sm text-red-500 line-through">{{ money(v.display_price.original) }} {{ v.currency }}</p>
                                     <p class="text-2xl font-extrabold text-navy-900">{{ v.display_price ? `${money(v.display_price.amount)} ${v.currency}` : 'Prix sur demande' }}</p>

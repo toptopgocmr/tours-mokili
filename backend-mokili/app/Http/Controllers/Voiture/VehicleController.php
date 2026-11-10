@@ -38,6 +38,11 @@ class VehicleController extends Controller
             ->when($request->input('vehicule') === 'utilitaires', fn ($q) => $q->where('category', 'utilitaire'))
             ->when($request->input('vehicule') === 'voitures', fn ($q) => $q->where(fn ($w) => $w->whereNull('category')->orWhere('category', '!=', 'utilitaire')))
             ->when($request->filled('brand'), fn ($q) => $q->where('brand', $request->string('brand')))
+            ->when($request->filled('model'), fn ($q) => $q->where('model', 'like', '%'.$request->string('model').'%'))
+            ->when($request->filled('color'), fn ($q) => $q->where('color', $request->string('color')))
+            ->when($request->filled('condition'), fn ($q) => $q->where('condition', $request->string('condition')))
+            ->when($request->filled('doors'), fn ($q) => $q->where('doors', $request->integer('doors')))
+            ->when($request->boolean('first_owner'), fn ($q) => $q->where('first_owner', true))
             ->when($request->filled('fuel'), fn ($q) => $q->where('fuel', $request->string('fuel')))
             ->when($request->filled('transmission'), fn ($q) => $q->where('transmission', $request->string('transmission')))
             ->when($request->filled('category'), fn ($q) => $q->where('category', $request->string('category')))
@@ -64,7 +69,7 @@ class VehicleController extends Controller
             default => $query->latest(),
         };
 
-        $pool = (clone $base)->get(['brand', 'fuel', 'transmission', 'category']);
+        $pool = (clone $base)->get(['brand', 'fuel', 'transmission', 'category', 'color', 'condition']);
         $count = fn ($col) => $pool->pluck($col)->filter()->countBy()->sortKeys()->map(fn ($n, $k) => ['key' => $k, 'count' => $n])->values();
 
         return Inertia::render('Voiture/Index', [
@@ -75,9 +80,9 @@ class VehicleController extends Controller
                     ->when($request->filled('city'), fn ($q) => $q->where('city', 'like', '%'.$request->string('city').'%'))
                     ->orderByDesc('is_featured')->orderBy('name')->limit(24)->get()
                 : [],
-            'filters' => (object) ($request->only('city', 'q', 'start', 'end', 'start_time', 'end_time', 'vehicule', 'brand', 'fuel', 'transmission', 'category', 'seats', 'price_min', 'price_max', 'year_min', 'km_max', 'sort', 'age', 'return_city') + ['type' => $type]),
+            'filters' => (object) ($request->only('city', 'q', 'start', 'end', 'start_time', 'end_time', 'vehicule', 'brand', 'model', 'color', 'condition', 'doors', 'first_owner', 'fuel', 'transmission', 'category', 'seats', 'price_min', 'price_max', 'year_min', 'km_max', 'sort', 'age', 'return_city') + ['type' => $type]),
             'offerTypes' => $types,
-            'facets' => ['brands' => $count('brand'), 'fuels' => $count('fuel'), 'transmissions' => $count('transmission'), 'categories' => $count('category')],
+            'facets' => ['brands' => $count('brand'), 'fuels' => $count('fuel'), 'transmissions' => $count('transmission'), 'categories' => $count('category'), 'colors' => $count('color'), 'conditions' => $count('condition')],
             'sorts' => self::SORTS,
         ]);
     }
