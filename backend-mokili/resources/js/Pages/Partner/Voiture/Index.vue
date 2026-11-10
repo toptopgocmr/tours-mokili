@@ -37,7 +37,7 @@ const statusLabel = (status) => ({
                 <tr v-for="v in vehicles.data" :key="v.id">
                     <td class="font-medium text-slate-900">{{ v.title }}</td>
                     <td>{{ v.brand }} {{ v.model }}</td>
-                    <td>{{ Number(v.price_per_day).toLocaleString('fr-FR') }} {{ v.currency }}</td>
+                    <td>{{ Number(v.price_per_day).toLocaleString('fr-FR') }} {{ $cur(v.currency) }}</td>
                     <td><span :class="statusBadge(v.status)">{{ statusLabel(v.status) }}</span></td>
                     <td class="space-x-3 text-right">
                         <Link :href="`/partner/voiture/${v.id}/editer`" class="font-semibold text-[#0972D3] hover:underline">Editer</Link>

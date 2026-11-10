@@ -55,7 +55,7 @@ const badgeClass = (s) => ({
                     <td class="font-medium text-slate-900">{{ b.reference }}</td>
                     <td>{{ b.user?.name }}</td>
                     <td>{{ b.bookable_type?.split('\\').pop() }}</td>
-                    <td>{{ Number(b.total_amount).toLocaleString('fr-FR') }} {{ b.currency }}</td>
+                    <td>{{ Number(b.total_amount).toLocaleString('fr-FR') }} {{ $cur(b.currency) }}</td>
                     <td><span :class="badgeClass(b.status)">{{ b.status }}</span></td>
                 </tr>
                 <tr v-if="!bookings.data.length"><td colspan="5" class="py-6 text-center text-slate-400">Aucune reservation.</td></tr>

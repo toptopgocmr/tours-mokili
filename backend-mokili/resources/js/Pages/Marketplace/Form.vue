@@ -123,7 +123,7 @@ const err = (k) => form.errors[k];
 
             <section class="grid gap-4 rounded-2xl border p-5 sm:grid-cols-2">
                 <div>
-                    <label class="text-sm font-medium text-navy-900">{{ form.listing_type === 'recherche' ? 'Budget (XAF)' : 'Prix (XAF)' }}</label>
+                    <label class="text-sm font-medium text-navy-900">{{ form.listing_type === 'recherche' ? 'Budget (FCFA)' : 'Prix (FCFA)' }}</label>
                     <input v-model="form.price" type="number" min="0" required class="mt-1 w-full rounded-lg border-gray-300" />
                     <p v-if="err('price')" class="mt-1 text-xs text-red-600">{{ err('price') }}</p>
                 </div>

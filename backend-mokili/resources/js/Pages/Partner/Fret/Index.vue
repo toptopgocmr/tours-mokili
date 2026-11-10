@@ -40,7 +40,7 @@ const statusLabel = (status) => ({
                     <td class="font-medium text-slate-900">{{ o.title }}</td>
                     <td>{{ o.origin_city }} &rarr; {{ o.destination_city }}</td>
                     <td class="uppercase">{{ modeLabel[o.mode] }}</td>
-                    <td>{{ Number(o.price_per_kg).toLocaleString('fr-FR') }} {{ o.currency }}</td>
+                    <td>{{ Number(o.price_per_kg).toLocaleString('fr-FR') }} {{ $cur(o.currency) }}</td>
                     <td><span :class="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
                     <td class="space-x-3 text-right">
                         <Link :href="`/partner/fret/${o.id}/editer`" class="font-semibold text-[#0972D3] hover:underline">Editer</Link>

@@ -187,8 +187,8 @@ const submit = () => {
                                             <p v-if="tooMany" class="mt-1 text-xs font-semibold text-red-600">Maximum {{ listing.max_guests }} voyageurs</p>
                                         </td>
                                         <td class="border-r px-4 py-4">
-                                            <p v-if="listing.promo" class="text-sm text-red-600 line-through">{{ money(base * (nights || 1)) }} {{ listing.currency }}</p>
-                                            <p class="text-lg font-bold text-slate-900">{{ money(night * (nights || 1)) }} {{ listing.currency }}</p>
+                                            <p v-if="listing.promo" class="text-sm text-red-600 line-through">{{ money(base * (nights || 1)) }} {{ $cur(listing.currency) }}</p>
+                                            <p class="text-lg font-bold text-slate-900">{{ money(night * (nights || 1)) }} {{ $cur(listing.currency) }}</p>
                                             <p class="text-[11px] text-slate-500">Taxes et frais compris</p>
                                             <PromoBadge :promo="listing.promo" class="mt-1" />
                                         </td>
@@ -231,11 +231,11 @@ const submit = () => {
                         <p v-if="form.errors.guests" class="mt-1 text-xs text-red-600">{{ form.errors.guests }}</p>
 
                         <div class="mt-4 rounded-lg bg-blue-50 p-3 text-sm">
-                            <div class="flex justify-between"><span>{{ money(night) }} {{ listing.currency }} × {{ nights }} nuit(s)</span><span>{{ money(total) }}</span></div>
+                            <div class="flex justify-between"><span>{{ money(night) }} {{ $cur(listing.currency) }} × {{ nights }} nuit(s)</span><span>{{ money(total) }}</span></div>
                             <div v-if="saving > 0" class="mt-1 flex justify-between text-green-700"><span>Promotion</span><span>− {{ money(saving) }}</span></div>
                             <div class="mt-2 flex items-end justify-between border-t border-blue-100 pt-2">
                                 <span class="font-semibold">Total</span>
-                                <span class="text-2xl font-extrabold text-slate-900">{{ money(total) }} {{ listing.currency }}</span>
+                                <span class="text-2xl font-extrabold text-slate-900">{{ money(total) }} {{ $cur(listing.currency) }}</span>
                             </div>
                         </div>
 
@@ -260,7 +260,7 @@ const submit = () => {
                         <div class="p-3">
                             <p class="truncate font-bold text-slate-900">{{ l.title }}</p>
                             <p class="text-xs text-slate-500">{{ l.city }} · {{ l.max_guests }} voyageurs</p>
-                            <p class="mt-2 text-sm">A partir de <b>{{ money(l.final_price_per_night ?? l.price_per_night) }} {{ l.currency }}</b> / nuit</p>
+                            <p class="mt-2 text-sm">A partir de <b>{{ money(l.final_price_per_night ?? l.price_per_night) }} {{ $cur(l.currency) }}</b> / nuit</p>
                         </div>
                     </Link>
                 </div>

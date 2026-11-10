@@ -21,7 +21,7 @@ const props = defineProps({
     kpis: { type: Object, default: () => ({}) },
 });
 
-const money = (v) => `${Number(v ?? 0).toLocaleString('fr-FR')} XAF`;
+const money = (v) => `${Number(v ?? 0).toLocaleString('fr-FR')} FCFA`;
 
 const cards = [
     { key: 'users', label: 'Clients', icon: UsersIcon, color: 'text-[#0972D3]', bg: 'bg-blue-50' },
@@ -127,7 +127,7 @@ const badgeClass = (status) => ({
                         <tr v-for="b in recentBookings" :key="b.id">
                             <td class="font-medium text-slate-900">{{ b.reference }}</td>
                             <td>{{ b.user?.name }}</td>
-                            <td>{{ Number(b.total_amount).toLocaleString('fr-FR') }} {{ b.currency }}</td>
+                            <td>{{ Number(b.total_amount).toLocaleString('fr-FR') }} {{ $cur(b.currency) }}</td>
                             <td><span :class="badgeClass(b.status)">{{ b.status }}</span></td>
                         </tr>
                         <tr v-if="!recentBookings.length"><td colspan="4" class="py-4 text-center text-slate-400">Aucune reservation.</td></tr>

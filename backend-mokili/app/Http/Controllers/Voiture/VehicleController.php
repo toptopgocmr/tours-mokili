@@ -75,7 +75,13 @@ class VehicleController extends Controller
         $pool = (clone $base)->get(['brand', 'fuel', 'transmission', 'category', 'color', 'condition']);
         $count = fn ($col) => $pool->pluck($col)->filter()->countBy()->sortKeys()->map(fn ($n, $k) => ['key' => $k, 'count' => $n])->values();
 
-        $page = $query->paginate(12)->withQueryString();
+        $page = $query->with('owner:id,name,company_name,partner_verified_at')->paginate(12)->withQueryString();
+        // Vendeur affiche sur la carte (jamais pour les annonces d'exemple).
+        $page->getCollection()->each(function (Vehicle $v) {
+            $v->setAttribute('seller_name', $v->is_demo || ! $v->owner ? null : ($v->owner->company_name ?: $v->owner->name));
+            $v->setAttribute('seller_verified', (bool) $v->owner?->partner_verified_at);
+            $v->unsetRelation('owner');
+        });
         // Vente : vehicules deja reserves par un acompte.
         $reserved = $type === 'vente' ? \App\Models\Booking::query()->where('bookable_type', Vehicle::class)
             ->whereIn('bookable_id', $page->getCollection()->pluck('id'))->where('meta->kind', 'acompte_vente')

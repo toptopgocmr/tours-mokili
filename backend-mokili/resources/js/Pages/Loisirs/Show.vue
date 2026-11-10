@@ -19,7 +19,7 @@ const form = useForm({ adults: 1, children: 0, visit_date: today, notes: '' });
 const adultPrice = computed(() => Number(props.park.final_price_adult ?? props.park.price_adult ?? 0));
 const childPrice = computed(() => Number(props.park.final_price_child ?? props.park.price_child ?? props.park.price_adult ?? 0));
 const total = computed(() => form.adults * adultPrice.value + form.children * childPrice.value);
-const fmt = (n) => `${Number(n).toLocaleString('fr-FR')} ${props.park.currency}`;
+const fmt = (n) => `${Number(n).toLocaleString('fr-FR')} ${props.park.currency === 'XAF' ? 'FCFA' : props.park.currency}`;
 
 const submit = () => form.post(`/divertissement/parcs/${props.park.slug}/reserver`);
 

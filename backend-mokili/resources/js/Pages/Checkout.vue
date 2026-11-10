@@ -196,8 +196,8 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                     </template>
                     <template v-else-if="booking.meta?.kind === 'acompte_vente'">
                         <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Objet</dt><dd class="font-semibold">Acompte de reservation du vehicule</dd></div>
-                        <div v-if="booking.meta.sale_price" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Prix du vehicule</dt><dd>{{ money(booking.meta.sale_price) }} {{ booking.currency }}</dd></div>
-                        <div v-if="booking.meta.sale_price" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Reste a regler au vendeur</dt><dd class="font-semibold">{{ money(booking.meta.sale_price - booking.total_amount) }} {{ booking.currency }}</dd></div>
+                        <div v-if="booking.meta.sale_price" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Prix du vehicule</dt><dd>{{ money(booking.meta.sale_price) }} {{ $cur(booking.currency) }}</dd></div>
+                        <div v-if="booking.meta.sale_price" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Reste a regler au vendeur</dt><dd class="font-semibold">{{ money(booking.meta.sale_price - booking.total_amount) }} {{ $cur(booking.currency) }}</dd></div>
                     </template>
                     <template v-else-if="item.isVehicle && booking.starts_at">
                         <div class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Prise en charge</dt><dd class="text-right font-semibold">{{ fmtDate(booking.starts_at) }} a {{ new Date(booking.starts_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) }}</dd></div>
@@ -217,11 +217,11 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                         <div v-if="booking.meta?.adults !== undefined" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Billets</dt><dd>{{ booking.meta.adults }} adulte(s), {{ booking.meta.children ?? 0 }} enfant(s)</dd></div>
                         <div v-else-if="!ride" class="flex justify-between gap-4 px-4 py-3"><dt class="text-navy-500">Quantite</dt><dd>{{ booking.quantity }}</dd></div>
                     </template>
-                    <div v-if="Number(booking.unit_price) && booking.quantity > 1" class="flex justify-between gap-4 px-4 py-3 text-navy-600"><dt>{{ money(booking.unit_price) }} {{ booking.currency }} × {{ booking.quantity }}</dt><dd>{{ money(booking.total_amount) }} {{ booking.currency }}</dd></div>
+                    <div v-if="Number(booking.unit_price) && booking.quantity > 1" class="flex justify-between gap-4 px-4 py-3 text-navy-600"><dt>{{ money(booking.unit_price) }} {{ $cur(booking.currency) }} × {{ booking.quantity }}</dt><dd>{{ money(booking.total_amount) }} {{ $cur(booking.currency) }}</dd></div>
                 </dl>
                 <div class="flex items-end justify-between bg-navy-900 px-4 py-4 text-white">
                     <span class="text-sm text-white/80">Total a payer</span>
-                    <span class="text-2xl font-extrabold text-gold-400">{{ money(booking.total_amount) }} {{ booking.currency }}</span>
+                    <span class="text-2xl font-extrabold text-gold-400">{{ money(booking.total_amount) }} {{ $cur(booking.currency) }}</span>
                 </div>
             </div>
             <p v-if="isFlight" class="mt-3 rounded-xl bg-navy-50/70 p-3 text-xs text-navy-700">Le prix a ete confirme aupres de la compagnie. Apres le paiement, la reservation puis l'emission du billet sont suivies dans votre dossier.</p>
@@ -275,7 +275,7 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                         <p class="font-semibold">En attente de votre validation</p>
                     </div>
                     <p class="mt-2 text-sm">
-                        Une demande de {{ Number(lastPayment.amount).toLocaleString('fr-FR') }} {{ lastPayment.currency }} a ete envoyee au
+                        Une demande de {{ Number(lastPayment.amount).toLocaleString('fr-FR') }} {{ $cur(lastPayment.currency) }} a ete envoyee au
                         <strong>+{{ lastPayment.phone }}</strong>.
                         Composez votre code secret Mobile Money pour confirmer. Cette page se met a jour automatiquement.
                     </p>
@@ -330,7 +330,7 @@ const detectedBrand = computed(() => detectCardBrand(cardForm.value.number));
                         </div>
 
                         <button type="submit" class="btn-gold w-full py-3.5 text-base disabled:cursor-not-allowed disabled:opacity-50" :disabled="form.processing || !countryPayable || !form.gateway || !form.phone">
-                            {{ form.processing ? 'Envoi de la demande...' : `Payer ${Number(booking.total_amount).toLocaleString('fr-FR')} ${booking.currency}` }}
+                            {{ form.processing ? 'Envoi de la demande...' : `Payer ${Number(booking.total_amount).toLocaleString('fr-FR')} ${$cur(booking.currency)}` }}
                         </button>
                         <p class="text-center text-xs text-navy-500">
                             Vous recevrez une notification sur votre telephone pour valider avec votre code secret.

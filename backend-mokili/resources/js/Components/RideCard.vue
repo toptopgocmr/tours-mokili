@@ -84,7 +84,7 @@ const money = (n) => n.toLocaleString('fr-FR');
 
             <!-- Prix -->
             <div class="shrink-0 text-right">
-                <p class="text-2xl font-extrabold tabular-nums text-navy-900">{{ money(passengers > 1 ? total : price) }}<span class="ml-1 text-sm font-bold">{{ offer.currency }}</span></p>
+                <p class="text-2xl font-extrabold tabular-nums text-navy-900">{{ money(passengers > 1 ? total : price) }}<span class="ml-1 text-sm font-bold">{{ $cur(offer.currency) }}</span></p>
                 <p v-if="passengers > 1" class="text-xs text-navy-500">{{ passengers }} voyageurs</p>
                 <p v-if="Number(offer.discount_percent) > 0" class="mt-1 inline-block rounded bg-rose-600 px-1.5 text-[10px] font-bold text-white">-{{ offer.discount_percent }}%<span v-if="offer.promo_label"> · {{ offer.promo_label }}</span></p>
             </div>

@@ -39,7 +39,7 @@ const statusLabel = (status) => ({
                 <tr v-for="l in listings.data" :key="l.id">
                     <td class="font-medium text-slate-900">{{ l.title }}</td>
                     <td>{{ l.city }}</td>
-                    <td>{{ Number(l.price_per_night).toLocaleString('fr-FR') }} {{ l.currency }}</td>
+                    <td>{{ Number(l.price_per_night).toLocaleString('fr-FR') }} {{ $cur(l.currency) }}</td>
                     <td><span :class="statusBadge(l.status)">{{ statusLabel(l.status) }}</span></td>
                     <td class="space-x-3 text-right">
                         <Link :href="`/partner/logement/${l.id}/editer`" class="font-semibold text-[#0972D3] hover:underline">Editer</Link>

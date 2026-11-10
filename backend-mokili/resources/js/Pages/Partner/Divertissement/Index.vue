@@ -38,7 +38,7 @@ const statusLabel = (status) => ({
                     <td class="font-medium text-slate-900">{{ e.title }}</td>
                     <td>{{ e.venue ?? e.city }}</td>
                     <td>{{ new Date(e.starts_at).toLocaleDateString('fr-FR') }}</td>
-                    <td>{{ Number(e.price).toLocaleString('fr-FR') }} {{ e.currency }}</td>
+                    <td>{{ Number(e.price).toLocaleString('fr-FR') }} {{ $cur(e.currency) }}</td>
                     <td><span :class="statusBadge(e.status)">{{ statusLabel(e.status) }}</span></td>
                     <td class="space-x-3 text-right">
                         <Link :href="`/partner/divertissement/${e.id}/editer`" class="font-semibold text-[#0972D3] hover:underline">Editer</Link>

@@ -47,7 +47,7 @@ const remove = (offer) => {
                     <td class="font-medium text-slate-900">{{ o.title }}</td>
                     <td class="capitalize">{{ o.type }}<span v-if="o.type === 'circuit' && o.transport_mode_label" class="text-slate-500"> · {{ o.transport_mode_label }}</span></td>
                     <td>{{ o.destination_city }}</td>
-                    <td>{{ Number(o.price).toLocaleString('fr-FR') }} {{ o.currency }}</td>
+                    <td>{{ Number(o.price).toLocaleString('fr-FR') }} {{ $cur(o.currency) }}</td>
                     <td>
                         <span :class="o.is_active ? 'console-badge console-badge-success' : 'console-badge console-badge-neutral'">{{ o.is_active ? 'Active' : 'Inactive' }}</span>
                     </td>

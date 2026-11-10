@@ -338,7 +338,7 @@ const cardSubtitle = (offer) => {
                                         <span class="h-3 w-3 rounded-full border-2 border-navy-900" /><span class="truncate font-bold text-navy-900">{{ r.to }}</span>
                                     </div>
                                     <p class="mt-3 text-sm text-navy-600">Des</p>
-                                    <p class="text-2xl font-extrabold text-navy-900">{{ r.price.toLocaleString('fr-FR') }} <span class="text-sm">XAF</span></p>
+                                    <p class="text-2xl font-extrabold text-navy-900">{{ r.price.toLocaleString('fr-FR') }} <span class="text-sm">FCFA</span></p>
                                 </div>
                                 <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#2f6fe4] text-xl text-white">→</span>
                             </div>
@@ -347,7 +347,7 @@ const cardSubtitle = (offer) => {
                             <p class="font-bold text-navy-900">Vers {{ r.to }} depuis</p>
                             <button v-for="o in r.others" :key="o.from" type="button" class="flex w-full items-center justify-between py-1.5 text-sm hover:text-sky-700" @click="routeTo(o.from, r.to)">
                                 <span class="font-medium">{{ o.from }}</span>
-                                <span class="font-bold">{{ o.price.toLocaleString('fr-FR') }} XAF ›</span>
+                                <span class="font-bold">{{ o.price.toLocaleString('fr-FR') }} FCFA ›</span>
                             </button>
                         </div>
                     </article>
@@ -413,7 +413,7 @@ const cardSubtitle = (offer) => {
                     <p class="mb-4 text-sm text-navy-600">
                         <strong class="text-navy-900">{{ filteredRides.length }} trajet{{ filteredRides.length > 1 ? 's' : '' }} disponible{{ filteredRides.length > 1 ? 's' : '' }}</strong>
                         <span v-if="from || destination"> · {{ from || 'Partout' }} → {{ destination || 'Partout' }}</span>
-                        <span v-if="cheapest != null"> · a partir de {{ cheapest.toLocaleString('fr-FR') }} XAF</span>
+                        <span v-if="cheapest != null"> · a partir de {{ cheapest.toLocaleString('fr-FR') }} FCFA</span>
                     </p>
                     <section v-for="g in rideDays" :key="g.key" class="mb-6">
                         <h3 class="mb-3 text-lg font-extrabold text-navy-900">{{ g.label }}</h3>
@@ -500,7 +500,7 @@ const cardSubtitle = (offer) => {
                     <p class="mt-2 text-sm font-semibold text-gold-600">
                         <span v-if="isFlight(offer)" class="mr-1 text-xs font-normal text-navy-500">a partir de</span>
                         <span v-if="discounted(offer)" class="mr-1 text-xs font-normal text-navy-400 line-through">{{ Number(offer.price).toLocaleString('fr-FR') }}</span>
-                        {{ Number(discounted(offer) ?? offer.price).toLocaleString('fr-FR') }} {{ offer.currency }}
+                        {{ Number(discounted(offer) ?? offer.price).toLocaleString('fr-FR') }} {{ $cur(offer.currency) }}
                     </p>
                 </div>
             </Link>

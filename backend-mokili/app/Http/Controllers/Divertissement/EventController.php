@@ -21,37 +21,32 @@ class EventController extends Controller
     public function index(Request $request, TourismeCatalog $catalog): Response
     {
         $tab = $catalog->resolveTab($request->string('tab')->toString(), $request->string('category')->toString());
-        $filters = ['city' => $request->string('city')->toString() ?: null, 'type' => $request->string('type')->toString() ?: null];
+        $filters = [
+            'city' => $request->string('city')->toString() ?: null,
+            'type' => $request->string('type')->toString() ?: null,
+            'q' => $request->string('q')->toString() ?: null,
+        ];
 
-        $props = [
+        // Toutes les cartes (TOUT = tous les onglets), puis pagination 12 par page.
+        $all = $catalog->cards($tab, $filters);
+        $page = max(1, $request->integer('page', 1));
+        $perPage = 12;
+        $counts = $tab ? null : $all->countBy('tab');
+
+        return Inertia::render('Divertissement/Index', [
             'tabs' => collect($catalog->tabs())->map(fn ($t) => $t['label']),
             'tab' => $tab,
             'filters' => (object) array_filter($filters + ['tab' => $tab]),
             'parkCategories' => AttractionPark::CATEGORIES,
-        ];
-
-        if ($tab) {
-            $result = $catalog->items($tab, $filters);
-            $props['source'] = $result['source'];
-            $props['items'] = $result['items'];
-        } else {
-            // Apercu : prochains evenements, parcs et adresses a la une.
-            $city = $filters['city'];
-            $props['preview'] = [
-                'events' => Event::query()->active()->where('starts_at', '>=', now()->subHours(6))
-                    ->when($city, fn ($q) => $q->where('city', 'like', "%{$city}%"))
-                    ->orderBy('starts_at')->limit(6)->get(),
-                'parks' => AttractionPark::query()->active()
-                    ->when($city, fn ($q) => $q->where('city', 'like', "%{$city}%"))
-                    ->orderByDesc('is_featured')->orderBy('name')->limit(6)->get(),
-                'places' => Business::query()->active()
-                    ->whereIn('category', ['night_club', 'restaurant', 'bar_lounge', 'site_touristique'])
-                    ->when($city, fn ($q) => $q->where('city', 'like', "%{$city}%"))
-                    ->orderByDesc('is_featured')->orderBy('name')->limit(8)->get(),
-            ];
-        }
-
-        return Inertia::render('Divertissement/Index', $props);
+            'cities' => $catalog->cities(),
+            'counts' => $counts,
+            'cards' => [
+                'data' => $all->forPage($page, $perPage)->values(),
+                'total' => $all->count(),
+                'page' => $page,
+                'last_page' => max(1, (int) ceil($all->count() / $perPage)),
+            ],
+        ]);
     }
 
     public function show(Event $event): Response

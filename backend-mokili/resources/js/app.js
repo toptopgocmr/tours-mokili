@@ -12,7 +12,10 @@ createInertiaApp({
     resolve: (name) =>
         resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
+        const app = createApp({ render: () => h(App, props) });
+        // Affichage public des montants : XAF -> FCFA (le code ISO reste XAF pour les paiements).
+        app.config.globalProperties.$cur = (c) => (!c || c === 'XAF' ? 'FCFA' : c);
+        app
             .use(plugin)
             .use(ZiggyVue)
             .mount(el);

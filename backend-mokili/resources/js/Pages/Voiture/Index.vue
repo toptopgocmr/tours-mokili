@@ -234,7 +234,7 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                 <label class="block text-xs font-semibold text-slate-500">Prix maximum
                     <select v-model="s.price_max" class="mt-1 h-12 w-full rounded-xl border-slate-300 text-sm font-medium text-slate-900">
                         <option value="">Sans limite</option>
-                        <option v-for="p in [1000000, 2000000, 3000000, 5000000, 7500000, 10000000, 15000000, 20000000, 30000000, 50000000, 100000000]" :key="p" :value="p">{{ money(p) }} XAF</option>
+                        <option v-for="p in [1000000, 2000000, 3000000, 5000000, 7500000, 10000000, 15000000, 20000000, 30000000, 50000000, 100000000]" :key="p" :value="p">{{ money(p) }} FCFA</option>
                     </select>
                 </label>
                 <label class="block text-xs font-semibold text-slate-500">Annee minimum
@@ -311,7 +311,7 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                         </select>
                     </label>
                     <div class="text-sm">
-                        <span class="font-semibold text-slate-800">Prix (XAF)</span>
+                        <span class="font-semibold text-slate-800">Prix (FCFA)</span>
                         <div class="mt-1 grid grid-cols-2 gap-2">
                             <input v-model.number="s.price_min" type="number" min="0" placeholder="Min" class="rounded-lg border-slate-300 text-sm" @change="submit" />
                             <input v-model.number="s.price_max" type="number" min="0" placeholder="Max" class="rounded-lg border-slate-300 text-sm" @change="submit" />
@@ -425,10 +425,10 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                             </div>
                             <p v-if="v.options?.length" class="mt-2 truncate text-xs text-slate-500">{{ v.options.slice(0, 4).join(' · ') }}</p>
                             <div class="mt-auto border-t border-slate-100 pt-3">
-                                <p v-if="v.display_price?.original" class="text-sm text-red-500 line-through">{{ money(v.display_price.original) }} {{ v.currency }}</p>
-                                <p class="text-2xl font-extrabold text-navy-900">{{ v.display_price ? `${money(v.display_price.amount)} ${v.currency}` : 'Prix sur demande' }}</p>
-                                <p v-if="v.display_price" class="text-xs text-slate-500">ou environ <b class="text-sm text-navy-900">{{ money(monthly(v.display_price.amount, finance)) }} {{ v.currency }}</b> /mois*</p>
-                                <p class="mt-1 text-xs text-slate-400">{{ v.city }}</p>
+                                <p v-if="v.display_price?.original" class="text-sm text-red-500 line-through">{{ money(v.display_price.original) }} {{ $cur(v.currency) }}</p>
+                                <p class="text-2xl font-extrabold text-navy-900">{{ v.display_price ? `${money(v.display_price.amount)} ${$cur(v.currency)}` : 'Prix sur demande' }}</p>
+                                <p v-if="v.display_price" class="text-xs text-slate-500">ou environ <b class="text-sm text-navy-900">{{ money(monthly(v.display_price.amount, finance)) }} {{ $cur(v.currency) }}</b> /mois*</p>
+                                <p class="mt-1 text-xs text-slate-400">{{ v.city }}<template v-if="v.seller_name"> · Vendu par <b class="font-semibold text-slate-600">{{ v.seller_name }}</b><span v-if="v.seller_verified" class="text-emerald-600"> ✓</span></template></p>
                             </div>
                         </Link>
                     </article>
@@ -474,10 +474,10 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                             <div>
                                 <p v-if="v.display_price?.original" class="text-xs text-red-500 line-through">{{ money(v.display_price.original) }}</p>
                                 <p class="text-lg font-extrabold text-navy-900">
-                                    {{ v.display_price ? money(v.display_price.amount) : 'Sur demande' }}<span v-if="v.display_price" class="text-sm font-semibold"> {{ v.currency }}</span>
+                                    {{ v.display_price ? money(v.display_price.amount) : 'Sur demande' }}<span v-if="v.display_price" class="text-sm font-semibold"> {{ $cur(v.currency) }}</span>
                                     <span v-if="v.offer_type === 'location'" class="text-xs font-normal text-slate-500">/ jour</span>
                                 </p>
-                                <p v-if="v.offer_type === 'location' && datesSearched && v.display_price" class="text-xs text-slate-500">{{ money(v.display_price.amount * days) }} {{ v.currency }} pour {{ days }} jour(s)</p>
+                                <p v-if="v.offer_type === 'location' && datesSearched && v.display_price" class="text-xs text-slate-500">{{ money(v.display_price.amount * days) }} {{ $cur(v.currency) }} pour {{ days }} jour(s)</p>
                             </div>
                             <span class="rounded-lg bg-navy-900 px-3 py-2 text-xs font-semibold text-white group-hover:bg-navy-800">{{ v.offer_type === 'location' ? 'Reserver' : 'Voir' }}</span>
                         </div>
@@ -500,6 +500,7 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
             </div>
         </div>
 
-        <PartnersSection v-if="s.type !== 'mecanique' && s.type !== 'vente'" module="voiture" title="Taxis, VTC & garages" subtitle="Applications de taxi, chauffeurs prives et garages a Brazzaville." />
+        <PartnersSection v-if="s.type === 'vente'" module="voiture" only="concessionnaire" title="Concessionnaires & vendeurs partenaires" subtitle="Les distributeurs officiels des marques au Congo : vehicules neufs, reprise, financement et garantie constructeur." />
+        <PartnersSection v-else-if="s.type !== 'mecanique'" module="voiture" only="taxi_vtc,garage" title="Taxis, VTC & garages" subtitle="Applications de taxi, chauffeurs prives et garages a Brazzaville." />
     </div>
 </template>

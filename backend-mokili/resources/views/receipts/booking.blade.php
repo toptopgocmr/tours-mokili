@@ -1,5 +1,6 @@
 @php
     $money = fn ($v) => number_format((float) $v, 0, ',', ' ');
+    $cur = fn ($c) => (! $c || $c === 'XAF') ? 'FCFA' : $c;
     $d = fn ($v, $f = 'd/m/Y') => $v ? \Carbon\Carbon::parse($v)->locale('fr')->translatedFormat($f) : '';
     $meta = $booking->meta ?? [];
     $paidAt = $payment?->paid_at ?? $booking->updated_at;
@@ -100,7 +101,7 @@
                     <tr>
                         <td>
                             <strong>{{ $isDeposit ? 'Acompte de reservation - ' : '' }}{{ $title }}</strong>@if ($place)<br><span class="muted">{{ $place }}</span>@endif
-                            @if ($isDeposit && ! empty($meta['sale_price']))<br><span class="muted">Prix du vehicule : {{ $money($meta['sale_price']) }} {{ $booking->currency }} - reste a regler au vendeur : {{ $money($meta['sale_price'] - $booking->total_amount) }} {{ $booking->currency }}</span>@endif
+                            @if ($isDeposit && ! empty($meta['sale_price']))<br><span class="muted">Prix du vehicule : {{ $money($meta['sale_price']) }} {{ $cur($booking->currency) }} - reste a regler au vendeur : {{ $money($meta['sale_price'] - $booking->total_amount) }} {{ $cur($booking->currency) }}</span>@endif
                             @if ($booking->starts_at)
                                 <br><span class="muted">
                                     @if ($kind === 'LodgingListing')Du {{ $d($booking->starts_at, 'd/m/Y') }} au {{ $d($booking->ends_at, 'd/m/Y') }}
@@ -113,15 +114,15 @@
                             @if (! empty($meta['guests']))<br><span class="muted">{{ $meta['guests'] }} voyageur(s)</span>@endif
                         </td>
                         <td class="r">{{ $booking->quantity }} {{ $unitLabel }}</td>
-                        <td class="r">{{ $money($booking->unit_price) }} {{ $booking->currency }}</td>
-                        <td class="r"><strong>{{ $money($booking->total_amount) }} {{ $booking->currency }}</strong></td>
+                        <td class="r">{{ $money($booking->unit_price) }} {{ $cur($booking->currency) }}</td>
+                        <td class="r"><strong>{{ $money($booking->total_amount) }} {{ $cur($booking->currency) }}</strong></td>
                     </tr>
                 </tbody>
             </table>
 
             <div class="total">
                 <span style="font-weight:600">Total paye</span>
-                <strong>{{ $money($payment?->amount ?? $booking->total_amount) }} {{ $payment?->currency ?? $booking->currency }}</strong>
+                <strong>{{ $money($payment?->amount ?? $booking->total_amount) }} {{ $cur($payment?->currency ?? $booking->currency) }}</strong>
             </div>
         </div>
 

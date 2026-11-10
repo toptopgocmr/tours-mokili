@@ -17,7 +17,7 @@ defineProps({ event: { type: Object, required: true } });
         <PromoBadge :promo="event.promo" show-end class="mt-4" />
         <p class="mt-2 text-xl font-bold text-gold-600">
             <span v-if="event.promo" class="mr-1 text-base font-normal text-navy-400 line-through">{{ Number(event.price).toLocaleString('fr-FR') }}</span>
-            {{ Number(event.final_price ?? event.price).toLocaleString('fr-FR') }} {{ event.currency }}
+            {{ Number(event.final_price ?? event.price).toLocaleString('fr-FR') }} {{ $cur(event.currency) }}
         </p>
         <p class="mt-6 rounded-lg bg-navy-50 p-4 text-sm text-navy-700">Module en cours de finalisation - la billetterie suivra le meme flux que Voyage.</p>
     </div>

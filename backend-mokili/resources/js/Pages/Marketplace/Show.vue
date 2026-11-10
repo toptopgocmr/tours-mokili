@@ -19,7 +19,7 @@ const p = computed(() => props.product);
 const photos = computed(() => (p.value.gallery_urls?.length ? p.value.gallery_urls : [p.value.image_url].filter(Boolean)));
 const current = ref(0);
 const showPhone = ref(false);
-const price = computed(() => (Number(p.value.price) > 0 ? `${Number(p.value.price).toLocaleString('fr-FR')} ${p.value.currency}` : 'Prix a discuter'));
+const price = computed(() => (Number(p.value.price) > 0 ? `${Number(p.value.price).toLocaleString('fr-FR')} ${p.value.currency === 'XAF' ? 'FCFA' : p.value.currency}` : 'Prix a discuter'));
 const STATUS = { draft: 'Brouillon', pending: 'En attente de validation', published: 'En ligne', rejected: 'Refusee' };
 const toggleSold = () => router.post(`/marketplace/annonce/${p.value.id}/vendu`, {}, { preserveScroll: true });
 </script>

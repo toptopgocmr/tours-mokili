@@ -34,7 +34,7 @@ const label = (s) => ({ confirmed: 'Paye', paid: 'Paye', completed: 'Termine', a
     <div class="mb-4 grid gap-4 sm:grid-cols-3">
         <div class="console-stat"><p class="text-xs uppercase text-slate-500">Places payees</p><p class="mt-1 text-2xl font-bold">{{ seats }}</p></div>
         <div class="console-stat"><p class="text-xs uppercase text-slate-500">Places restantes</p><p class="mt-1 text-2xl font-bold">{{ offer.seats_available }}</p></div>
-        <div class="console-stat"><p class="text-xs uppercase text-slate-500">Montant encaisse</p><p class="mt-1 text-2xl font-bold">{{ Math.round(total).toLocaleString('fr-FR') }} {{ offer.currency }}</p></div>
+        <div class="console-stat"><p class="text-xs uppercase text-slate-500">Montant encaisse</p><p class="mt-1 text-2xl font-bold">{{ Math.round(total).toLocaleString('fr-FR') }} {{ $cur(offer.currency) }}</p></div>
     </div>
 
     <div class="console-table-wrap">

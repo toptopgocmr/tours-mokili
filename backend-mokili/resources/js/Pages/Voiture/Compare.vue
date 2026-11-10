@@ -14,7 +14,7 @@ const cat = computed(() => usePage().props.catalogue?.voiture ?? {});
 const money = (x) => Number(x ?? 0).toLocaleString('fr-FR');
 
 const ROWS = [
-    ['Prix', (v) => (v.display_price ? `${money(v.display_price.amount)} ${v.currency}` : 'Sur demande'), 'price'],
+    ['Prix', (v) => (v.display_price ? `${money(v.display_price.amount)} ${v.currency === 'XAF' ? 'FCFA' : v.currency}` : 'Sur demande'), 'price'],
     ['Annee', (v) => v.year],
     ['Kilometrage', (v) => (v.mileage_km ? `${money(v.mileage_km)} km` : null), 'km'],
     ['Carburant', (v) => cat.value.fuels?.[v.fuel] ?? v.fuel],

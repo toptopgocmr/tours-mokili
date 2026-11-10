@@ -37,7 +37,7 @@ const statusLabel = (status) => ({
                 <tr v-for="p in products.data" :key="p.id">
                     <td class="font-medium text-slate-900">{{ p.title }}</td>
                     <td>{{ p.category }}</td>
-                    <td>{{ Number(p.price).toLocaleString('fr-FR') }} {{ p.currency }}</td>
+                    <td>{{ Number(p.price).toLocaleString('fr-FR') }} {{ $cur(p.currency) }}</td>
                     <td>{{ p.stock }}</td>
                     <td><span :class="statusBadge(p.status)">{{ statusLabel(p.status) }}</span></td>
                     <td class="space-x-3 text-right">

@@ -163,7 +163,7 @@ const notePlaceholder = computed(() => ({
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-semibold text-navy-900">Voyageurs</p>
-                            <p class="text-xs text-navy-500">{{ Math.round(unit).toLocaleString('fr-FR') }} {{ offer.currency }} / voyageur</p>
+                            <p class="text-xs text-navy-500">{{ Math.round(unit).toLocaleString('fr-FR') }} {{ $cur(offer.currency) }} / voyageur</p>
                         </div>
                         <div class="flex items-center gap-3">
                             <button type="button" class="h-9 w-9 rounded-full border border-navy-200 text-lg disabled:opacity-30" :disabled="form.quantity <= 1" @click="form.quantity--">−</button>
@@ -180,7 +180,7 @@ const notePlaceholder = computed(() => ({
                 <div class="border-t border-navy-100 px-6 py-4">
                     <div class="flex items-baseline justify-between">
                         <span class="font-semibold text-navy-900">Total</span>
-                        <span class="text-2xl font-bold text-navy-900">{{ total.toLocaleString('fr-FR') }} <span class="text-sm">{{ offer.currency }}</span></span>
+                        <span class="text-2xl font-bold text-navy-900">{{ total.toLocaleString('fr-FR') }} <span class="text-sm">{{ $cur(offer.currency) }}</span></span>
                     </div>
                     <button type="submit" class="mt-4 w-full rounded-full bg-sky-700 py-3 font-semibold text-white hover:bg-sky-800 disabled:opacity-50" :disabled="form.processing || seats === 0">
                         {{ seats === 0 ? 'Complet' : 'Continuer vers le paiement' }}
@@ -215,7 +215,7 @@ const notePlaceholder = computed(() => ({
 
         <div class="h-fit rounded-2xl border p-6 shadow-sm">
             <p class="text-2xl font-bold text-gold-600">
-                {{ Number(offer.discounted_price ?? offer.price).toLocaleString('fr-FR') }} {{ offer.currency }}
+                {{ Number(offer.discounted_price ?? offer.price).toLocaleString('fr-FR') }} {{ $cur(offer.currency) }}
                 <span class="text-sm font-normal text-navy-500">/ personne</span>
             </p>
 

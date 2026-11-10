@@ -15,7 +15,7 @@ const categoryColors = {
 };
 
 const price = (p) =>
-    p.is_bookable ? `${Number(p.final_price_adult ?? p.price_adult).toLocaleString('fr-FR')} ${p.currency}${p.promo ? ` (-${p.promo.percent} %)` : ''}` : 'Tarif sur place';
+    p.is_bookable ? `${Number(p.final_price_adult ?? p.price_adult).toLocaleString('fr-FR')} ${p.currency === 'XAF' ? 'FCFA' : p.currency}${p.promo ? ` (-${p.promo.percent} %)` : ''}` : 'Tarif sur place';
 </script>
 
 <template>

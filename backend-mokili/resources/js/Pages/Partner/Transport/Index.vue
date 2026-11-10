@@ -94,7 +94,7 @@ const promoOn = (o) => Number(o.discount_percent) > 0;
                     <td>{{ o.transport_mode_label }}</td>
                     <td class="whitespace-nowrap">
                         <span v-if="promoOn(o)" class="mr-1 text-xs text-slate-400 line-through">{{ Number(o.price).toLocaleString('fr-FR') }}</span>
-                        <span class="font-semibold text-slate-900">{{ Math.round(o.discounted_price).toLocaleString('fr-FR') }} {{ o.currency }}</span>
+                        <span class="font-semibold text-slate-900">{{ Math.round(o.discounted_price).toLocaleString('fr-FR') }} {{ $cur(o.currency) }}</span>
                         <span v-if="promoOn(o)" class="ml-1 console-badge console-badge-error">-{{ o.discount_percent }} %</span>
                     </td>
                     <td class="whitespace-nowrap">

@@ -63,7 +63,7 @@ const money = (x) => Number(x ?? 0).toLocaleString('fr-FR');
 const user = computed(() => usePage().props.auth?.user);
 
 const price = computed(() => (v.value.display_price
-    ? `${v.value.display_price.suffix === 'a partir de' ? 'A partir de ' : ''}${money(v.value.display_price.amount)} ${v.value.currency}`
+    ? `${v.value.display_price.suffix === 'a partir de' ? 'A partir de ' : ''}${money(v.value.display_price.amount)} ${v.value.currency === 'XAF' ? 'FCFA' : v.value.currency}`
     : 'Prix sur demande'));
 
 const cat = computed(() => usePage().props.catalogue?.voiture ?? {});
@@ -289,7 +289,7 @@ const CONDITIONS = [
                         <div class="mt-3 grid gap-5 rounded-2xl border border-slate-200 bg-white p-5 sm:grid-cols-2">
                             <div class="space-y-4 text-sm">
                                 <label class="block">
-                                    <span class="flex justify-between font-semibold text-slate-800"><span>Apport</span><span>{{ fin.down_payment_percent }} % · {{ money(downPayment) }} {{ v.currency }}</span></span>
+                                    <span class="flex justify-between font-semibold text-slate-800"><span>Apport</span><span>{{ fin.down_payment_percent }} % · {{ money(downPayment) }} {{ $cur(v.currency) }}</span></span>
                                     <input v-model.number="fin.down_payment_percent" type="range" min="0" max="70" step="5" class="mt-2 w-full accent-navy-900" />
                                 </label>
                                 <label class="block">
@@ -303,8 +303,8 @@ const CONDITIONS = [
                             </div>
                             <div class="flex flex-col justify-center rounded-xl bg-navy-900 p-5 text-white">
                                 <p class="text-sm text-white/70">Mensualite estimee</p>
-                                <p class="text-3xl font-extrabold text-gold-400">{{ money(perMonth) }} {{ v.currency }}<span class="text-base font-semibold text-white"> /mois</span></p>
-                                <p class="mt-2 text-xs text-white/70">Montant finance : {{ money(salePrice - downPayment) }} {{ v.currency }} · Cout total : {{ money(totalCredit + downPayment) }} {{ v.currency }}</p>
+                                <p class="text-3xl font-extrabold text-gold-400">{{ money(perMonth) }} {{ $cur(v.currency) }}<span class="text-base font-semibold text-white"> /mois</span></p>
+                                <p class="mt-2 text-xs text-white/70">Montant finance : {{ money(salePrice - downPayment) }} {{ $cur(v.currency) }} · Cout total : {{ money(totalCredit + downPayment) }} {{ $cur(v.currency) }}</p>
                             </div>
                             <p class="text-[11px] text-slate-400 sm:col-span-2">Simulation indicative, sans valeur d'offre. Un credit vous engage et doit etre rembourse : verifiez vos capacites de remboursement avant de vous engager. Renseignez-vous aupres de votre banque ou d'un etablissement de microfinance.</p>
                         </div>
@@ -388,7 +388,7 @@ const CONDITIONS = [
                 <form v-if="isRental" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" @submit.prevent="submit">
                     <p class="text-2xl font-extrabold text-slate-900">
                         <span v-if="v.display_price?.original" class="mr-1 text-base font-normal text-red-500 line-through">{{ money(v.display_price.original) }}</span>
-                        {{ money(v.display_price?.amount) }} {{ v.currency }}
+                        {{ money(v.display_price?.amount) }} {{ $cur(v.currency) }}
                         <span class="text-sm font-normal text-slate-500">/ jour</span>
                     </p>
 
@@ -490,10 +490,10 @@ const CONDITIONS = [
                     </div>
 
                     <div v-if="check.days" class="mt-4 rounded-xl bg-slate-50 p-3 text-sm">
-                        <div class="flex justify-between"><span>{{ money(check.unit_price) }} {{ v.currency }} × {{ check.days }} jour(s)</span><span>{{ money(check.total) }}</span></div>
+                        <div class="flex justify-between"><span>{{ money(check.unit_price) }} {{ $cur(v.currency) }} × {{ check.days }} jour(s)</span><span>{{ money(check.total) }}</span></div>
                         <div class="mt-2 flex items-end justify-between border-t border-slate-200 pt-2">
                             <span class="font-semibold">Total</span>
-                            <span class="text-2xl font-extrabold text-slate-900">{{ money(check.total) }} {{ v.currency }}</span>
+                            <span class="text-2xl font-extrabold text-slate-900">{{ money(check.total) }} {{ $cur(v.currency) }}</span>
                         </div>
                     </div>
 
@@ -540,9 +540,9 @@ const CONDITIONS = [
                             <span v-if="v.warranty_months" class="rounded-md bg-navy-900 px-2 py-1 text-white">Garantie {{ v.warranty_months }} mois</span>
                         </div>
                         <div class="mt-4 border-t border-slate-100 pt-4">
-                            <p v-if="v.display_price?.original" class="text-base text-red-500 line-through">{{ money(v.display_price.original) }} {{ v.currency }}</p>
+                            <p v-if="v.display_price?.original" class="text-base text-red-500 line-through">{{ money(v.display_price.original) }} {{ $cur(v.currency) }}</p>
                             <p class="text-3xl font-extrabold text-navy-900">{{ price }}</p>
-                            <p v-if="isSale && salePrice" class="mt-1 text-sm text-slate-600">ou environ <b class="text-lg text-navy-900">{{ money(perMonth) }} {{ v.currency }}</b> /mois*
+                            <p v-if="isSale && salePrice" class="mt-1 text-sm text-slate-600">ou environ <b class="text-lg text-navy-900">{{ money(perMonth) }} {{ $cur(v.currency) }}</b> /mois*
                                 <button type="button" class="ml-1 text-xs font-semibold text-[#006ce4] underline" @click="goTo('financement')">Personnaliser</button></p>
                         </div>
 
@@ -558,7 +558,7 @@ const CONDITIONS = [
                                 </button>
                                 <Link v-else href="/login" class="rounded-full bg-gold-500 px-3 py-3 text-center text-sm font-bold text-navy-900">Reserver ce vehicule</Link>
                             </div>
-                            <p class="mt-2 text-xs text-slate-500">Reservation par un acompte de <b>{{ money(sale?.deposit) }} {{ v.currency }}</b> en Mobile Money, deduit du prix chez le vendeur. Le vehicule est retire de la vente pour vous.</p>
+                            <p class="mt-2 text-xs text-slate-500">Reservation par un acompte de <b>{{ money(sale?.deposit) }} {{ $cur(v.currency) }}</b> en Mobile Money, deduit du prix chez le vendeur. Le vehicule est retire de la vente pour vous.</p>
                             <p v-if="reserveForm.errors.reserve" class="mt-1 text-xs font-semibold text-red-600">{{ reserveForm.errors.reserve }}</p>
                             <div v-if="v.phone" class="mt-3 grid grid-cols-2 gap-2">
                                 <a :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(saleMsg('Je souhaiterais faire un essai, quand seriez-vous disponible ?'))}`" target="_blank" rel="noopener" class="rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Demander un essai</a>
@@ -595,7 +595,7 @@ const CONDITIONS = [
                     <div class="p-3">
                         <p class="truncate font-bold text-slate-900">{{ s.title }}</p>
                         <p class="text-xs text-slate-500">{{ s.city }}</p>
-                        <p v-if="s.display_price" class="mt-1 text-sm font-semibold text-slate-900">{{ money(s.display_price.amount) }} {{ s.currency }} <span class="font-normal text-slate-500">{{ s.display_price.suffix }}</span></p>
+                        <p v-if="s.display_price" class="mt-1 text-sm font-semibold text-slate-900">{{ money(s.display_price.amount) }} {{ $cur(s.currency) }} <span class="font-normal text-slate-500">{{ s.display_price.suffix }}</span></p>
                     </div>
                 </Link>
             </div>

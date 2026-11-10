@@ -103,7 +103,7 @@ const modules = [
 const sortedModules = computed(() => [...modules].sort((x, y) => Number(y.for.includes(ACTIVITY_QUICK[act.value])) - Number(x.for.includes(ACTIVITY_QUICK[act.value]))));
 const isTransport = computed(() => ['transport', 'vols'].includes(ACTIVITY_QUICK[act.value]) || !act.value || props.nextDepartures.length > 0);
 
-const money = (v) => `${Math.round(Number(v || 0)).toLocaleString('fr-FR')} XAF`;
+const money = (v) => `${Math.round(Number(v || 0)).toLocaleString('fr-FR')} FCFA`;
 const when = (iso) => {
     if (!iso) return '';
     const d = new Date(`${iso}:00`);

@@ -23,10 +23,10 @@ class DivertissementAndCircuitsTest extends TestCase
 
         // Ancienne adresse ?category=parcs -> onglet Parcs de Tourisme.
         $this->get('/divertissement?category=parcs')->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Divertissement/Index')->where('tab', 'parcs')->where('source', 'parks')->has('items.data.0.id'));
+            ->assertInertia(fn ($page) => $page->component('Divertissement/Index')->where('tab', 'parcs')->where('cards.data.0.tab', 'parcs')->has('cards.data.0.href'));
 
         $this->get('/divertissement')->assertOk()
-            ->assertInertia(fn ($page) => $page->where('tab', null)->has('preview.parks', 6)->has('tabs.visite'));
+            ->assertInertia(fn ($page) => $page->where('tab', null)->where('counts.parcs', AttractionPark::query()->active()->count())->has('tabs.visite'));
 
         $this->get("/divertissement/parcs/{$park->slug}")->assertOk()
             ->assertInertia(fn ($page) => $page->component('Loisirs/Show'));

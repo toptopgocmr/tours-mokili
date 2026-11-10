@@ -354,7 +354,7 @@ const AMEN = { wifi: 'Wi-Fi', prises: 'Prises', clim: 'Climatisation', toilettes
                         <span class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold text-white" :class="MODE_COLORS[r.mode] ?? 'bg-navy-700'">{{ r.mode_label }}</span>
                         <p class="mt-1 truncate font-semibold text-navy-900">{{ r.operator || 'Transporteur partenaire' }} · {{ arrivals ? r.origin : r.destination }}</p>
                     </div>
-                    <p class="hidden text-sm font-semibold text-navy-900 sm:block">{{ Number(r.price).toLocaleString('fr-FR') }} {{ r.currency }}</p>
+                    <p class="hidden text-sm font-semibold text-navy-900 sm:block">{{ Number(r.price).toLocaleString('fr-FR') }} {{ $cur(r.currency) }}</p>
                     <span v-if="r.bookable" class="text-sm font-semibold text-sky-700">Reserver ›</span>
                 </component>
             </div>
@@ -389,7 +389,7 @@ const AMEN = { wifi: 'Wi-Fi', prises: 'Prises', clim: 'Climatisation', toilettes
                     <p v-if="r.amenities?.length" class="truncate text-[11px] text-navy-400">{{ r.amenities.map((a) => AMEN[a] ?? a).join(' · ') }}</p>
                 </div>
                 <div class="hidden md:block">
-                    <p class="text-base font-extrabold text-navy-900">{{ Number(r.price).toLocaleString('fr-FR') }} <span class="text-xs">{{ r.currency }}</span></p>
+                    <p class="text-base font-extrabold text-navy-900">{{ Number(r.price).toLocaleString('fr-FR') }} <span class="text-xs">{{ $cur(r.currency) }}</span></p>
                     <p class="text-xs font-semibold" :class="r.seats === 0 ? 'text-rose-600' : r.seats <= 3 ? 'text-amber-700' : 'text-emerald-700'">{{ r.seats === 0 ? 'Complet' : `${r.seats} place${r.seats > 1 ? 's' : ''}` }}</p>
                 </div>
                 <div class="text-right">

@@ -36,7 +36,7 @@ const remove = (p) => {
                 </div>
                 <div class="min-w-0 flex-1">
                     <Link :href="`/marketplace/${p.slug}`" class="font-semibold text-navy-900 hover:underline">{{ p.title }}</Link>
-                    <p class="text-sm text-navy-600">{{ Number(p.price).toLocaleString('fr-FR') }} {{ p.currency }} · {{ p.city }} · {{ p.views }} vue(s)</p>
+                    <p class="text-sm text-navy-600">{{ Number(p.price).toLocaleString('fr-FR') }} {{ $cur(p.currency) }} · {{ p.city }} · {{ p.views }} vue(s)</p>
                     <span class="mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold" :class="STATUS[p.status]?.[1]">{{ STATUS[p.status]?.[0] }}</span>
                     <span v-if="p.sold_at" class="ml-2 inline-block rounded-full bg-gray-800 px-2 py-0.5 text-xs font-semibold text-white">Vendu</span>
                     <p v-if="p.status === 'rejected' && p.rejection_reason" class="text-xs text-red-700">Motif : {{ p.rejection_reason }}</p>

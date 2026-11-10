@@ -38,7 +38,7 @@ const submit = () => form.post(`/fret/${props.offer.slug}/demande`);
             <dl class="mt-6 grid grid-cols-2 gap-4 text-sm">
                 <div><dt class="text-navy-500">Origine</dt><dd class="font-medium">{{ offer.origin_city }}</dd></div>
                 <div><dt class="text-navy-500">Destination</dt><dd class="font-medium">{{ offer.destination_city }}</dd></div>
-                <div><dt class="text-navy-500">Prix</dt><dd class="font-semibold text-gold-600">{{ Number(offer.price_per_kg).toLocaleString('fr-FR') }} {{ offer.currency }} / kg</dd></div>
+                <div><dt class="text-navy-500">Prix</dt><dd class="font-semibold text-gold-600">{{ Number(offer.price_per_kg).toLocaleString('fr-FR') }} {{ $cur(offer.currency) }} / kg</dd></div>
                 <div v-if="offer.capacity_kg"><dt class="text-navy-500">Capacite</dt><dd class="font-medium">{{ offer.capacity_kg }} kg</dd></div>
             </dl>
         </div>
@@ -82,8 +82,8 @@ const submit = () => form.post(`/fret/${props.offer.slug}/demande`);
 
                 <div class="rounded-lg bg-navy-50 p-3 text-sm text-navy-700">
                     <div class="flex justify-between">
-                        <span>{{ Number(offer.price_per_kg).toLocaleString('fr-FR') }} {{ offer.currency }} x {{ form.weight_kg || 0 }} kg</span>
-                        <span class="font-semibold">{{ total.toLocaleString('fr-FR') }} {{ offer.currency }}</span>
+                        <span>{{ Number(offer.price_per_kg).toLocaleString('fr-FR') }} {{ $cur(offer.currency) }} x {{ form.weight_kg || 0 }} kg</span>
+                        <span class="font-semibold">{{ total.toLocaleString('fr-FR') }} {{ $cur(offer.currency) }}</span>
                     </div>
                 </div>
 

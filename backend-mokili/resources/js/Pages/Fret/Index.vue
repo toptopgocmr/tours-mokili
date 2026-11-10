@@ -100,7 +100,7 @@ const parcelEstimate = computed(() => {
                 </div>
                 <div class="flex flex-col justify-center rounded-xl bg-navy-50 p-5">
                     <p class="text-xs uppercase text-navy-500">Estimation indicative</p>
-                    <p class="mt-1 text-3xl font-bold text-gold-600">{{ parcelEstimate.toLocaleString('fr-FR') }} XAF</p>
+                    <p class="mt-1 text-3xl font-bold text-gold-600">{{ parcelEstimate.toLocaleString('fr-FR') }} FCFA</p>
                     <p class="mt-2 text-xs text-navy-500">
                         Tarif confirme au moment du depot. Contactez un point MOKILI TOUR ou un partenaire fret pour organiser l'enlevement.
                     </p>
@@ -140,7 +140,7 @@ const parcelEstimate = computed(() => {
                         <p class="font-semibold text-navy-900">{{ o.title }}</p>
                         <p class="mt-1 text-xs uppercase text-navy-500">{{ MODE_ICONS[o.mode] }} {{ modeLabel[o.mode] }} · {{ o.scope === 'national' ? 'National' : 'International' }} · {{ o.origin_city }} &rarr; {{ o.destination_city }}</p>
                         <p class="mt-1 text-xs text-navy-600">{{ o.package_type_labels?.join(', ') }}</p>
-                        <p class="mt-1 text-sm font-semibold text-gold-600">{{ Number(o.price_per_kg).toLocaleString('fr-FR') }} {{ o.currency }} / kg</p>
+                        <p class="mt-1 text-sm font-semibold text-gold-600">{{ Number(o.price_per_kg).toLocaleString('fr-FR') }} {{ $cur(o.currency) }} / kg</p>
                     </div>
                 </Link>
             </div>

@@ -125,7 +125,7 @@ const features = [
                 <div class="p-4">
                     <p class="font-semibold text-navy-900">{{ offer.title }}</p>
                     <p class="mt-1 text-sm text-navy-700">
-                        A partir de {{ Number(offer.price).toLocaleString('fr-FR') }} {{ offer.currency }}
+                        A partir de {{ Number(offer.price).toLocaleString('fr-FR') }} {{ $cur(offer.currency) }}
                         <span v-if="offer.discount_percent" class="ml-2 rounded-full bg-gold-50 px-2 py-0.5 text-xs font-semibold text-gold-600">
                             -{{ offer.discount_percent }}%
                         </span>

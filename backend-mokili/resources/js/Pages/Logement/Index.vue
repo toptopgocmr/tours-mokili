@@ -208,7 +208,7 @@ const activeFilters = computed(() => s.type.length + s.amenities.length + (s.pri
                     <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/10 to-transparent" />
                     <div class="absolute left-4 top-3 text-white">
                         <p class="text-2xl font-extrabold drop-shadow">{{ c.city }}</p>
-                        <p class="text-sm drop-shadow">{{ c.total }} hebergement(s) · des {{ money(c.from_price) }} XAF</p>
+                        <p class="text-sm drop-shadow">{{ c.total }} hebergement(s) · des {{ money(c.from_price) }} FCFA</p>
                     </div>
                 </button>
             </div>
@@ -304,8 +304,8 @@ const activeFilters = computed(() => s.type.length + s.amenities.length + (s.pri
                                 <div>
                                     <p v-if="l.booked_on_dates" class="mb-1 text-xs font-semibold text-red-600">Deja reserve sur vos dates</p>
                                     <p class="text-xs text-slate-500">{{ nights ? `${nights} nuit(s), ${s.adults} adulte(s)` : '1 nuit' }}</p>
-                                    <p v-if="l.promo" class="text-sm text-red-600 line-through">{{ money(Number(l.price_per_night) * Math.max(1, nights)) }} {{ l.currency }}</p>
-                                    <p class="text-2xl font-bold text-slate-900">{{ money(priceFor(l)) }} {{ l.currency }}</p>
+                                    <p v-if="l.promo" class="text-sm text-red-600 line-through">{{ money(Number(l.price_per_night) * Math.max(1, nights)) }} {{ $cur(l.currency) }}</p>
+                                    <p class="text-2xl font-bold text-slate-900">{{ money(priceFor(l)) }} {{ $cur(l.currency) }}</p>
                                     <p class="text-[11px] text-slate-500">Taxes et frais compris</p>
                                     <Link :href="href(l)" class="mt-2 inline-flex items-center gap-1 rounded-md bg-[#006ce4] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0057b8]">
                                         Voir les disponibilites ›

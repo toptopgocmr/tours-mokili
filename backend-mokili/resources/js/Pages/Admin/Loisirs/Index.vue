@@ -55,7 +55,7 @@ const remove = (park) => {
                     <td>{{ categories[p.category] ?? p.category }}</td>
                     <td>{{ p.city }}</td>
                     <td>
-                        <span v-if="p.price_adult">{{ Number(p.price_adult).toLocaleString('fr-FR') }} {{ p.currency }}</span>
+                        <span v-if="p.price_adult">{{ Number(p.price_adult).toLocaleString('fr-FR') }} {{ $cur(p.currency) }}</span>
                         <span v-else class="text-slate-400">Sur place</span>
                     </td>
                     <td>

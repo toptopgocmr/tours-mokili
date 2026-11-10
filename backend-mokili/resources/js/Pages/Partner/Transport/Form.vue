@@ -231,7 +231,7 @@ const toggleAmenity = (k) => { const i = form.amenities.indexOf(k); i >= 0 ? for
         <aside class="space-y-5">
             <section class="console-panel space-y-4">
                 <h2 class="font-semibold text-slate-900">Prix et places</h2>
-                <label class="block text-sm font-medium text-slate-700">Prix par passager (XAF)
+                <label class="block text-sm font-medium text-slate-700">Prix par passager (FCFA)
                     <input v-model="form.price" type="number" min="0" step="100" class="mt-1 w-full rounded border-slate-300" required />
                     <span v-if="form.errors.price" class="text-xs text-red-600">{{ form.errors.price }}</span>
                 </label>
@@ -258,7 +258,7 @@ const toggleAmenity = (k) => { const i = form.amenities.indexOf(k); i >= 0 ? for
                 </template>
                 <div class="rounded bg-slate-50 p-3 text-sm">
                     <p class="text-slate-500">Prix affiche au client</p>
-                    <p class="text-xl font-bold text-slate-900">{{ final.toLocaleString('fr-FR') }} XAF</p>
+                    <p class="text-xl font-bold text-slate-900">{{ final.toLocaleString('fr-FR') }} FCFA</p>
                 </div>
             </section>
 

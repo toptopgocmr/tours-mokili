@@ -21,7 +21,7 @@ const ago = (iso) => {
         <div class="p-3">
             <p class="line-clamp-2 text-sm font-semibold text-navy-900 group-hover:text-pink-700">{{ product.title }}</p>
             <p class="mt-1 font-bold text-navy-900">
-                {{ Number(product.price) > 0 ? `${Number(product.price).toLocaleString('fr-FR')} ${product.currency}` : (product.listing_type === 'recherche' ? 'Budget a discuter' : 'Prix a discuter') }}
+                {{ Number(product.price) > 0 ? `${Number(product.price).toLocaleString('fr-FR')} ${$cur(product.currency)}` : (product.listing_type === 'recherche' ? 'Budget a discuter' : 'Prix a discuter') }}
                 <span v-if="product.negotiable" class="text-xs font-normal text-navy-500">· a debattre</span>
             </p>
             <p class="mt-1 text-xs text-navy-500">{{ product.city }}<span v-if="product.district"> · {{ product.district }}</span> · {{ ago(product.created_at) }}</p>

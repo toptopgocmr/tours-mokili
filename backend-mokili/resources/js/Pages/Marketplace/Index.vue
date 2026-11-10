@@ -87,7 +87,7 @@ const reset = () => {
                     <label v-for="(label, key) in cat.conditions" :key="key" class="flex items-center gap-2"><input v-model="f.condition" type="radio" :value="key" @change="apply" /> {{ label }}</label>
                 </div>
                 <div>
-                    <p class="font-semibold text-navy-900">Prix (XAF)</p>
+                    <p class="font-semibold text-navy-900">Prix (FCFA)</p>
                     <div class="mt-1 flex gap-2">
                         <input v-model="f.price_min" type="number" min="0" placeholder="Min" class="w-full rounded-lg border-gray-200 text-sm" />
                         <input v-model="f.price_max" type="number" min="0" placeholder="Max" class="w-full rounded-lg border-gray-200 text-sm" />
