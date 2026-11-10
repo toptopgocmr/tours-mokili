@@ -72,7 +72,8 @@ const sliceCode = (s) => s.segments?.[0]?.airline_code ?? props.offer.validating
                 <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-navy-600">
                     <span v-if="rules.cabin_baggage" class="rounded bg-navy-50 px-2 py-0.5">👜 {{ rules.cabin_baggage }}</span>
                     <span v-if="rules.baggage" class="rounded bg-navy-50 px-2 py-0.5">🧳 {{ rules.baggage }}</span>
-                    <span class="rounded px-2 py-0.5" :class="rules.refundable ? 'bg-emerald-50 text-emerald-700' : 'bg-navy-50 text-navy-500'">{{ rules.refundable ? 'Remboursable' : 'Non remboursable' }}</span>
+                    <span v-if="rules.indicative" class="rounded bg-amber-50 px-2 py-0.5 font-semibold text-amber-700" title="Prix constate recemment, confirme par notre equipe avant l'emission du billet">Prix indicatif</span>
+                    <span v-else class="rounded px-2 py-0.5" :class="rules.refundable ? 'bg-emerald-50 text-emerald-700' : 'bg-navy-50 text-navy-500'">{{ rules.refundable ? 'Remboursable' : 'Non remboursable' }}</span>
                     <button type="button" class="ml-auto font-semibold text-navy-900 hover:underline" @click="details = !details">{{ details ? 'Masquer' : 'Details' }} ›</button>
                 </div>
             </div>

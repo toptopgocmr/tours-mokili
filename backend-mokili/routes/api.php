@@ -59,6 +59,7 @@ Route::get('/voyage/offers/{travelOffer:slug}', [TravelOfferController::class, '
 
 // Billetterie aerienne (moteur central, meme logique que le site).
 Route::get('/flights/airports', [FlightController::class, 'airports'])->middleware('throttle:60,1');
+Route::get('/flights/schedules', [FlightController::class, 'schedules'])->middleware('throttle:30,1');
 Route::post('/flights/search', [FlightController::class, 'search'])->middleware('throttle:20,1');
 Route::get('/flights/searches/{uuid}', [FlightController::class, 'offers']);
 Route::get('/flights/offers/{flightOffer}', [FlightController::class, 'offer']);

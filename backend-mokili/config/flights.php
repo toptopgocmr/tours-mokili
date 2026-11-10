@@ -18,6 +18,52 @@ return [
         'manual' => App\Services\Flights\Suppliers\ManualFareSupplier::class,
         'sandbox' => App\Services\Flights\Suppliers\SandboxSupplier::class,
         'galileo' => App\Services\Flights\Suppliers\GalileoSupplier::class,
+        'duffel' => App\Services\Flights\Suppliers\DuffelSupplier::class,
+        'travelpayouts' => App\Services\Flights\Suppliers\TravelpayoutsSupplier::class,
+    ],
+
+    // TRAVELPAYOUTS / AVIASALES (gratuit, inscription ouverte au Congo) : vrais
+    // prix des vols constates recemment (indicatifs). travelpayouts.com >
+    // rejoindre le programme Aviasales > Profil > API token.
+    'travelpayouts' => [
+        'token' => env('TRAVELPAYOUTS_TOKEN'),
+        'marker' => env('TRAVELPAYOUTS_MARKER'),
+        'endpoint' => env('TRAVELPAYOUTS_ENDPOINT', 'https://api.travelpayouts.com'),
+        'max_offers' => (int) env('TRAVELPAYOUTS_MAX_OFFERS', 30),
+        'timeout' => (int) env('TRAVELPAYOUTS_TIMEOUT', 20),
+        'eur_xaf' => 655.957,
+    ],
+
+    // AIRLABS (plan gratuit) : programme des vols en direct (departs /
+    // arrivees d'un aeroport, retards). Cle : airlabs.co > Sign up > API key.
+    'airlabs' => [
+        'key' => env('AIRLABS_API_KEY'),
+        'endpoint' => env('AIRLABS_ENDPOINT', 'https://airlabs.co/api/v9'),
+        'cache_minutes' => (int) env('AIRLABS_CACHE_MINUTES', 30),
+        'timeout' => (int) env('AIRLABS_TIMEOUT', 15),
+    ],
+
+    // DUFFEL : vols en direct, inscription gratuite sur duffel.com (recherche
+    // gratuite, frais seulement par reservation). Jeton : tableau de bord
+    // Duffel > Developers > Access tokens. "duffel_test_..." = donnees de test
+    // (compagnie fictive "Duffel Airways"), "duffel_live_..." = vrais vols.
+    'duffel' => [
+        'token' => env('DUFFEL_ACCESS_TOKEN'),
+        'endpoint' => env('DUFFEL_ENDPOINT', 'https://api.duffel.com'),
+        // true : apres le paiement Mobile Money, la commande est creee et payee
+        // automatiquement sur le solde Duffel (billet emis). false : l'equipe
+        // reserve dans le tableau de bord Duffel.
+        'auto_ticketing' => (bool) env('DUFFEL_AUTO_TICKETING', false),
+        'max_offers' => (int) env('DUFFEL_MAX_OFFERS', 50),
+        'supplier_timeout_ms' => (int) env('DUFFEL_SUPPLIER_TIMEOUT_MS', 20000),
+        'timeout' => (int) env('DUFFEL_TIMEOUT', 40),
+        // Conversion vers le XAF (prix affiches et payes en XAF).
+        'fx' => [
+            'XAF' => 1,
+            'EUR' => 655.957, // parite fixe du franc CFA
+            'USD' => env('FX_USD_XAF'),
+            'GBP' => env('FX_GBP_XAF'),
+        ],
     ],
 
     // Travelport GALILEO (1G) via Universal API. Identifiants fournis par

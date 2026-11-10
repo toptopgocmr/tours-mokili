@@ -77,6 +77,7 @@ Route::prefix('voyage')->name('voyage.')->group(function () {
     Route::prefix('vols')->name('vols.')->group(function () {
         Route::get('/', fn () => redirect('/voyage?type=vol'))->name('home');
         Route::get('/aeroports', [FlightController::class, 'airports'])->middleware('throttle:60,1')->name('airports');
+        Route::get('/horaires', [FlightController::class, 'schedules'])->middleware('throttle:30,1')->name('schedules');
         Route::get('/recherche', [FlightController::class, 'search'])->middleware('throttle:20,1')->name('search');
         Route::get('/resultats/{uuid}', [FlightController::class, 'results'])->name('results');
 

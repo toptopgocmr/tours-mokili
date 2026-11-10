@@ -30,6 +30,12 @@ class FlightSupplierManager
         if ($s->driver === 'galileo' && ! \App\Services\Flights\Suppliers\GalileoSupplier::configured()) {
             return false; // identifiants Travelport absents : on ne l'interroge pas
         }
+        if ($s->driver === 'duffel' && ! \App\Services\Flights\Suppliers\DuffelSupplier::configured()) {
+            return false; // jeton Duffel absent
+        }
+        if ($s->driver === 'travelpayouts' && ! \App\Services\Flights\Suppliers\TravelpayoutsSupplier::configured()) {
+            return false; // jeton Travelpayouts absent
+        }
 
         return $s->is_active;
     }

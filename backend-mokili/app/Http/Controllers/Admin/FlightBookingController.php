@@ -73,6 +73,9 @@ class FlightBookingController extends Controller
             'passengers' => $passengers,
             'statuses' => FlightStatus::LABELS,
             'allowed' => FlightStatus::TRANSITIONS[$flightBooking->status] ?? [],
+            // Offre Aviasales (prix indicatif) : liens pour acheter le billet.
+            'aviasales' => ($tp = $flightBooking->offer?->raw['travelpayouts'] ?? null)
+                ? ['links' => $tp['links'] ?? [], 'price_eur' => $tp['price_eur'] ?? null] : null,
             'afterSaleStatuses' => FlightAfterSale::STATUSES,
             // Rapprochement : encaisse / cout fournisseur / marge / frais / rembourse.
             'reconciliation' => [

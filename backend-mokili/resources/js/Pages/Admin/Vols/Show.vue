@@ -13,6 +13,7 @@ const props = defineProps({
     allowed: { type: Array, default: () => [] },
     afterSaleStatuses: { type: Object, default: () => ({}) },
     reconciliation: { type: Object, default: () => ({}) },
+    aviasales: { type: Object, default: null },
 });
 
 const d = computed(() => props.dossier);
@@ -58,6 +59,11 @@ const showReconcile = computed(() => ['BOOKING_PENDING', 'TICKETING_PENDING', 'F
             </p>
         </div>
         <span class="rounded-full px-3 py-1 text-sm font-semibold" :class="STATUS_STYLES[d.status]">{{ d.status }} - {{ statuses[d.status] }}</span>
+    </div>
+    <div v-if="aviasales" class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <p class="font-semibold">Offre Aviasales (prix indicatif : {{ aviasales.price_eur }} EUR / adulte au moment de la recherche)</p>
+        <p class="mt-1">Achetez le billet, puis saisissez le PNR et les numeros de billet ci-dessous. Si le prix a augmente, proposez le nouveau prix au client.</p>
+        <a v-for="(l, i) in aviasales.links" :key="i" :href="l" target="_blank" rel="noopener" class="mr-3 mt-2 inline-block font-semibold underline">Ouvrir le vol {{ aviasales.links.length > 1 ? i + 1 : '' }} sur Aviasales ↗</a>
     </div>
 
     <div v-if="d.needs_attention" class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800">

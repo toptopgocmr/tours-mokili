@@ -33,6 +33,12 @@ class FlightController extends Controller
         return app(WebFlightController::class)->airports($request);
     }
 
+    /** Programme des vols : ?airport=BZV&direction=departures|arrivals&to=CDG */
+    public function schedules(Request $request, \App\Services\Flights\Schedules\AirLabsSchedules $airlabs): JsonResponse
+    {
+        return response()->json(app(WebFlightController::class)->scheduleData($request, $airlabs));
+    }
+
     public function search(FlightSearchRequest $request): JsonResponse
     {
         $search = $this->searchService->search($request->validated(), $request->user('sanctum'));

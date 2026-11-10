@@ -53,6 +53,35 @@ class FlightController extends Controller
         return response()->json($airports);
     }
 
+    /** Programme des vols (departs / arrivees en direct, AirLabs). */
+    public function schedules(Request $request, \App\Services\Flights\Schedules\AirLabsSchedules $airlabs): Response
+    {
+        $data = $this->scheduleData($request, $airlabs);
+
+        return Inertia::render('Voyage/Vols/Horaires', $data);
+    }
+
+    public function scheduleData(Request $request, \App\Services\Flights\Schedules\AirLabsSchedules $airlabs): array
+    {
+        $airport = strtoupper(preg_replace('/[^A-Za-z]/', '', (string) $request->query('airport', 'BZV'))) ?: 'BZV';
+        $airport = strlen($airport) === 3 ? $airport : 'BZV';
+        $other = strtoupper(preg_replace('/[^A-Za-z]/', '', (string) $request->query('to', '')));
+        $other = strlen($other) === 3 ? $other : null;
+        $direction = $request->query('direction') === 'arrivals' ? 'arrivals' : 'departures';
+
+        $board = $airlabs->board($airport, $direction, $other);
+        $codes = collect($board['flights'])->flatMap(fn ($f) => [$f['origin'], $f['destination']])->push($airport, $other)->filter()->unique();
+
+        return [
+            'airport' => $airport,
+            'to' => $other,
+            'direction' => $direction,
+            'flights' => $board['flights'],
+            'error' => $board['error'],
+            'airports' => Airport::whereIn('iata_code', $codes)->get(['iata_code', 'name', 'city', 'country_name'])->keyBy('iata_code'),
+        ];
+    }
+
     public function search(FlightSearchRequest $request): RedirectResponse
     {
         $search = $this->searchService->search($request->validated(), $request->user());

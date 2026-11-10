@@ -186,6 +186,9 @@ const cardSubtitle = (offer) => {
             <!-- VOLS : moteur de billetterie aerienne -->
             <div v-if="type === 'vol'" class="mt-3">
                 <FlightSearchForm :cabins="cabins" :suggestions="popularAirports" />
+                <Link href="/voyage/vols/horaires" class="mt-3 inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-navy-900 shadow hover:bg-gold-50">
+                    🕓 Programme des vols : departs et arrivees en direct →
+                </Link>
             </div>
             <!-- CIRCUITS : recherche de trajet facon BlaBlaCar -->
             <form v-else-if="isRides" class="mt-3 space-y-3" @submit.prevent="search">
