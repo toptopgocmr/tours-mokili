@@ -205,27 +205,50 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
 
         <!-- ===== VENTE : recherche facon La Centrale ===== -->
         <form v-else-if="s.type === 'vente'" class="mx-auto max-w-6xl rounded-2xl bg-white p-5 shadow-[0_8px_30px_rgba(0,0,0,0.18)]" @submit.prevent="submit">
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]">
-                <select v-model="s.brand" class="h-12 rounded-xl border-slate-300 text-sm" @change="s.model = ''">
-                    <option value="">Marque</option>
-                    <option v-for="(m, b) in cat.brands" :key="b" :value="b">{{ b }}</option>
-                </select>
-                <select v-model="s.model" class="h-12 rounded-xl border-slate-300 text-sm" :disabled="!models.length">
-                    <option value="">Modele</option>
-                    <option v-for="m in models" :key="m" :value="m">{{ m }}</option>
-                </select>
-                <select v-model="s.price_max" class="h-12 rounded-xl border-slate-300 text-sm">
-                    <option value="">Prix max</option>
-                    <option v-for="p in [1000000, 2000000, 3000000, 5000000, 7500000, 10000000, 15000000, 20000000, 30000000, 50000000]" :key="p" :value="p">{{ money(p) }} XAF</option>
-                </select>
-                <input v-model="s.city" type="text" placeholder="Ville" class="h-12 rounded-xl border-slate-300 text-sm" />
-                <button type="submit" class="h-12 rounded-xl bg-gold-500 px-8 font-bold text-navy-900 transition hover:bg-gold-400">Rechercher<span v-if="vehicles.total !== undefined"> ({{ vehicles.total }})</span></button>
-            </div>
-            <div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                <span class="text-slate-500">Carburant :</span>
-                <button v-for="(lbl, key) in cat.fuels" :key="key" type="button" class="rounded-full border px-3 py-1 text-xs font-semibold" :class="s.fuel === key ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700'" @click="s.fuel = s.fuel === key ? '' : key; submit()">{{ lbl }}</button>
-                <span class="ml-2 text-slate-500">Boite :</span>
-                <button v-for="[k, lbl] in [['automatique', 'Automatique'], ['manuelle', 'Manuelle']]" :key="k" type="button" class="rounded-full border px-3 py-1 text-xs font-semibold" :class="s.transmission === k ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700'" @click="s.transmission = s.transmission === k ? '' : k; submit()">{{ lbl }}</button>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <label class="block text-xs font-semibold text-slate-500">Marque
+                    <select v-model="s.brand" class="mt-1 h-12 w-full rounded-xl border-slate-300 text-sm font-medium text-slate-900" @change="s.model = ''">
+                        <option value="">Toutes les marques</option>
+                        <option v-for="(m, b) in cat.brands" :key="b" :value="b">{{ b }}</option>
+                    </select>
+                </label>
+                <label class="block text-xs font-semibold text-slate-500">Modele
+                    <select v-model="s.model" class="mt-1 h-12 w-full rounded-xl border-slate-300 text-sm font-medium text-slate-900 disabled:bg-slate-50" :disabled="!models.length">
+                        <option value="">{{ s.brand ? 'Tous les modeles' : 'Choisir une marque' }}</option>
+                        <option v-for="m in models" :key="m" :value="m">{{ m }}</option>
+                    </select>
+                </label>
+                <label class="block text-xs font-semibold text-slate-500">Carburant
+                    <select v-model="s.fuel" class="mt-1 h-12 w-full rounded-xl border-slate-300 text-sm font-medium text-slate-900">
+                        <option value="">Tous les carburants</option>
+                        <option v-for="(lbl, key) in cat.fuels" :key="key" :value="key">{{ lbl }}</option>
+                    </select>
+                </label>
+                <label class="block text-xs font-semibold text-slate-500">Boite de vitesses
+                    <select v-model="s.transmission" class="mt-1 h-12 w-full rounded-xl border-slate-300 text-sm font-medium text-slate-900">
+                        <option value="">Automatique ou manuelle</option>
+                        <option value="automatique">Automatique</option>
+                        <option value="manuelle">Manuelle</option>
+                    </select>
+                </label>
+                <label class="block text-xs font-semibold text-slate-500">Prix maximum
+                    <select v-model="s.price_max" class="mt-1 h-12 w-full rounded-xl border-slate-300 text-sm font-medium text-slate-900">
+                        <option value="">Sans limite</option>
+                        <option v-for="p in [1000000, 2000000, 3000000, 5000000, 7500000, 10000000, 15000000, 20000000, 30000000, 50000000, 100000000]" :key="p" :value="p">{{ money(p) }} XAF</option>
+                    </select>
+                </label>
+                <label class="block text-xs font-semibold text-slate-500">Annee minimum
+                    <select v-model="s.year_min" class="mt-1 h-12 w-full rounded-xl border-slate-300 text-sm font-medium text-slate-900">
+                        <option value="">Toutes les annees</option>
+                        <option v-for="y in YEARS" :key="y" :value="y">{{ y }} et plus</option>
+                    </select>
+                </label>
+                <label class="block text-xs font-semibold text-slate-500">Ville
+                    <input v-model="s.city" type="text" placeholder="Brazzaville, Pointe-Noire..." class="mt-1 h-12 w-full rounded-xl border-slate-300 text-sm" />
+                </label>
+                <div class="flex items-end">
+                    <button type="submit" class="h-12 w-full rounded-xl bg-gold-500 px-8 font-bold text-navy-900 transition hover:bg-gold-400">Rechercher<span v-if="vehicles.total !== undefined"> ({{ vehicles.total }})</span></button>
+                </div>
             </div>
         </form>
 
@@ -311,19 +334,21 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                             <option v-for="k in [20000, 50000, 100000, 150000, 200000]" :key="k" :value="k">{{ money(k) }} km</option>
                         </select>
                     </label>
-                    <div class="text-sm">
+                    <label class="block text-sm">
                         <span class="font-semibold text-slate-800">Boite de vitesses</span>
-                        <div class="mt-2 grid grid-cols-2 gap-2">
-                            <button v-for="[k, label] in [['automatique', 'Automatique'], ['manuelle', 'Manuelle']]" :key="k" type="button" class="rounded-lg border px-2 py-2 text-xs font-semibold" :class="s.transmission === k ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700'" @click="s.transmission = s.transmission === k ? '' : k; submit()">{{ label }}</button>
-                        </div>
-                    </div>
-                    <div class="text-sm">
+                        <select v-model="s.transmission" class="mt-1 w-full rounded-lg border-slate-300 text-sm" @change="submit">
+                            <option value="">Automatique ou manuelle</option>
+                            <option value="automatique">Automatique</option>
+                            <option value="manuelle">Manuelle</option>
+                        </select>
+                    </label>
+                    <label class="block text-sm">
                         <span class="font-semibold text-slate-800">Carburant</span>
-                        <label v-for="(lbl, key) in cat.fuels" :key="key" class="mt-2 flex items-center gap-2 text-slate-700">
-                            <input type="checkbox" :checked="s.fuel === key" class="rounded text-navy-900" @change="s.fuel = s.fuel === key ? '' : key; submit()" />
-                            <span class="flex-1">{{ lbl }}</span><span class="text-xs text-slate-400">{{ countOf('fuels', key) }}</span>
-                        </label>
-                    </div>
+                        <select v-model="s.fuel" class="mt-1 w-full rounded-lg border-slate-300 text-sm" @change="submit">
+                            <option value="">Tous les carburants</option>
+                            <option v-for="(lbl, key) in cat.fuels" :key="key" :value="key">{{ lbl }}{{ countOf('fuels', key) ? ` (${countOf('fuels', key)})` : '' }}</option>
+                        </select>
+                    </label>
                     <div class="text-sm">
                         <span class="font-semibold text-slate-800">Couleur</span>
                         <div class="mt-2 grid grid-cols-6 gap-2">
