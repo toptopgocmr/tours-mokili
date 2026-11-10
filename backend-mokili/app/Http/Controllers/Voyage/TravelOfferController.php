@@ -75,6 +75,12 @@ class TravelOfferController extends Controller
         ]);
     }
 
+    /** Programme des departs / arrivees : trains, bus, canots rapides, taxis. */
+    public function schedules(Request $request, \App\Services\Voyage\RideBoard $board): Response
+    {
+        return Inertia::render('Voyage/Trajets/Horaires', $board->board($request));
+    }
+
     /** Heure de depart minimale (?time=16 ou 16:00), entre 0 et 23. */
     protected function hour(Request $request): ?int
     {

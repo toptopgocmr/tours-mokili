@@ -62,6 +62,12 @@ class TravelOfferController extends Controller
         return response()->json($offers->toArray() + ['return_offers' => $returns]);
     }
 
+    /** Programme des departs / arrivees (?city=Brazzaville&direction=departures|arrivals&mode=bus&date=2026-11-10). */
+    public function schedules(Request $request, \App\Services\Voyage\RideBoard $board): JsonResponse
+    {
+        return response()->json($board->board($request));
+    }
+
     public function modes(): JsonResponse
     {
         return response()->json(collect(TravelOffer::TRANSPORT_MODES)

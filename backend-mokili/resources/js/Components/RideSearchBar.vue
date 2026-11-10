@@ -39,7 +39,8 @@ const QUICK = {
     taxi: [['Location de voiture', '/voiture'], ['Programme des vols', '/voyage/vols/horaires']],
     '': [['Location de voiture', '/voiture'], ['Hotels', '/logement'], ['Programme des vols', '/voyage/vols/horaires']],
 };
-const quick = computed(() => QUICK[scope.value ? '' : mode.value] ?? QUICK['']);
+// Le programme des departs est propose sur tous les onglets.
+const quick = computed(() => [['Programme des departs', `/voyage/trajets/horaires${mode.value ? `?mode=${mode.value}` : ''}`], ...(QUICK[scope.value ? '' : mode.value] ?? QUICK[''])]);
 const pickRoute = (r) => {
     [from.value, to.value] = r.split('|');
     emit('search');
