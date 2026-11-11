@@ -22,7 +22,7 @@ class Vehicle extends Model
         'color', 'doors', 'condition', 'first_owner', 'engine', 'options', 'gallery', 'version', 'warranty_months', 'views', 'is_demo',
     ];
 
-    protected $appends = ['image_url', 'offer_type_label', 'display_price', 'promo', 'gallery_urls'];
+    protected $appends = ['image_url', 'image_is_illustration', 'offer_type_label', 'display_price', 'promo', 'gallery_urls'];
 
     /** Toutes les photos (principale + galerie), en URL. */
     public function getGalleryUrlsAttribute(): array
@@ -113,7 +113,8 @@ class Vehicle extends Model
     public function getImageUrlAttribute(): ?string
     {
         if (! $this->image) {
-            return null;
+            // Annonce sans photo : photo d'illustration de la marque / du modele.
+            return $this->offer_type === 'mecanique' ? null : \App\Support\VehiclePhotos::for($this->brand, $this->model);
         }
 
         // Demo listings store a full external photo URL directly; real
@@ -121,5 +122,11 @@ class Vehicle extends Model
         return str_starts_with($this->image, 'http')
             ? $this->image
             : Storage::disk('public')->url($this->image);
+    }
+
+    /** true : la photo affichee illustre la marque, ce n'est pas le vehicule vendu. */
+    public function getImageIsIllustrationAttribute(): bool
+    {
+        return ! $this->image && $this->image_url !== null;
     }
 }

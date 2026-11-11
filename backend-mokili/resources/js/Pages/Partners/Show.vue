@@ -3,7 +3,7 @@ import MainLayout from '@/Layouts/MainLayout.vue';
 import GuideCover from '@/Components/GuideCover.vue';
 import { usePreviewPhotos } from '@/composables/usePreviewPhotos';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
 defineOptions({ layout: MainLayout });
 
@@ -14,11 +14,15 @@ const props = defineProps({
     business: { type: Object, required: true },
     similar: { type: Array, default: () => [] },
     formulas: { type: Object, default: () => ({}) },
+    mechanicServices: { type: Array, default: () => [] },
 });
 
 const { photoFor, isPreview } = usePreviewPhotos();
 const b = computed(() => props.business);
 const isSite = computed(() => b.value.category === 'site_touristique');
+// Garage (ou concession avec atelier) : prise de rendez-vous.
+const isGarage = computed(() => b.value.category === 'garage' || (b.value.category === 'concessionnaire' && (b.value.services ?? []).some((x) => /atelier|remorquage/i.test(x))));
+const canBook = computed(() => isSite.value || isGarage.value);
 
 // --- Galerie ---
 const photos = computed(() => [photoFor(b.value), ...(b.value.gallery_urls ?? [])].filter(Boolean).filter((u, i, a) => a.indexOf(u) === i));
@@ -43,26 +47,37 @@ const MODULE_PAGES = {
     divertissement: ['/divertissement', 'Tourisme'],
     marketplace: ['/marketplace', 'Marketplace'],
 };
-const back = computed(() => (isSite.value ? ['/divertissement?tab=visite', 'Sites touristiques'] : MODULE_PAGES[b.value.module] ?? ['/', 'Accueil']));
+const back = computed(() => (isSite.value ? ['/divertissement?tab=visite', 'Sites touristiques'] : b.value.category === 'garage' ? ['/voiture?type=mecanique', 'Mecanique'] : b.value.category === 'concessionnaire' ? ['/voiture?type=vente', 'Voitures a vendre'] : MODULE_PAGES[b.value.module] ?? ['/', 'Accueil']));
 const whatsappUrl = computed(() => (b.value.whatsapp ? `https://wa.me/${b.value.whatsapp.replace(/\D/g, '')}` : null));
 const price = computed(() => b.value.price_range || (isSite.value ? 'Gratuit' : null));
-const badge = computed(() => (b.value.services ?? []).find((s) => /visite/i.test(s)) ?? b.value.services?.[0] ?? b.value.category_label);
+const badge = computed(() => (isGarage.value ? b.value.category_label : (b.value.services ?? []).find((s) => /visite/i.test(s)) ?? b.value.services?.[0] ?? b.value.category_label));
 
-// --- Reserver ma visite ---
+// --- Reserver ma visite / Prendre RDV (fenetre facon Boas) ---
 const user = computed(() => usePage().props.auth?.user);
-const open = ref(false);
+const [first0, ...rest0] = String(user.value?.name ?? '').split(' ');
+const open = ref(typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('rdv'));
 const today = new Date().toISOString().slice(0, 10);
-const form = useForm({ name: user.value?.name ?? '', phone: user.value?.phone ?? '', email: user.value?.email ?? '', visit_date: '', people: 1, formula: 'individuel', message: '' });
+const who = reactive({ first: first0 ?? '', last: rest0.join(' ') });
+const garageServices = computed(() => {
+    const own = (b.value.services ?? []).filter((x) => props.mechanicServices.includes(x));
+    return own.length ? [...own, ...props.mechanicServices.filter((x) => !own.includes(x))] : props.mechanicServices;
+});
+const form = useForm({ name: '', phone: user.value?.phone ?? '', email: user.value?.email ?? '', visit_date: '', visit_time: '', people: 1, formula: 'individuel', service: '', vehicle: '', message: '' });
 const sent = ref(false);
-const submit = () =>
-    form.post(`/partenaires/${b.value.slug}/visite`, {
-        preserveScroll: true,
-        onSuccess: () => {
-            sent.value = true;
-            open.value = false;
-            form.reset('visit_date', 'message');
-        },
-    });
+const bump = (d) => (form.people = Math.min(500, Math.max(1, Number(form.people || 1) + d)));
+const submit = () => {
+    form.name = `${who.first} ${who.last}`.trim();
+    form.transform((d) => (isGarage.value ? { ...d, people: null, formula: null } : { ...d, service: null, vehicle: null }))
+        .post(`/partenaires/${b.value.slug}/visite`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                sent.value = true;
+                open.value = false;
+                form.reset('visit_date', 'visit_time', 'message', 'vehicle');
+            },
+        });
+};
+const ctaLabel = computed(() => (isGarage.value ? 'Prendre rendez-vous' : 'Reserver ma visite'));
 </script>
 
 <template>
@@ -133,33 +148,15 @@ const submit = () =>
                     <li v-if="business.phone" class="flex gap-3"><span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />{{ business.phone }}</li>
                 </ul>
 
-                <template v-if="isSite">
-                    <p v-if="sent" class="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">Demande envoyee ! L'equipe MOKILI TOUR vous rappelle pour confirmer votre visite.</p>
-                    <button v-if="!open" type="button" class="w-full rounded-xl bg-emerald-600 py-3.5 font-bold text-white shadow hover:bg-emerald-700" @click="open = true">Reserver ma visite</button>
-                    <form v-else class="space-y-3" @submit.prevent="submit">
-                        <label class="block text-sm"><span class="font-semibold text-slate-700">Date de la visite</span>
-                            <input v-model="form.visit_date" type="date" :min="today" required class="mt-1 w-full rounded-xl border-slate-300 text-sm" />
-                            <span v-if="form.errors.visit_date" class="text-xs text-red-600">{{ form.errors.visit_date }}</span></label>
-                        <div class="grid grid-cols-2 gap-3">
-                            <label class="block text-sm"><span class="font-semibold text-slate-700">Personnes</span>
-                                <input v-model.number="form.people" type="number" min="1" max="500" required class="mt-1 w-full rounded-xl border-slate-300 text-sm" /></label>
-                            <label class="block text-sm"><span class="font-semibold text-slate-700">Formule</span>
-                                <select v-model="form.formula" class="mt-1 w-full rounded-xl border-slate-300 text-sm"><option v-for="(l, k) in formulas" :key="k" :value="k">{{ l }}</option></select></label>
-                        </div>
-                        <label class="block text-sm"><span class="font-semibold text-slate-700">Nom complet</span>
-                            <input v-model="form.name" type="text" required class="mt-1 w-full rounded-xl border-slate-300 text-sm" />
-                            <span v-if="form.errors.name" class="text-xs text-red-600">{{ form.errors.name }}</span></label>
-                        <label class="block text-sm"><span class="font-semibold text-slate-700">Telephone</span>
-                            <input v-model="form.phone" type="tel" required placeholder="06 000 00 00" class="mt-1 w-full rounded-xl border-slate-300 text-sm" />
-                            <span v-if="form.errors.phone" class="text-xs text-red-600">{{ form.errors.phone }}</span></label>
-                        <label class="block text-sm"><span class="font-semibold text-slate-700">Email (facultatif)</span>
-                            <input v-model="form.email" type="email" class="mt-1 w-full rounded-xl border-slate-300 text-sm" /></label>
-                        <label class="block text-sm"><span class="font-semibold text-slate-700">Message (facultatif)</span>
-                            <textarea v-model="form.message" rows="2" placeholder="Guide, transport, horaire souhaite..." class="mt-1 w-full rounded-xl border-slate-300 text-sm" /></label>
-                        <button type="submit" :disabled="form.processing" class="w-full rounded-xl bg-emerald-600 py-3.5 font-bold text-white shadow hover:bg-emerald-700 disabled:opacity-60">{{ form.processing ? 'Envoi...' : 'Envoyer ma demande' }}</button>
-                        <button type="button" class="w-full text-sm text-slate-500 hover:text-slate-800" @click="open = false">Annuler</button>
-                    </form>
+                <template v-if="canBook">
+                    <p v-if="sent" class="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{{ isGarage ? 'Demande de rendez-vous envoyee ! Nous vous rappelons sous 24 h pour confirmer.' : "Demande envoyee ! L'equipe MOKILI TOUR vous rappelle pour confirmer votre visite." }}</p>
+                    <button type="button" class="w-full rounded-xl bg-emerald-600 py-3.5 font-bold text-white shadow hover:bg-emerald-700" @click="open = true">📅 {{ ctaLabel }}</button>
                     <p class="text-center text-xs text-slate-500">Reservation sans engagement</p>
+                    <template v-if="isGarage">
+                        <a v-if="business.phone" :href="`tel:${business.phone.replace(/\s/g, '')}`" class="btn-outline block w-full text-center">Appeler</a>
+                        <a v-if="whatsappUrl" :href="whatsappUrl" target="_blank" rel="noopener" class="btn-outline block w-full text-center">WhatsApp</a>
+                        <a :href="mapsUrl" target="_blank" rel="noopener" class="btn-outline block w-full text-center">Itineraire</a>
+                    </template>
                 </template>
                 <template v-else>
                     <a v-if="business.phone" :href="`tel:${business.phone.replace(/\s/g, '')}`" class="btn-gold block w-full text-center">Appeler</a>
@@ -182,5 +179,86 @@ const submit = () =>
                 </Link>
             </div>
         </section>
+    </div>
+    <!-- Fenetre de reservation (facon Boas) -->
+    <div v-if="open && canBook" class="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" @click.self="open = false">
+        <form class="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl" @submit.prevent="submit">
+            <div class="flex items-start justify-between border-b px-6 py-4">
+                <div>
+                    <h2 class="text-xl font-bold text-navy-900">{{ isGarage ? 'Rendez-vous' : 'Reserver' }} {{ business.name }}</h2>
+                    <p class="mt-1 text-sm text-slate-500">Remplissez le formulaire ci-dessous. Nous reviendrons vers vous rapidement.</p>
+                </div>
+                <button type="button" class="text-2xl leading-none text-slate-400 hover:text-slate-700" aria-label="Fermer" @click="open = false">×</button>
+            </div>
+            <div class="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                <section>
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Vos informations</p>
+                    <div class="mt-2 grid grid-cols-2 gap-3">
+                        <label class="block text-sm"><span class="font-semibold text-slate-700">Prenom <span class="text-red-500">*</span></span>
+                            <input v-model="who.first" type="text" required class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" /></label>
+                        <label class="block text-sm"><span class="font-semibold text-slate-700">Nom <span class="text-red-500">*</span></span>
+                            <input v-model="who.last" type="text" required class="mt-1 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" /></label>
+                        <label class="block text-sm"><span class="font-semibold text-slate-700">Telephone <span class="text-red-500">*</span></span>
+                            <input v-model="form.phone" type="tel" required placeholder="+242 06 000 0000" class="mt-1 w-full rounded-lg border-slate-300 text-sm" />
+                            <span v-if="form.errors.phone" class="text-xs text-red-600">{{ form.errors.phone }}</span></label>
+                        <label class="block text-sm"><span class="font-semibold text-slate-700">Email</span>
+                            <input v-model="form.email" type="email" class="mt-1 w-full rounded-lg border-slate-300 text-sm" /></label>
+                    </div>
+                    <span v-if="form.errors.name" class="text-xs text-red-600">{{ form.errors.name }}</span>
+                </section>
+
+                <section>
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ isGarage ? 'Votre vehicule et la prestation' : 'Details de la visite' }}</p>
+                    <div class="mt-2 grid grid-cols-2 gap-3">
+                        <template v-if="isGarage">
+                            <label class="col-span-2 block text-sm"><span class="font-semibold text-slate-700">Prestation <span class="text-red-500">*</span></span>
+                                <select v-model="form.service" required class="mt-1 w-full rounded-lg border-slate-300 text-sm">
+                                    <option value="" disabled>Choisir une prestation</option>
+                                    <option v-for="m in garageServices" :key="m" :value="m">{{ m }}</option>
+                                </select>
+                                <span v-if="form.errors.service" class="text-xs text-red-600">{{ form.errors.service }}</span></label>
+                            <label class="col-span-2 block text-sm"><span class="font-semibold text-slate-700">Vehicule</span>
+                                <input v-model="form.vehicle" type="text" placeholder="Marque, modele, annee (ex. Toyota Corolla 2015)" class="mt-1 w-full rounded-lg border-slate-300 text-sm" /></label>
+                        </template>
+                        <label class="block text-sm"><span class="font-semibold text-slate-700">{{ isGarage ? 'Date souhaitee' : 'Date de visite' }} <span class="text-red-500">*</span></span>
+                            <input v-model="form.visit_date" type="date" :min="today" required class="mt-1 w-full rounded-lg border-slate-300 text-sm" />
+                            <span v-if="form.errors.visit_date" class="text-xs text-red-600">{{ form.errors.visit_date }}</span></label>
+                        <label v-if="isGarage" class="block text-sm"><span class="font-semibold text-slate-700">Heure souhaitee</span>
+                            <input v-model="form.visit_time" type="time" min="07:00" max="19:00" class="mt-1 w-full rounded-lg border-slate-300 text-sm" /></label>
+                        <div v-else class="block text-sm"><span class="font-semibold text-slate-700">Nombre de visiteurs <span class="text-red-500">*</span></span>
+                            <div class="mt-1 flex h-[42px] items-center justify-between rounded-lg border border-slate-300 px-2">
+                                <button type="button" class="h-8 w-8 rounded text-lg text-slate-500 hover:bg-slate-100" @click="bump(-1)">−</button>
+                                <span class="font-semibold">{{ form.people }}</span>
+                                <button type="button" class="h-8 w-8 rounded text-lg text-slate-500 hover:bg-slate-100" @click="bump(1)">+</button>
+                            </div></div>
+                        <label v-if="!isGarage && Object.keys(formulas).length" class="col-span-2 block text-sm"><span class="font-semibold text-slate-700">Formule</span>
+                            <select v-model="form.formula" class="mt-1 w-full rounded-lg border-slate-300 text-sm"><option v-for="(l, k) in formulas" :key="k" :value="k">{{ l }}</option></select></label>
+                        <label class="col-span-2 block text-sm"><span class="font-semibold text-slate-700">Notes / Commentaires</span>
+                            <textarea v-model="form.message" rows="2" :placeholder="isGarage ? 'Symptomes, bruit, voyant allume, depannage a domicile...' : 'Besoins particuliers, langue du guide, horaire prefere...'" class="mt-1 w-full rounded-lg border-slate-300 text-sm" /></label>
+                    </div>
+                </section>
+
+                <section class="overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50/50">
+                    <p class="border-b border-emerald-200 px-4 py-2 text-xs font-bold uppercase tracking-wide text-emerald-700">Recapitulatif</p>
+                    <div class="space-y-2 px-4 py-3 text-sm text-slate-700">
+                        <template v-if="isGarage">
+                            <p class="flex justify-between"><span>Prestation</span><b>{{ form.service || '—' }}</b></p>
+                            <p class="flex justify-between"><span>Date</span><b>{{ form.visit_date || '—' }}<template v-if="form.visit_time"> a {{ form.visit_time }}</template></b></p>
+                            <p class="flex justify-between border-t border-emerald-200 pt-2"><span class="font-bold">Tarif</span><b class="text-emerald-700">{{ business.price_range || 'Devis sur place' }}</b></p>
+                        </template>
+                        <template v-else>
+                            <p class="flex justify-between"><span>Visiteurs</span><b>{{ form.people }} personne(s)</b></p>
+                            <p class="flex justify-between"><span>Entree × {{ form.people }}</span><b>{{ price }}</b></p>
+                            <p class="flex justify-between border-t border-emerald-200 pt-2 text-base"><span class="font-bold">Total a payer</span><b class="text-xl text-emerald-700">{{ price }}</b></p>
+                        </template>
+                    </div>
+                </section>
+                <p class="rounded-xl bg-sky-50 p-3 text-sm text-sky-800">ⓘ Nous vous recontactons sous 24 h pour confirmer {{ isGarage ? 'votre rendez-vous' : 'votre visite et finaliser les modalites d\'accueil' }}.</p>
+            </div>
+            <div class="flex justify-end gap-3 border-t px-6 py-4">
+                <button type="button" class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50" @click="open = false">Annuler</button>
+                <button type="submit" :disabled="form.processing" class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-60">{{ form.processing ? 'Envoi...' : 'Confirmer la reservation' }}</button>
+            </div>
+        </form>
     </div>
 </template>

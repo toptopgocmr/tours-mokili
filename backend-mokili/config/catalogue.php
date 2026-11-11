@@ -151,9 +151,11 @@ return [
             'Climatisation', 'GPS', 'Camera de recul', 'Radar de recul', 'Bluetooth', 'Toit ouvrant', 'Sieges cuir',
             'Jantes alliage', 'Regulateur de vitesse', 'Demarrage sans cle', '4 roues motrices', 'Vitres electriques',
         ],
+        // Prestations proposees dans le champ de recherche Voiture > Mecanique.
         'mechanic_services' => [
-            'Vidange', 'Diagnostic', 'Freinage', 'Pneumatiques', 'Climatisation', 'Carrosserie',
-            'Electricite auto', 'Depannage / remorquage',
+            'Mecanique generale', 'Entretien / revision', 'Vidange', 'Diagnostic', 'Freinage', 'Pneumatiques',
+            'Climatisation', 'Carrosserie', 'Peinture', 'Electricite auto', 'Batterie', 'Pieces detachees',
+            'Depannage / remorquage', 'Poids lourds', 'Lavage', 'Gardiennage',
         ],
     ],
 

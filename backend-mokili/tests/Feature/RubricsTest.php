@@ -46,7 +46,9 @@ class RubricsTest extends TestCase
         $this->get('/voiture?type=vente')->assertOk()
             ->assertInertia(fn ($p) => $p->has('vehicles.data', 1)->where('vehicles.data.0.display_price.amount', 9500000));
         $this->get('/voiture?type=mecanique')->assertOk()
-            ->assertInertia(fn ($p) => $p->has('vehicles.data', 1)->has('garages', 1));
+            ->assertInertia(fn ($p) => $p->has('vehicles.data', 1)
+                // Garages + ateliers des concessionnaires (CFAO, Tractafric).
+                ->where('garages', fn ($g) => collect($g)->where('category', 'garage')->count() === 1));
         $res = $this->getJson('/api/voiture/vehicles?offer_type=location')->assertOk();
         $this->assertNotEmpty($res->json('data'));
         $this->assertSame(['location'], array_values(array_unique(array_column($res->json('data'), 'offer_type'))));

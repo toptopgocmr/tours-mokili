@@ -46,7 +46,7 @@ const wa = (phone) => `https://wa.me/${String(phone).replace(/\D/g, '')}`;
                         <td class="px-4 py-3"><Link v-if="r.business" :href="`/partenaires/${r.business.slug}`" class="font-semibold text-navy-900 hover:underline">{{ r.business.name }}</Link><p class="text-xs text-slate-500">{{ r.business?.city }}</p></td>
                         <td class="whitespace-nowrap px-4 py-3 font-medium">{{ day(r.visit_date) }}</td>
                         <td class="px-4 py-3"><p class="font-semibold">{{ r.name }}</p><a :href="`tel:${r.phone}`" class="text-emerald-700">{{ r.phone }}</a> · <a :href="wa(r.phone)" target="_blank" rel="noopener" class="text-emerald-700">WhatsApp</a><p v-if="r.email" class="text-xs text-slate-500">{{ r.email }}</p></td>
-                        <td class="whitespace-nowrap px-4 py-3">{{ r.people }} pers. · {{ formulas[r.formula] ?? r.formula }}</td>
+                        <td class="whitespace-nowrap px-4 py-3"><template v-if="r.service"><b>RDV garage</b> · {{ r.service }}<span v-if="r.vehicle" class="block text-xs text-slate-500">{{ r.vehicle }}</span></template><template v-else>{{ r.people }} pers. · {{ formulas[r.formula] ?? r.formula }}</template><span v-if="r.visit_time" class="block text-xs text-slate-500">a {{ r.visit_time }}</span></td>
                         <td class="max-w-xs px-4 py-3 text-slate-600">{{ r.message }}</td>
                         <td class="px-4 py-3">
                             <span :class="badge(r.status)">{{ statuses[r.status] ?? r.status }}</span>

@@ -24,6 +24,7 @@ const props = defineProps({
     sorts: { type: Object, default: () => ({}) },
     reservedIds: { type: Array, default: () => [] },
     finance: { type: Object, default: () => ({}) },
+    mechanicServices: { type: Array, default: () => [] },
 });
 const { favorites, compare, isFav, inCompare, toggleFav, toggleCompare, clearCompare } = useCarShortlist();
 const showFavs = () => router.get('/voiture', { type: 'vente', ids: favorites.value.join(',') || '0' }, { preserveScroll: true });
@@ -81,6 +82,11 @@ const query = () => {
     return out;
 };
 const submit = () => router.get('/voiture', query(), { preserveState: true, preserveScroll: true, replace: true });
+const pickService = (m, clearCity = false) => {
+    s.q = s.q === m ? '' : m;
+    if (clearCity) s.city = '';
+    submit();
+};
 const setType = (t) => {
     s.type = t;
     if (t === 'location' && !s.start) {
@@ -253,10 +259,25 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
         </form>
 
         <!-- ===== TOUT / MECANIQUE : barre de recherche ===== -->
-        <form v-else class="mx-auto flex max-w-6xl flex-col gap-2 rounded-2xl bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.18)] sm:flex-row" @submit.prevent="submit">
-            <input v-model="s.q" type="text" :placeholder="s.type === 'mecanique' ? 'Prestation, garage (ex. vidange)...' : 'Marque, modele (ex. Toyota RAV4)...'" class="h-12 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" />
-            <input v-model="s.city" type="text" placeholder="Ville" class="h-12 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500 sm:w-52" />
-            <button type="submit" class="h-12 rounded-xl bg-gold-500 px-10 font-bold text-navy-900 transition hover:bg-gold-400">Rechercher</button>
+        <form v-else class="mx-auto max-w-6xl rounded-2xl bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.18)]" @submit.prevent="submit">
+            <div class="flex flex-col gap-2 sm:flex-row">
+                <template v-if="s.type === 'mecanique'">
+                    <!-- Liste des prestations directement dans le champ (saisie libre possible). -->
+                    <input v-model="s.q" type="text" list="mecanique-services" placeholder="Prestation ou garage : vidange, depannage..." class="h-12 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" @change="submit" />
+                    <datalist id="mecanique-services"><option v-for="m in mechanicServices" :key="m" :value="m" /></datalist>
+                    <select v-model="s.q" class="h-12 rounded-xl border-slate-300 text-sm font-medium text-slate-900 sm:w-60" @change="submit">
+                        <option value="">Toutes les prestations</option>
+                        <option v-for="m in mechanicServices" :key="m" :value="m">{{ m }}</option>
+                    </select>
+                </template>
+                <input v-else v-model="s.q" type="text" placeholder="Marque, modele (ex. Toyota RAV4)..." class="h-12 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" />
+                <input v-model="s.city" type="text" list="voiture-villes" placeholder="Ville" class="h-12 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500 sm:w-52" />
+                <datalist id="voiture-villes"><option value="Brazzaville" /><option value="Pointe-Noire" /><option value="Dolisie" /><option value="Ouesso" /></datalist>
+                <button type="submit" class="h-12 rounded-xl bg-gold-500 px-10 font-bold text-navy-900 transition hover:bg-gold-400">Rechercher</button>
+            </div>
+            <div v-if="s.type === 'mecanique'" class="mt-3 flex flex-wrap gap-2">
+                <button v-for="m in mechanicServices" :key="m" type="button" class="rounded-full border px-3 py-1 text-xs font-semibold transition" :class="s.q === m ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700 hover:border-navy-900'" @click="pickService(m)">{{ m }}</button>
+            </div>
         </form>
     </div>
 
@@ -277,15 +298,30 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
     </div>
 
     <div class="mx-auto max-w-6xl px-4 py-8">
-        <!-- Garages (mecanique) -->
-        <section v-if="garages.length" class="mb-10">
-            <h2 class="text-xl font-bold text-navy-900">Garages partenaires</h2>
-            <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                <Link v-for="g in garages" :key="g.id" :href="`/partenaires/${g.slug}`" class="overflow-hidden rounded-2xl border shadow-sm transition hover:shadow-lg">
-                    <div class="h-28"><GuideCover :src="g.image_url" category="garage" :alt="g.name" icon-class="h-10 w-10" /></div>
-                    <div class="p-3"><p class="font-semibold text-navy-900">{{ g.name }}</p><p class="text-xs text-navy-500">{{ g.district ?? g.city }}</p></div>
-                </Link>
+        <!-- Garages, mecanique & depannage -->
+        <section v-if="s.type === 'mecanique'" class="mb-10">
+            <div class="flex flex-wrap items-end justify-between gap-2">
+                <h2 class="text-xl font-bold text-navy-900">{{ garages.length }} garage(s) &amp; depanneur(s){{ f.q ? ` : ${f.q}` : '' }}{{ f.city ? ` a ${f.city}` : '' }}</h2>
+                <button v-if="f.q || f.city" type="button" class="text-sm font-semibold text-[#006ce4]" @click="pickService('', true)">Voir tous les garages</button>
             </div>
+            <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <article v-for="g in garages" :key="g.id" class="flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-lg">
+                    <Link :href="`/partenaires/${g.slug}`" class="relative block h-32"><GuideCover :src="g.image_url" category="garage" :alt="g.name" icon-class="h-10 w-10" />
+                        <span class="absolute right-2 top-2 rounded-full bg-navy-900/80 px-2 py-0.5 text-[11px] font-semibold text-white">{{ g.city }}</span></Link>
+                    <div class="flex flex-1 flex-col p-4">
+                        <Link :href="`/partenaires/${g.slug}`" class="font-bold text-navy-900 hover:underline">{{ g.name }}</Link>
+                        <p class="text-xs text-slate-500">{{ g.address || g.district || g.city }}</p>
+                        <div class="mt-2 flex flex-wrap gap-1">
+                            <span v-for="sv in (g.services ?? []).slice(0, 5)" :key="sv" class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">{{ sv }}</span>
+                        </div>
+                        <div class="mt-auto grid grid-cols-2 gap-2 pt-4">
+                            <a v-if="g.phone" :href="`tel:${g.phone.replace(/\s/g, '')}`" class="rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Appeler</a>
+                            <Link :href="`/partenaires/${g.slug}?rdv=1`" class="rounded-xl bg-gold-500 px-3 py-2 text-center text-sm font-bold text-navy-900 hover:bg-gold-400" :class="!g.phone && 'col-span-2'">Prendre RDV</Link>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <p v-if="!garages.length" class="mt-6 rounded-2xl bg-slate-50 p-6 text-center text-slate-600">Aucun garage pour cette recherche. Essayez une autre prestation ou une autre ville.</p>
         </section>
 
         <!-- ===== VENTE : sidebar de filtres + annonces ===== -->
@@ -408,6 +444,7 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                                 </button>
                             </div>
                             <span v-if="v.is_demo" class="absolute bottom-2 left-2 rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-600">Exemple</span>
+                            <span v-if="v.image_is_illustration" class="absolute bottom-2 right-2 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">Photo d'illustration</span>
                             <span v-if="reservedIds.includes(v.id)" class="absolute left-2 top-2 rounded-md bg-red-600 px-2 py-1 text-[11px] font-bold uppercase text-white">Reserve</span>
                             <PromoBadge v-else :promo="v.promo" class="absolute left-2 top-2" />
                         </div>
@@ -459,6 +496,7 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                     <div class="relative">
                         <ListingImage :src="v.image_url" fallback-class="bg-navy-800" class="h-44">{{ v.brand }} {{ v.model }}</ListingImage>
                         <span class="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-0.5 text-xs font-semibold text-navy-900">{{ v.offer_type_label }}</span>
+                        <span v-if="v.image_is_illustration" class="absolute bottom-2 right-2 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">Photo d'illustration</span>
                         <PromoBadge :promo="v.promo" class="absolute right-3 top-3" />
                     </div>
                     <div class="flex flex-1 flex-col p-4">
@@ -485,7 +523,7 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                     </div>
                 </Link>
             </div>
-            <p v-if="!vehicles.data.length" class="mt-10 text-center text-navy-500">
+            <p v-if="!vehicles.data.length && s.type !== 'mecanique'" class="mt-10 text-center text-navy-500">
                 {{ datesSearched ? 'Aucun vehicule libre sur ces dates : essayez d\'autres dates.' : 'Aucune annonce pour le moment dans cette categorie.' }}
             </p>
             <Paginator :page="vehicles" />

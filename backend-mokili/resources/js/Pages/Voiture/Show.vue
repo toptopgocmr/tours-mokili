@@ -21,6 +21,7 @@ const props = defineProps({
     search: { type: Object, default: () => ({}) },
     sale: { type: Object, default: null },
     idTypes: { type: Object, default: () => ({}) },
+    dealers: { type: Array, default: () => [] },
 });
 
 // ---------- Galerie ----------
@@ -229,6 +230,7 @@ const CONDITIONS = [
                     </template>
                     <span v-if="photos.length" class="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">{{ photo + 1 }} / {{ photos.length }}</span>
                     <span v-if="sale?.reserved" class="absolute left-3 top-3 rounded-md bg-red-600 px-3 py-1 text-xs font-bold uppercase text-white">Reserve</span>
+                    <span v-if="v.image_is_illustration" class="absolute bottom-3 left-3 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">Photo d'illustration {{ v.brand }}</span>
                 </div>
                 <div v-if="photos.length > 1" class="mt-2 flex gap-2 overflow-x-auto pb-1">
                     <button v-for="(u, i) in photos" :key="u" type="button" class="h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 transition" :class="i === photo ? 'ring-navy-900' : 'ring-transparent opacity-70 hover:opacity-100'" @click="photo = i">
@@ -571,6 +573,14 @@ const CONDITIONS = [
                                 {{ inCompare(v.id) ? '✓ Ajoute au comparateur' : 'Ajouter au comparateur' }}
                             </button>
                             <Link v-if="compare.length >= 2" :href="`/voiture/comparer?ids=${compare.join(',')}`" class="mt-2 block text-center text-xs font-semibold text-[#006ce4] underline">Comparer {{ compare.length }} vehicules</Link>
+                            <div v-if="dealers.length" class="mt-4 rounded-xl border border-slate-200 p-3">
+                                <p class="text-sm font-bold text-navy-900">Acheter une {{ v.brand }} au Congo</p>
+                                <p class="text-xs text-slate-500">Vendeurs et concessionnaires partenaires</p>
+                                <Link v-for="d in dealers" :key="d.id" :href="`/partenaires/${d.slug}`" class="mt-2 flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm hover:bg-slate-100">
+                                    <span><b class="text-navy-900">{{ d.name }}</b><span class="block text-xs text-slate-500">{{ d.city }}<template v-if="d.phone"> · {{ d.phone }}</template></span></span>
+                                    <span class="text-[#006ce4]">›</span>
+                                </Link>
+                            </div>
                         </template>
                         <div v-else class="mt-4">
                             <ContactButtons v-if="v.phone" :phone="v.phone" :message="saleMsg('Pouvez-vous me donner plus d\'informations ?')" />

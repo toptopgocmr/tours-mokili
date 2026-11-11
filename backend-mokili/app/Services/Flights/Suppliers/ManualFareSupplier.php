@@ -42,13 +42,21 @@ class ManualFareSupplier extends AbstractSupplier
             foreach ($combos as $combo) {
                 foreach ($fares as $fare) {
                     $next[] = array_merge($combo, [$fare]);
-                    if (count($next) >= $max) {
+                    if (count($next) >= $max * 10) {
                         break 2;
                     }
                 }
             }
             $combos = $next;
         }
+
+        // Aller-retour / multi-destinations : on propose d'abord les voyages
+        // sur une seule compagnie (billet unique), les melanges en dernier recours.
+        $sameAirline = array_values(array_filter(
+            $combos,
+            fn (array $fares) => count(array_unique(array_map(fn ($f) => $f->airline_code, $fares))) === 1,
+        ));
+        $combos = array_slice($sameAirline ?: $combos, 0, $max);
 
         return array_map(fn (array $fares) => $this->buildOffer($c, $fares), $combos);
     }
