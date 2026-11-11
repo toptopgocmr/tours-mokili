@@ -36,6 +36,22 @@ class PartnerPhotos
             return $pool ? $pool[((int) $b->id) % count($pool)] : null;
         }
 
+        $pool = $cfg['categories'][$b->category] ?? [];
+        if ($pool) {
+            return $pool[((int) $b->id) % count($pool)];
+        }
+
+        if ($b->category === 'site_touristique') {
+            $name = mb_strtolower((string) $b->name);
+            foreach ($cfg['site_keywords'] ?? [] as $word => $url) {
+                if (str_contains($name, $word)) {
+                    return $url;
+                }
+            }
+
+            return $cfg['site_cities'][$b->city] ?? null;
+        }
+
         return null;
     }
 }

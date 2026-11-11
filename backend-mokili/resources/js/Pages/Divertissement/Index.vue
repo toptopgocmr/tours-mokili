@@ -20,7 +20,7 @@ const props = defineProps({
     cards: { type: Object, default: () => ({ data: [], total: 0, page: 1, last_page: 1 }) },
 });
 
-const { photoFor, isPreview } = usePreviewPhotos();
+const { photoFor, isPreview, isIllustration } = usePreviewPhotos();
 const s = reactive({ city: props.filters.city ?? '', q: props.filters.q ?? '', type: props.filters.type ?? '' });
 
 const TITLES = {
@@ -52,7 +52,8 @@ const reset = () => {
 };
 
 const date = (iso) => (iso ? new Date(iso).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : null);
-const imageOf = (c) => (c.business_id ? photoFor({ id: c.business_id, image_url: c.image }) : c.image);
+const asBiz = (c) => ({ id: c.business_id, image_url: c.image, image_is_illustration: c.image_is_illustration });
+const imageOf = (c) => (c.business_id ? photoFor(asBiz(c)) : c.image);
 const broken = ref([]);
 const count = (key) => (props.counts ? props.counts[key] ?? 0 : null);
 const total = computed(() => (props.counts ? Object.values(props.counts).reduce((a, b) => a + b, 0) : props.cards.total));
@@ -143,10 +144,11 @@ const excursion = 'https://wa.me/?text=' + encodeURIComponent("Bonjour MOKILI TO
                             <GuideCover v-else :src="null" :category="c.category || 'site_touristique'" :alt="c.title" icon-class="h-12 w-12" />
                             <span v-if="c.price" class="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-emerald-700 shadow">{{ c.price }}</span>
                             <span v-if="c.city" class="absolute right-3 top-3 rounded-full bg-navy-900/80 px-2.5 py-1 text-xs font-semibold text-white">{{ c.city }}</span>
-                            <span v-if="c.business_id && isPreview({ id: c.business_id, image_url: c.image })" class="absolute bottom-3 left-3 rounded bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-950">Apercu admin</span>
+                            <span v-if="c.business_id && isIllustration(asBiz(c))" class="absolute bottom-3 right-3 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">Photo d'illustration</span>
+                            <span v-if="c.business_id && isPreview(asBiz(c))" class="absolute bottom-3 left-3 rounded bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-950">Apercu admin</span>
                         </Link>
                         <div class="flex flex-1 flex-col p-4">
-                            <p class="text-[11px] font-semibold uppercase tracking-wide text-gold-600">{{ c.category && c.tab === 'parcs' ? c.category : c.tab_label }}</p>
+                            <p class="text-[11px] font-semibold uppercase tracking-wide text-gold-600">{{ c.category && c.tab === 'parcs' ? c.category : c.category_label && ['cinema', 'salle_spectacle'].includes(c.category) ? c.category_label : c.tab_label }}</p>
                             <Link :href="c.href" class="mt-0.5 text-lg font-bold leading-tight text-navy-900 hover:text-emerald-700">{{ c.title }}</Link>
                             <p v-if="date(c.date)" class="mt-1 text-sm font-semibold text-purple-700">{{ date(c.date) }}</p>
                             <p v-if="c.address" class="mt-1 line-clamp-1 text-sm text-slate-500">{{ c.address }}</p>

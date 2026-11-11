@@ -17,6 +17,7 @@ import {
     WrenchScrewdriverIcon,
     SparklesIcon,
     CameraIcon,
+    FilmIcon,
 } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
@@ -36,6 +37,8 @@ const STYLES = {
     supermarche: { icon: ShoppingCartIcon, from: '#BE123C', to: '#FB7185' },
     garage: { icon: WrenchScrewdriverIcon, from: '#C2410C', to: '#FDBA74' },
     night_club: { icon: SparklesIcon, from: '#4C1D95', to: '#EC4899' },
+    cinema: { icon: FilmIcon, from: '#7F1D1D', to: '#EF4444' },
+    salle_spectacle: { icon: MusicalNoteIcon, from: '#1E3A8A', to: '#A855F7' },
     site_touristique: { icon: CameraIcon, from: '#065F46', to: '#34D399' },
     restaurant: { icon: CakeIcon, from: '#9A3412', to: '#FB923C' },
     bar_lounge: { icon: MusicalNoteIcon, from: '#6D28D9', to: '#C084FC' },

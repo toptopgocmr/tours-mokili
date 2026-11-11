@@ -163,8 +163,9 @@ return [
     'tourisme' => [
         'label' => 'Tourisme',
         'tabs' => [
-            'concerts' => ['label' => 'Concerts & spectacles', 'source' => 'events', 'categories' => ['concert', 'spectacle']],
-            'cinema' => ['label' => 'Cinema', 'source' => 'events', 'categories' => ['cinema']],
+            // "venues" : salles affichees avec les evenements (et a leur place s'il n'y en a pas).
+            'concerts' => ['label' => 'Concerts & spectacles', 'source' => 'events', 'categories' => ['concert', 'spectacle'], 'venues' => ['salle_spectacle', 'cinema']],
+            'cinema' => ['label' => 'Cinema', 'source' => 'events', 'categories' => ['cinema'], 'venues' => ['cinema']],
             'parcs' => ['label' => 'Parcs', 'source' => 'parks'],
             'night_club' => ['label' => 'Night club', 'source' => 'businesses', 'categories' => ['night_club']],
             'restaurant' => ['label' => 'Restaurant', 'source' => 'businesses', 'categories' => ['restaurant']],

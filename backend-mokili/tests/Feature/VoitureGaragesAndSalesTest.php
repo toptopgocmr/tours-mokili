@@ -89,4 +89,18 @@ class VoitureGaragesAndSalesTest extends TestCase
         $this->assertSame('https://example.com/officielle.jpg', $official->image_url);
         $this->assertFalse($official->image_is_illustration);
     }
+
+    public function test_tourism_tabs_show_venues_with_illustrations(): void
+    {
+        Business::create(['name' => 'Cine Test', 'category' => 'cinema', 'city' => 'Brazzaville', 'is_active' => true]);
+        Business::create(['name' => 'Club Test', 'category' => 'night_club', 'city' => 'Brazzaville', 'is_active' => true]);
+
+        $this->get('/divertissement?tab=cinema')->assertOk()->assertInertia(fn ($p) => $p
+            ->where('cards.data', fn ($c) => collect($c)->contains(fn ($x) => $x['title'] === 'Cine Test' && $x['image_is_illustration'] && str_contains($x['image'], 'CanalOlympia'))));
+        $this->get('/divertissement?tab=night_club')->assertOk()->assertInertia(fn ($p) => $p
+            ->where('cards.data.0.title', 'Club Test')->where('cards.data.0.image_is_illustration', true));
+        // App mobile : sans seance a venir, l'onglet Cinema liste les salles.
+        \App\Models\Divertissement\Event::query()->delete();
+        $this->getJson('/api/tourisme?tab=cinema')->assertOk()->assertJsonFragment(['name' => 'Cine Test']);
+    }
 }

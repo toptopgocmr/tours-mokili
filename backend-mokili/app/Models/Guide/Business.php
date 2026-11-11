@@ -27,6 +27,8 @@ class Business extends Model
         'restaurant' => 'Restaurants',
         'bar_lounge' => 'Bars & lounges',
         'night_club' => 'Night clubs',
+        'cinema' => 'Cinemas',
+        'salle_spectacle' => 'Salles de concert & spectacles',
         'site_touristique' => 'Visites & sites touristiques',
         'ecommerce' => 'Boutiques en ligne',
     ];
@@ -43,6 +45,8 @@ class Business extends Model
         'concessionnaire' => 'voiture',
         'restaurant' => 'divertissement',
         'night_club' => 'divertissement',
+        'cinema' => 'divertissement',
+        'salle_spectacle' => 'divertissement',
         'site_touristique' => 'divertissement',
         'bar_lounge' => 'divertissement',
         'supermarche' => 'marketplace',

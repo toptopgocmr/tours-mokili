@@ -41,6 +41,12 @@ class TourismeCatalog
         $config = $this->tabs()[$tab];
         $city = $filters['city'] ?? null;
 
+        // Concerts / cinema sans evenement a venir : on montre les salles.
+        if ($config['source'] === 'events' && ! empty($config['venues'])
+            && ! Event::query()->active()->where('starts_at', '>=', now()->subHours(6))->whereIn('category', $config['categories'])->exists()) {
+            $config = ['source' => 'businesses', 'categories' => $config['venues']];
+        }
+
         $items = match ($config['source']) {
             'events' => Event::query()->active()
                 ->where('starts_at', '>=', now()->subHours(6))
@@ -99,13 +105,15 @@ class TourismeCatalog
                     ]),
                 default => Business::query()->active()->whereIn('category', $conf['categories'])->when($city, fn ($w) => $w->where('city', 'like', "%{$city}%"))
                     ->orderByDesc('is_featured')->orderBy('name')->limit(200)->get()
-                    ->map(fn (Business $b) => [
-                        'key' => 'b'.$b->id, 'tab' => $key, 'title' => $b->name, 'city' => $b->city, 'address' => trim(($b->address ?? '').($b->district ? ' · '.$b->district : ''), ' ·'),
-                        'description' => $b->description, 'image' => $b->image_url, 'category' => $b->category, 'business_id' => $b->id,
-                        'price' => $b->price_range ?: ($key === 'visite' ? 'Gratuit' : null),
-                        'date' => null, 'href' => '/partenaires/'.$b->slug, 'featured' => (bool) $b->is_featured,
-                    ]),
+                    ->map(fn (Business $b) => $this->businessCard($b, $key)),
             };
+            // Salles de concert / cinemas, apres les evenements.
+            if ($conf['source'] === 'events' && ! empty($conf['venues'])) {
+                $rows = $rows->concat(Business::query()->active()->whereIn('category', $conf['venues'])
+                    ->when($city, fn ($w) => $w->where('city', 'like', "%{$city}%"))
+                    ->orderByDesc('is_featured')->orderBy('name')->limit(100)->get()
+                    ->map(fn (Business $b) => $this->businessCard($b, $key)));
+            }
             $cards = $cards->concat($rows->map(fn ($c) => $c + ['tab_label' => $conf['label']]));
         }
 
@@ -117,13 +125,24 @@ class TourismeCatalog
         return $cards->sortBy([['featured', 'desc'], fn ($a, $b) => strcmp((string) ($a['date'] ?? 'z'), (string) ($b['date'] ?? 'z')), ['title', 'asc']])->values();
     }
 
+    protected function businessCard(Business $b, string $key): array
+    {
+        return [
+            'key' => 'b'.$b->id, 'tab' => $key, 'title' => $b->name, 'city' => $b->city, 'address' => trim(($b->address ?? '').($b->district ? ' · '.$b->district : ''), ' ·'),
+            'description' => $b->description, 'image' => $b->image_url, 'image_is_illustration' => $b->image_is_illustration,
+            'category' => $b->category, 'category_label' => $b->category_label, 'business_id' => $b->id,
+            'price' => $b->price_range ?: ($key === 'visite' ? 'Gratuit' : null),
+            'date' => null, 'href' => '/partenaires/'.$b->slug, 'featured' => (bool) $b->is_featured,
+        ];
+    }
+
     /** Villes presentes dans la rubrique (filtre "Ville"). */
     public function cities(): array
     {
         return collect([
             ...Event::query()->active()->where('starts_at', '>=', now()->subHours(6))->pluck('city'),
             ...AttractionPark::query()->active()->pluck('city'),
-            ...Business::query()->active()->whereIn('category', collect($this->tabs())->pluck('categories')->flatten()->filter()->all())->pluck('city'),
+            ...Business::query()->active()->whereIn('category', collect($this->tabs())->flatMap(fn ($t) => [...($t['categories'] ?? []), ...($t['venues'] ?? [])])->filter()->all())->pluck('city'),
         ])->filter()->map(fn ($c) => trim($c))->unique()->sort()->values()->all();
     }
 }
