@@ -18,8 +18,11 @@ export function usePreviewPhotos() {
     }
 
     // Photo publique si elle existe, sinon l'apercu (staff uniquement).
-    const photoFor = (b) => b?.image_url || (isStaff.value ? previews.value[b?.id] ?? null : null);
-    const isPreview = (b) => !b?.image_url && isStaff.value && !!previews.value[b?.id];
+    // Photo officielle d'abord ; sinon apercu admin ; sinon photo d'illustration.
+    const official = (b) => (b?.image_url && !b?.image_is_illustration ? b.image_url : null);
+    const photoFor = (b) => official(b) || (isStaff.value ? previews.value[b?.id] ?? null : null) || b?.image_url || null;
+    const isPreview = (b) => !official(b) && isStaff.value && !!previews.value[b?.id];
+    const isIllustration = (b) => !!b?.image_is_illustration && !isPreview(b);
 
-    return { photoFor, isPreview };
+    return { photoFor, isPreview, isIllustration };
 }

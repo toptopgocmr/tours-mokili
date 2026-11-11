@@ -76,4 +76,17 @@ class VoitureGaragesAndSalesTest extends TestCase
             'visit_date' => now()->addDays(2)->toDateString(), 'service' => 'Diagnostic'])->assertCreated();
         $this->assertSame('Diagnostic', VisitRequest::first()->service);
     }
+
+    public function test_partners_without_official_photo_get_labelled_illustration(): void
+    {
+        $tyres = Business::create(['name' => 'Vulca', 'category' => 'garage', 'city' => 'Brazzaville', 'services' => ['Pneumatiques'], 'is_active' => true]);
+        $dealer = Business::create(['name' => 'Dealer Toyota', 'category' => 'concessionnaire', 'city' => 'Brazzaville', 'services' => ['Toyota'], 'is_active' => true]);
+        $official = Business::create(['name' => 'Avec photo', 'category' => 'garage', 'city' => 'Brazzaville', 'image' => 'https://example.com/officielle.jpg', 'is_active' => true]);
+
+        $this->assertStringContainsString('Tyre_Repairer', $tyres->image_url);
+        $this->assertTrue($tyres->image_is_illustration);
+        $this->assertSame(\App\Support\VehiclePhotos::for('Toyota'), $dealer->image_url);
+        $this->assertSame('https://example.com/officielle.jpg', $official->image_url);
+        $this->assertFalse($official->image_is_illustration);
+    }
 }

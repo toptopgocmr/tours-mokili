@@ -307,7 +307,8 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
             <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <article v-for="g in garages" :key="g.id" class="flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-lg">
                     <Link :href="`/partenaires/${g.slug}`" class="relative block h-32"><GuideCover :src="g.image_url" category="garage" :alt="g.name" icon-class="h-10 w-10" />
-                        <span class="absolute right-2 top-2 rounded-full bg-navy-900/80 px-2 py-0.5 text-[11px] font-semibold text-white">{{ g.city }}</span></Link>
+                        <span class="absolute right-2 top-2 rounded-full bg-navy-900/80 px-2 py-0.5 text-[11px] font-semibold text-white">{{ g.city }}</span>
+                        <span v-if="g.image_is_illustration" class="absolute bottom-2 right-2 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">Photo d'illustration</span></Link>
                     <div class="flex flex-1 flex-col p-4">
                         <Link :href="`/partenaires/${g.slug}`" class="font-bold text-navy-900 hover:underline">{{ g.name }}</Link>
                         <p class="text-xs text-slate-500">{{ g.address || g.district || g.city }}</p>

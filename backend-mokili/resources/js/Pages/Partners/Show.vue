@@ -17,7 +17,7 @@ const props = defineProps({
     mechanicServices: { type: Array, default: () => [] },
 });
 
-const { photoFor, isPreview } = usePreviewPhotos();
+const { photoFor, isPreview, isIllustration } = usePreviewPhotos();
 const b = computed(() => props.business);
 const isSite = computed(() => b.value.category === 'site_touristique');
 // Garage (ou concession avec atelier) : prise de rendez-vous.
@@ -103,6 +103,7 @@ const ctaLabel = computed(() => (isGarage.value ? 'Prendre rendez-vous' : 'Reser
                 <div class="relative h-72 overflow-hidden rounded-3xl bg-slate-100 sm:h-[460px]">
                     <img v-if="current" :key="current" :src="current" :alt="business.name" referrerpolicy="no-referrer" class="h-full w-full object-cover" @error="broken.push(current)" />
                     <GuideCover v-else :src="null" :category="business.category" :alt="business.name" icon-class="h-20 w-20" />
+<span v-if="isIllustration(business) && idx === 0" class="absolute bottom-4 right-4 z-10 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">Photo d'illustration · en attente des photos officielles</span>
                     <span v-if="isPreview(business)" class="absolute left-3 top-3 rounded bg-amber-400 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-950 shadow">Apercu admin</span>
                     <template v-if="shown.length > 1">
                         <button type="button" aria-label="Photo precedente" class="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-xl text-navy-900 shadow-lg hover:bg-slate-100" @click="step(-1)">‹</button>

@@ -58,7 +58,7 @@ class Business extends Model
     // Photo du mode presentation : jamais envoyee au public (voir PreviewController).
     protected $hidden = ['preview_image'];
 
-    protected $appends = ['image_url', 'gallery_urls', 'category_label', 'module'];
+    protected $appends = ['image_url', 'image_is_illustration', 'gallery_urls', 'category_label', 'module'];
 
     protected function casts(): array
     {
@@ -98,7 +98,14 @@ class Business extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return AttractionPark::resolveUrl($this->image);
+        // Pas encore de photo officielle : illustration (garages, concessionnaires).
+        return AttractionPark::resolveUrl($this->image) ?? \App\Support\PartnerPhotos::for($this);
+    }
+
+    /** true : la photo n'est pas celle de la societe (illustration en attendant ses photos). */
+    public function getImageIsIllustrationAttribute(): bool
+    {
+        return ! $this->image && $this->image_url !== null;
     }
 
     public function getGalleryUrlsAttribute(): array
