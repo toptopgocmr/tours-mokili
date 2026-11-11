@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Guide\VisitRequestController;
 use App\Models\Guide\Business;
+use App\Models\Guide\VisitRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -28,6 +30,24 @@ class BusinessController extends Controller
     {
         abort_unless($business->is_active, 404);
 
-        return response()->json($business);
+        // booking : "visite" (site touristique), "rdv" (garage / atelier) ou null.
+        return response()->json($business->toArray() + [
+            'booking' => VisitRequestController::isBookable($business) ? (VisitRequestController::isGarage($business) ? 'rdv' : 'visite') : null,
+            'mechanic_services' => VisitRequestController::isGarage($business) ? config('catalogue.voiture.mechanic_services') : [],
+            'formulas' => VisitRequest::FORMULAS,
+        ]);
+    }
+
+    /** App mobile : "Reserver ma visite" / "Prendre rendez-vous" (sans engagement). */
+    public function book(Request $request, Business $business): JsonResponse
+    {
+        $r = VisitRequestController::createFor($request, $business);
+
+        return response()->json([
+            'id' => $r->id,
+            'message' => VisitRequestController::isGarage($business)
+                ? 'Demande de rendez-vous envoyee. Nous vous rappelons sous 24 h pour confirmer.'
+                : 'Demande de visite envoyee. L\'equipe MOKILI TOUR vous rappelle pour confirmer.',
+        ], 201);
     }
 }

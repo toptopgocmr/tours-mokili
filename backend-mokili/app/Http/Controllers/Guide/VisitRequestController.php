@@ -9,14 +9,37 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-// "Reserver ma visite" sur la fiche d'un site touristique : demande sans
-// engagement, traitee par l'equipe MOKILI TOUR depuis le back-office.
+// "Reserver ma visite" (site touristique) ou "Prendre rendez-vous" (garage,
+// atelier d'un concessionnaire) : demande sans engagement, traitee par
+// l'equipe MOKILI TOUR depuis le back-office. Utilise par le site et l'API mobile.
 class VisitRequestController extends Controller
 {
     public function store(Request $request, Business $business): RedirectResponse
     {
-        $garage = in_array($business->category, ['garage', 'concessionnaire'], true);
-        abort_unless($business->is_active && ($business->category === 'site_touristique' || $garage), 404);
+        $garage = self::isGarage($business);
+        self::createFor($request, $business);
+
+        return back()->with('success', $garage
+            ? 'Demande de rendez-vous envoyee. Le garage / l\'equipe MOKILI TOUR vous rappelle sous 24 h pour confirmer.'
+            : 'Demande de visite envoyee. L\'equipe MOKILI TOUR vous rappelle pour confirmer.');
+    }
+
+    public static function isGarage(Business $business): bool
+    {
+        return $business->category === 'garage'
+            || ($business->category === 'concessionnaire'
+                && collect($business->services ?? [])->contains(fn ($s) => (bool) preg_match('/atelier|remorquage/i', (string) $s)));
+    }
+
+    public static function isBookable(Business $business): bool
+    {
+        return $business->is_active && ($business->category === 'site_touristique' || self::isGarage($business));
+    }
+
+    public static function createFor(Request $request, Business $business): VisitRequest
+    {
+        abort_unless(self::isBookable($business), 404);
+        $garage = self::isGarage($business);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
@@ -33,10 +56,6 @@ class VisitRequestController extends Controller
         $data['people'] ??= 1;
         $data['formula'] ??= 'individuel';
 
-        $business->hasMany(VisitRequest::class)->create($data + ['user_id' => $request->user()?->id]);
-
-        return back()->with('success', $garage
-            ? 'Demande de rendez-vous envoyee. Le garage / l\'equipe MOKILI TOUR vous rappelle sous 24 h pour confirmer.'
-            : 'Demande de visite envoyee. L\'equipe MOKILI TOUR vous rappelle pour confirmer.');
+        return $business->hasMany(VisitRequest::class)->create($data + ['user_id' => $request->user('sanctum')?->id ?? $request->user()?->id]);
     }
 }

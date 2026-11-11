@@ -56,4 +56,24 @@ class VoitureGaragesAndSalesTest extends TestCase
         $this->get("/voiture/{$v->slug}")->assertOk()
             ->assertInertia(fn ($p) => $p->has('dealers', 1)->where('dealers.0.name', 'Auto Multi'));
     }
+
+    public function test_mobile_api_garages_meta_dealers_and_booking(): void
+    {
+        $g = Business::create(['name' => 'Garage API', 'category' => 'garage', 'city' => 'Pointe-Noire', 'services' => ['Diagnostic'], 'is_active' => true]);
+        Business::create(['name' => 'Multi API', 'category' => 'concessionnaire', 'city' => 'Brazzaville', 'services' => ['Multimarque'], 'is_active' => true]);
+        $v = Vehicle::create(['title' => 'Haval H6 2023', 'offer_type' => 'vente', 'brand' => 'Haval', 'model' => 'H6', 'sale_price' => 15000000,
+            'currency' => 'XAF', 'city' => 'Brazzaville', 'country' => 'CG', 'is_active' => true, 'status' => 'published']);
+
+        $this->getJson('/api/voiture/garages?q=Diagnostic&city=Pointe-Noire')->assertOk()
+            ->assertJsonPath('data.0.id', $g->id)->assertJsonFragment(['Depannage / remorquage']);
+        $this->getJson('/api/voiture/meta')->assertOk()->assertJsonFragment(['key' => 'Haval', 'count' => 1]);
+        $this->getJson('/api/voiture/vehicles?offer_type=vente&brand=Haval')->assertOk()->assertJsonPath('data.0.id', $v->id)
+            ->assertJsonPath('data.0.image_is_illustration', true);
+        $this->getJson("/api/voiture/vehicles/{$v->slug}")->assertOk()->assertJsonPath('dealers.0.name', 'Multi API');
+
+        $this->getJson("/api/partners/{$g->slug}")->assertOk()->assertJsonPath('booking', 'rdv');
+        $this->postJson("/api/partners/{$g->slug}/booking", ['name' => 'Ana', 'phone' => '+242 06 111 2233',
+            'visit_date' => now()->addDays(2)->toDateString(), 'service' => 'Diagnostic'])->assertCreated();
+        $this->assertSame('Diagnostic', VisitRequest::first()->service);
+    }
 }

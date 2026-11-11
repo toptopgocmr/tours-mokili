@@ -96,23 +96,7 @@ class VehicleController extends Controller
             'finance' => config('catalogue.voiture.finance'),
             // Mecanique : les garages partenaires en plus des annonces.
             'garages' => $type === 'mecanique'
-                ? Business::query()->active()
-                    // Garages + concessionnaires qui ont un atelier ou un service de depannage.
-                    ->where(fn ($c) => $c->where('category', 'garage')->orWhere(fn ($d) => $d->where('category', 'concessionnaire')
-                        ->where(fn ($x) => $x->where('services', 'like', '%Atelier%')->orWhere('services', 'like', '%remorquage%'))))
-                    ->when($request->filled('city'), fn ($q) => $q->where('city', 'like', '%'.$request->string('city').'%'))
-                    ->when($request->filled('q'), function ($q) use ($request) {
-                        // Prestation ("Vidange", "Depannage / remorquage"...) ou nom du garage.
-                        $term = trim((string) $request->string('q'));
-                        // "Depannage / remorquage" : le "/" est echappe dans le JSON, on cherche le mot principal.
-                        $key = collect(explode('/', $term))->map(fn ($w) => trim($w))->sortByDesc(fn ($w) => strlen($w))->first() ?: $term;
-                        $q->where(fn ($w) => $w->where('name', 'like', "%{$term}%")
-                            ->orWhere('description', 'like', "%{$term}%")
-                            ->orWhere('district', 'like', "%{$term}%")
-                            ->orWhere('services', 'like', '%'.$key.'%')
-                            ->orWhere('services', 'like', "%{$term}%"));
-                    })
-                    ->orderByDesc('is_featured')->orderBy('city')->orderBy('name')->limit(48)->get()
+                ? \App\Services\Voiture\GarageSearch::query($request->input('city'), $request->input('q'))->limit(48)->get()
                 : [],
             'filters' => (object) ($request->only('city', 'q', 'start', 'end', 'start_time', 'end_time', 'vehicule', 'brand', 'model', 'color', 'condition', 'doors', 'first_owner', 'fuel', 'transmission', 'category', 'seats', 'price_min', 'price_max', 'year_min', 'km_max', 'sort', 'age', 'return_city', 'ids') + ['type' => $type]),
             'offerTypes' => $types,
@@ -144,11 +128,8 @@ class VehicleController extends Controller
             ] : null,
             'search' => request()->only(['start', 'end', 'start_time', 'end_time', 'age', 'return_city']),
             // Vente : concessionnaires / vendeurs partenaires qui proposent cette marque.
-            'dealers' => $vehicle->offer_type === 'vente' && $vehicle->brand
-                ? Business::query()->active()->where('category', 'concessionnaire')
-                    ->where(fn ($q) => $q->where('services', 'like', '%"'.$vehicle->brand.'"%')->orWhere('services', 'like', '%Multimarque%'))
-                    ->orderByRaw('city = ? desc', [$vehicle->city])->orderByDesc('is_featured')->limit(4)
-                    ->get(['id', 'name', 'slug', 'city', 'phone'])
+            'dealers' => $vehicle->offer_type === 'vente'
+                ? \App\Services\Voiture\GarageSearch::dealersFor($vehicle->brand, $vehicle->city)
                 : [],
             'similar' => Vehicle::query()->active()->where('offer_type', $vehicle->offer_type)
                 ->whereKeyNot($vehicle->id)->latest()->limit(4)->get(),

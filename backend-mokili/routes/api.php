@@ -74,6 +74,8 @@ Route::get('/logement/listings', [LodgingListingController::class, 'index']);
 Route::get('/logement/listings/{listing:slug}', [LodgingListingController::class, 'show']);
 
 Route::get('/voiture/vehicles', [VehicleController::class, 'index']);
+Route::get('/voiture/meta', [VehicleController::class, 'meta']);
+Route::get('/voiture/garages', [VehicleController::class, 'garages']);
 Route::get('/voiture/vehicles/{vehicle:slug}', [VehicleController::class, 'show']);
 
 Route::get('/divertissement/events', [EventController::class, 'index']);
@@ -87,6 +89,8 @@ Route::get('/loisirs/parks/{attractionPark:slug}', [AttractionParkController::cl
 // Societes partenaires par rubrique (?module=logement|voyage|voiture|divertissement|marketplace).
 Route::get('/partners', [BusinessController::class, 'index']);
 Route::get('/partners/{business:slug}', [BusinessController::class, 'show']);
+// Reserver une visite (site touristique) / prendre rendez-vous (garage), sans compte.
+Route::post('/partners/{business:slug}/booking', [BusinessController::class, 'book'])->middleware('throttle:10,1');
 
 Route::get('/marketplace/products', [ProductController::class, 'index']);
 Route::get('/marketplace/products/{product:slug}', [ProductController::class, 'show']);
