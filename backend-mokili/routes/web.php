@@ -145,7 +145,9 @@ Route::prefix('divertissement')->name('divertissement.')->group(function () {
 Route::get('/tourisme/monde', [\App\Http\Controllers\Tourisme\WorldController::class, 'index'])->middleware('throttle:60,1')->name('tourisme.monde');
 
 // TOURISME = rubrique Divertissement renommee (adresses /divertissement conservees).
-Route::get('/tourisme', fn (\Illuminate\Http\Request $r) => redirect('/divertissement'.($r->getQueryString() ? '?'.$r->getQueryString() : '')))->name('tourisme');
+// Page "Choisissez un pays" (avant la page des sorties) puis page de chaque pays.
+Route::get('/tourisme', [\App\Http\Controllers\Tourisme\CountryController::class, 'index'])->name('tourisme');
+Route::get('/tourisme/pays/{slug}', [\App\Http\Controllers\Tourisme\CountryController::class, 'show'])->middleware('throttle:60,1')->name('tourisme.pays');
 
 // Anciennes adresses "Loisirs" : redirigees vers Tourisme > Parcs.
 Route::prefix('loisirs')->name('loisirs.')->group(function () {

@@ -96,7 +96,7 @@ const features = [
             <Link
                 v-for="c in categories"
                 :key="c.slug"
-                :href="`/${c.slug}`"
+                :href="c.slug === 'divertissement' ? '/tourisme' : `/${c.slug}`"
                 class="flex flex-col items-center justify-center gap-2 rounded-2xl bg-white p-4 text-center shadow-[0_4px_10px_rgba(0,0,0,0.12)] transition hover:-translate-y-1 hover:shadow-[0_8px_18px_rgba(0,0,0,0.16)]"
             >
                 <ServiceIcon :slug="c.slug" class="h-11 w-11" :style="{ color: serviceColor(c.slug) }" />

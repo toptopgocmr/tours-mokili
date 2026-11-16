@@ -11,6 +11,8 @@ defineOptions({ layout: MainLayout });
 // TOURISME > Monde : comme les rubriques "Site touristique" / "Lieu de
 // loisirs" de Boas, mais pour n'importe quelle ville du monde.
 const props = defineProps({
+    // Page d'un pays (/tourisme/pays/{slug}) : seules ses villes sont proposees.
+    country: { type: Object, default: null },
     ville: { type: String, default: 'Brazzaville' },
     categorie: { type: String, default: '' },
     result: { type: Object, default: () => ({ city: null, places: [], error: null }) },
@@ -23,8 +25,8 @@ const props = defineProps({
 const q = ref(props.ville);
 const cat = ref(props.categorie);
 const region = ref(Object.keys(props.cities).find((r) => props.cities[r].includes(props.ville)) ?? Object.keys(props.cities)[0]);
-const go = (ville) => router.get('/tourisme/monde', { ville }, { preserveScroll: false });
-const submit = () => q.value.trim() && go(q.value.trim());
+const go = (ville) => router.get(props.country ? `/tourisme/pays/${props.country.slug}` : '/tourisme/monde', { ville }, { preserveScroll: false });
+const submit = () => q.value.trim() && router.get('/tourisme/monde', { ville: q.value.trim() });
 
 const counts = computed(() => props.result.places.reduce((m, p) => ({ ...m, [p.category]: (m[p.category] ?? 0) + 1 }), {}));
 const places = computed(() => (cat.value ? props.result.places.filter((p) => p.category === cat.value) : props.result.places));
@@ -34,13 +36,21 @@ const broken = ref([]);
 </script>
 
 <template>
-    <Head :title="`Que visiter a ${cityName} ?`" />
+    <Head :title="country ? `Tourisme - ${country.name}` : `Que visiter a ${cityName} ?`" />
 
     <PhotoHero class="px-4 pb-24 pt-10 text-white sm:pt-12">
         <div class="mx-auto max-w-6xl">
-            <Link href="/divertissement" class="text-sm text-white/80 hover:text-white">&larr; Tourisme</Link>
-            <h1 class="mt-2 text-3xl font-extrabold drop-shadow sm:text-4xl">Decouvrez le monde</h1>
-            <p class="mt-1 text-white/90">Sites touristiques, musees, monuments, parcs et lieux de loisirs de toutes les villes du monde.</p>
+            <nav class="text-xs text-white/80">
+                <Link href="/" class="hover:text-white">Accueil</Link> ›
+                <Link href="/tourisme" class="hover:text-white">Tourisme</Link> ›
+                <span class="text-white">{{ country ? country.name : 'Le monde' }}</span>
+            </nav>
+            <div class="mt-2 flex items-center gap-3">
+                <img v-if="country" :src="country.flag" :alt="country.name" class="h-9 w-14 rounded object-cover shadow ring-1 ring-white/40" />
+                <h1 class="text-3xl font-extrabold drop-shadow sm:text-4xl">{{ country ? `Decouvrez : ${country.name}` : 'Decouvrez le monde' }}</h1>
+            </div>
+            <p class="mt-1 text-white/90">{{ country ? `Sites touristiques, musees, monuments, parcs et lieux de loisirs - ${country.cities.join(', ')}.` : 'Sites touristiques, musees, monuments, parcs et lieux de loisirs de toutes les villes du monde.' }}</p>
+            <Link href="/tourisme" class="mt-3 inline-block rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold text-white ring-1 ring-white/40 hover:bg-white/25">&larr; Changer de pays</Link>
         </div>
     </PhotoHero>
 

@@ -68,10 +68,17 @@ const excursion = 'https://wa.me/?text=' + encodeURIComponent("Bonjour MOKILI TO
         <div class="mx-auto max-w-6xl">
             <nav class="text-xs text-slate-500">
                 <Link href="/" class="hover:text-navy-900">Accueil</Link> ›
-                <Link href="/divertissement" class="hover:text-navy-900">Tourisme</Link>
+                <Link href="/tourisme" class="hover:text-navy-900">Tourisme</Link> ›
+                <Link href="/divertissement" class="hover:text-navy-900">Congo-Brazzaville</Link>
                 <template v-if="tab"> › <span class="text-slate-700">{{ tabs[tab] }}</span></template>
             </nav>
-            <span class="mt-4 inline-block rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Tourisme · {{ tab ? tabs[tab] : 'Toutes les sorties' }}</span>
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    <img src="https://flagcdn.com/w40/cg.png" alt="" class="h-3 w-4 rounded-sm object-cover" />
+                    Congo-Brazzaville · {{ tab ? tabs[tab] : 'Toutes les sorties' }}
+                </span>
+                <Link href="/tourisme" class="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-navy-900 hover:border-navy-900">&larr; Changer de pays</Link>
+            </div>
             <h1 class="mt-3 max-w-3xl text-3xl font-extrabold leading-tight text-navy-900 sm:text-5xl">
                 <template v-if="!tab">Decouvrez les plus beaux <span class="text-emerald-600">tresors</span> du Congo</template>
                 <template v-else>{{ title[0] }}</template>
