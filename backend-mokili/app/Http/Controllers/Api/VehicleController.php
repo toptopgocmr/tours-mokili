@@ -56,6 +56,7 @@ class VehicleController extends Controller
             'fuels' => config('catalogue.voiture.fuels'),
             'mechanic_services' => config('catalogue.voiture.mechanic_services'),
             'parking_services' => config('catalogue.voiture.parking_services'),
+            'sale_purposes' => \App\Models\Guide\VisitRequest::SALE_PURPOSES,
         ]);
     }
 
@@ -87,9 +88,19 @@ class VehicleController extends Controller
         ]);
     }
 
+    /** Vente : rendez-vous pour voir, essayer ou acheter le vehicule (paiement sur place). */
+    public function appointment(Request $request, Vehicle $vehicle): JsonResponse
+    {
+        $r = \App\Http\Controllers\Voiture\SaleController::createAppointment($request, $vehicle);
+
+        return response()->json(['id' => $r->id, 'status' => $r->status, 'message' => 'Demande de rendez-vous envoyee. Le paiement se fait sur place.'], 201);
+    }
+
     public function book(StoreBookingRequest $request, Vehicle $vehicle): JsonResponse
     {
         abort_unless($vehicle->is_active && $vehicle->status === 'published', 404);
+        // Vente : pas de paiement en ligne, rendez-vous et paiement sur place.
+        abort_if($vehicle->offer_type === 'vente', 422, "La vente en ligne n'est plus proposee : prenez rendez-vous (paiement sur place).");
         if ($vehicle->offer_type === 'location' && $request->filled('starts_at')) {
             $start = \Carbon\Carbon::parse($request->input('starts_at'));
             $end = \Carbon\Carbon::parse($request->input('ends_at') ?: $request->input('starts_at'));

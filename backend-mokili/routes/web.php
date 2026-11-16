@@ -128,6 +128,8 @@ Route::prefix('voiture')->name('voiture.')->group(function () {
     Route::get('/{vehicle:slug}/disponibilite', [\App\Http\Controllers\Voiture\RentalController::class, 'availability'])->middleware('throttle:60,1')->name('availability');
     Route::middleware('auth')->post('/{vehicle:slug}/reserver', [\App\Http\Controllers\Voiture\RentalController::class, 'store'])->name('book');
     Route::middleware(['auth', 'throttle:10,1'])->post('/{vehicle:slug}/reserver-achat', [\App\Http\Controllers\Voiture\SaleController::class, 'reserve'])->name('reserve');
+    // Vente : rendez-vous (voir, essayer, acheter), paiement sur place.
+    Route::middleware('throttle:10,1')->post('/{vehicle:slug}/rendez-vous', [\App\Http\Controllers\Voiture\SaleController::class, 'appointment'])->name('appointment');
 });
 
 Route::prefix('divertissement')->name('divertissement.')->group(function () {

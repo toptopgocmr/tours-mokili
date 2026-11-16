@@ -113,7 +113,7 @@ class VehicleRentalTest extends TestCase
         $this->get('/voiture?type=vente&fuel=diesel')->assertInertia(fn ($p) => $p->has('vehicles.data', 1)->where('vehicles.data.0.title', 'Noire'));
     }
 
-    public function test_sale_reservation_deposit_compare_and_gallery(): void
+    public function test_sale_by_appointment_no_online_payment_compare_and_gallery(): void
     {
         \Illuminate\Support\Facades\Storage::fake('public');
         Vehicle::query()->delete();
@@ -128,17 +128,27 @@ class VehicleRentalTest extends TestCase
         $car->update(['status' => 'published', 'is_active' => true]);
 
         $buyer = User::factory()->create();
-        $this->actingAs($buyer)->get("/voiture/{$car->slug}")->assertInertia(fn ($p) => $p->where('sale.reserved', false)->where('sale.deposit', 100000)->where('sale.seller.name', 'Auto Congo')->has('vehicle.gallery_urls', 2));
+        $this->actingAs($buyer)->get("/voiture/{$car->slug}")->assertInertia(fn ($p) => $p->where('sale.reserved', false)->where('sale.purposes.achat', 'Achat (paiement sur place)')->where('sale.seller.name', 'Auto Congo')->has('vehicle.gallery_urls', 2));
         $this->assertSame(1, $car->fresh()->views);
 
-        $this->post("/voiture/{$car->slug}/reserver-achat")->assertRedirect();
-        $b = Booking::latest('id')->first();
-        $this->assertEquals(100000, $b->total_amount);
-        $this->assertSame('acompte_vente', $b->meta['kind']);
+        // Plus de reservation / paiement en ligne : rendez-vous, paiement sur place.
+        $this->post("/voiture/{$car->slug}/reserver-achat")->assertSessionHasErrors('reserve');
+        $this->assertSame(0, Booking::count());
+        $this->post("/voiture/{$car->slug}/rendez-vous", ['visit_date' => now()->addDays(2)->toDateString(), 'visit_time' => '10:00', 'purpose' => 'essai', 'phone' => '+242 06 111 2233'])
+            ->assertSessionHasNoErrors()->assertRedirect();
+        $rdv = \App\Models\Guide\VisitRequest::firstOrFail();
+        $this->assertSame([$car->id, 'Essai routier', $buyer->name, null], [$rdv->vehicle_id, $rdv->service, $rdv->name, $rdv->business_id]);
 
-        // Un autre client ne peut plus reserver.
-        $this->actingAs(User::factory()->create())->post("/voiture/{$car->slug}/reserver-achat")->assertSessionHasErrors('reserve');
-        $this->get('/voiture?type=vente')->assertInertia(fn ($p) => $p->where('reservedIds', fn ($ids) => collect($ids)->contains($car->id)));
+        // Visiteur non connecte : nom et telephone obligatoires.
+        auth()->logout();
+        $this->post("/voiture/{$car->slug}/rendez-vous", ['visit_date' => now()->addDay()->toDateString(), 'purpose' => 'achat'])->assertSessionHasErrors(['name', 'phone']);
+
+        // Le vendeur voit le rendez-vous dans son espace ; l'admin aussi.
+        $this->actingAs($seller)->get('/partner/reservations')->assertInertia(fn ($p) => $p->has('appointments', 1)->where('appointments.0.purpose', 'Essai routier'));
+        $this->getJson("/api/voiture/vehicles/{$car->slug}/rendez-vous")->assertStatus(405);
+
+        // API mobile : pas d'achat en ligne, rendez-vous possible.
+        $this->postJson("/api/voiture/vehicles/{$car->slug}/rendez-vous", ['name' => 'Paul', 'phone' => '+242 05 000 0000', 'visit_date' => now()->addDay()->toDateString(), 'purpose' => 'voir'])->assertCreated();
 
         $other = $this->car(['title' => 'Accent', 'offer_type' => 'vente', 'price_per_day' => null, 'sale_price' => 4000000]);
         $this->get("/voiture/comparer?ids={$car->id},{$other->id}")->assertOk()->assertInertia(fn ($p) => $p->component('Voiture/Compare')->has('vehicles', 2));

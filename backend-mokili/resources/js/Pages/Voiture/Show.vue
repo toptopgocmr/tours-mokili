@@ -51,8 +51,22 @@ const salePrice = computed(() => Number(props.vehicle.display_price?.amount ?? 0
 const downPayment = computed(() => Math.round(salePrice.value * fin.value.down_payment_percent / 100));
 const perMonth = computed(() => monthly(salePrice.value, fin.value));
 const totalCredit = computed(() => perMonth.value * fin.value.months);
-const reserveForm = useForm({ phone: '', message: '' });
-const reserve = () => reserveForm.post(`/voiture/${props.vehicle.slug}/reserver-achat`, { preserveScroll: true });
+// Vente : rendez-vous (voir, essayer, acheter), paiement sur place - plus de paiement en ligne.
+const rdvOpen = ref(false);
+const rdvSent = ref(false);
+const rdv = useForm({ name: '', phone: '', email: '', visit_date: '', visit_time: '', purpose: 'voir', message: '' });
+const openRdv = (purpose = 'voir') => {
+    rdv.purpose = purpose;
+    rdvOpen.value = true;
+};
+const sendRdv = () => rdv.post(`/voiture/${props.vehicle.slug}/rendez-vous`, {
+    preserveScroll: true,
+    onSuccess: () => {
+        rdvSent.value = true;
+        rdvOpen.value = false;
+        rdv.reset();
+    },
+});
 const tradeIn = ref({ brand: '', model: '', year: '', km: '' });
 const tradeInMsg = computed(() => `Bonjour, je suis interesse(e) par votre ${props.vehicle.title} (MOKILI TOUR) et je souhaite faire estimer ma voiture en reprise : ${tradeIn.value.brand} ${tradeIn.value.model} ${tradeIn.value.year}, ${tradeIn.value.km} km.`);
 const printSheet = () => window.print();
@@ -553,17 +567,45 @@ const CONDITIONS = [
                             <p class="mt-0.5">Ce vehicule illustre le catalogue MOKILI TOUR (prix indicatif du marche). Il n'est pas reservable : consultez les annonces des vendeurs ou contactez notre service client.</p>
                         </div>
                         <template v-if="isSale && !v.is_demo">
+                            <p v-if="rdvSent" class="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">Demande de rendez-vous envoyee ! Le vendeur / l'equipe MOKILI TOUR vous rappelle pour confirmer.</p>
                             <div class="mt-4 grid grid-cols-2 gap-2">
                                 <a v-if="v.phone" :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(saleMsg('Est-il toujours disponible ?'))}`" target="_blank" rel="noopener" class="flex items-center justify-center rounded-full bg-navy-900 px-3 py-3 text-center text-sm font-bold text-white hover:bg-navy-800">Se renseigner</a>
-                                <button v-if="user" type="button" class="rounded-full bg-gold-500 px-3 py-3 text-sm font-bold text-navy-900 hover:bg-gold-400 disabled:cursor-not-allowed disabled:opacity-50" :class="!v.phone && 'col-span-2'" :disabled="sale?.reserved || reserveForm.processing" @click="reserve">
-                                    {{ sale?.reserved ? 'Deja reserve' : 'Reserver ce vehicule' }}
+                                <button type="button" class="rounded-full bg-gold-500 px-3 py-3 text-sm font-bold text-navy-900 hover:bg-gold-400 disabled:cursor-not-allowed disabled:opacity-50" :class="!v.phone && 'col-span-2'" :disabled="sale?.reserved" @click="openRdv('voir')">
+                                    {{ sale?.reserved ? 'Deja reserve' : 'Prendre rendez-vous' }}
                                 </button>
-                                <Link v-else href="/login" class="rounded-full bg-gold-500 px-3 py-3 text-center text-sm font-bold text-navy-900">Reserver ce vehicule</Link>
                             </div>
-                            <p class="mt-2 text-xs text-slate-500">Reservation par un acompte de <b>{{ money(sale?.deposit) }} {{ $cur(v.currency) }}</b> en Mobile Money, deduit du prix chez le vendeur. Le vehicule est retire de la vente pour vous.</p>
-                            <p v-if="reserveForm.errors.reserve" class="mt-1 text-xs font-semibold text-red-600">{{ reserveForm.errors.reserve }}</p>
+                            <p class="mt-2 text-xs text-slate-500"><b>Aucun paiement en ligne.</b> Prenez rendez-vous pour voir, essayer ou acheter le vehicule : le paiement se fait sur place, chez le vendeur, apres avoir vu le vehicule.</p>
+
+                            <!-- Formulaire de rendez-vous -->
+                            <form v-if="rdvOpen" class="mt-3 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4" @submit.prevent="sendRdv">
+                                <p class="text-sm font-bold text-navy-900">Rendez-vous pour ce vehicule</p>
+                                <div class="grid grid-cols-1 gap-2">
+                                    <label v-for="(lbl, key) in sale?.purposes ?? {}" :key="key" class="flex cursor-pointer items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm" :class="rdv.purpose === key ? 'border-navy-900 font-semibold text-navy-900' : 'border-slate-200 text-slate-700'">
+                                        <input v-model="rdv.purpose" type="radio" :value="key" class="text-navy-900" /> {{ lbl }}
+                                    </label>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="block text-xs font-semibold text-slate-600">Date *
+                                        <input v-model="rdv.visit_date" type="date" :min="today" required class="mt-1 h-10 w-full rounded-lg border-slate-300 text-sm" />
+                                    </label>
+                                    <label class="block text-xs font-semibold text-slate-600">Heure
+                                        <input v-model="rdv.visit_time" type="time" class="mt-1 h-10 w-full rounded-lg border-slate-300 text-sm" />
+                                    </label>
+                                </div>
+                                <template v-if="!user">
+                                    <input v-model="rdv.name" type="text" placeholder="Votre nom *" required class="h-10 w-full rounded-lg border-slate-300 text-sm" />
+                                </template>
+                                <input v-if="!user || !user.phone" v-model="rdv.phone" type="tel" placeholder="Votre telephone *" required class="h-10 w-full rounded-lg border-slate-300 text-sm" />
+                                <textarea v-model="rdv.message" rows="2" placeholder="Message (facultatif) : questions, offre de prix..." class="w-full rounded-lg border-slate-300 text-sm" />
+                                <p v-for="(e, k) in rdv.errors" :key="k" class="text-xs font-semibold text-red-600">{{ e }}</p>
+                                <div class="flex gap-2">
+                                    <button type="button" class="flex-1 rounded-lg border border-slate-300 bg-white py-2 text-sm font-semibold text-slate-700" @click="rdvOpen = false">Annuler</button>
+                                    <button type="submit" :disabled="rdv.processing" class="flex-1 rounded-lg bg-gold-500 py-2 text-sm font-bold text-navy-900 hover:bg-gold-400 disabled:opacity-50">Envoyer la demande</button>
+                                </div>
+                                <p class="text-[11px] text-slate-500">Sans engagement. Paiement sur place uniquement.</p>
+                            </form>
                             <div v-if="v.phone" class="mt-3 grid grid-cols-2 gap-2">
-                                <a :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(saleMsg('Je souhaiterais faire un essai, quand seriez-vous disponible ?'))}`" target="_blank" rel="noopener" class="rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Demander un essai</a>
+                                <button type="button" class="rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50" @click="openRdv('essai')">Demander un essai</button>
                                 <a :href="`https://wa.me/${String(v.phone).replace(/\D/g, '')}?text=${encodeURIComponent(saleMsg('Le prix est-il negociable ?'))}`" target="_blank" rel="noopener" class="rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Faire une offre</a>
                                 <a :href="`tel:${v.phone}`" class="col-span-2 rounded-xl border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-navy-900 hover:bg-slate-50">Appeler le vendeur</a>
                             </div>

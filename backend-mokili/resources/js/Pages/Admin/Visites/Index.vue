@@ -26,7 +26,7 @@ const wa = (phone) => `https://wa.me/${String(phone).replace(/\D/g, '')}`;
     <div class="space-y-6">
         <div>
             <h1 class="text-2xl font-bold text-navy-900">Demandes de visite</h1>
-            <p class="text-sm text-slate-500">Reservations "sans engagement" des sites touristiques. Rappelez le client puis mettez a jour le statut.</p>
+            <p class="text-sm text-slate-500">Demandes "sans engagement" : visites de sites, RDV garages / parkings et RDV vente de vehicules (paiement sur place). Rappelez le client puis mettez a jour le statut.</p>
         </div>
 
         <div class="flex flex-wrap gap-2">
@@ -39,14 +39,21 @@ const wa = (phone) => `https://wa.me/${String(phone).replace(/\D/g, '')}`;
         <div class="overflow-x-auto rounded-2xl border bg-white">
             <table class="min-w-full text-sm">
                 <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-                    <tr><th class="px-4 py-3">Site</th><th class="px-4 py-3">Date</th><th class="px-4 py-3">Client</th><th class="px-4 py-3">Groupe</th><th class="px-4 py-3">Message</th><th class="px-4 py-3">Statut</th></tr>
+                    <tr><th class="px-4 py-3">Site / vehicule</th><th class="px-4 py-3">Date</th><th class="px-4 py-3">Client</th><th class="px-4 py-3">Groupe</th><th class="px-4 py-3">Message</th><th class="px-4 py-3">Statut</th></tr>
                 </thead>
                 <tbody class="divide-y">
                     <tr v-for="r in requests.data" :key="r.id" class="align-top">
-                        <td class="px-4 py-3"><Link v-if="r.business" :href="`/partenaires/${r.business.slug}`" class="font-semibold text-navy-900 hover:underline">{{ r.business.name }}</Link><p class="text-xs text-slate-500">{{ r.business?.city }}</p></td>
+                        <td class="px-4 py-3">
+                            <template v-if="r.vehicle_id">
+                                <span class="rounded bg-gold-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-navy-900">Vente vehicule</span>
+                                <Link v-if="r.sale_vehicle" :href="`/voiture/${r.sale_vehicle.slug}`" class="mt-1 block font-semibold text-navy-900 hover:underline">{{ r.sale_vehicle.title }}</Link><p v-else class="mt-1 font-semibold">{{ r.vehicle }}</p>
+                                <p class="text-xs text-slate-500">{{ r.sale_vehicle?.city }} · paiement sur place</p>
+                            </template>
+                            <template v-else><Link v-if="r.business" :href="`/partenaires/${r.business.slug}`" class="font-semibold text-navy-900 hover:underline">{{ r.business.name }}</Link><p class="text-xs text-slate-500">{{ r.business?.city }}</p></template>
+                        </td>
                         <td class="whitespace-nowrap px-4 py-3 font-medium">{{ day(r.visit_date) }}</td>
                         <td class="px-4 py-3"><p class="font-semibold">{{ r.name }}</p><a :href="`tel:${r.phone}`" class="text-emerald-700">{{ r.phone }}</a> · <a :href="wa(r.phone)" target="_blank" rel="noopener" class="text-emerald-700">WhatsApp</a><p v-if="r.email" class="text-xs text-slate-500">{{ r.email }}</p></td>
-                        <td class="whitespace-nowrap px-4 py-3"><template v-if="r.service"><b>RDV garage</b> · {{ r.service }}<span v-if="r.vehicle" class="block text-xs text-slate-500">{{ r.vehicle }}</span></template><template v-else>{{ r.people }} pers. · {{ formulas[r.formula] ?? r.formula }}</template><span v-if="r.visit_time" class="block text-xs text-slate-500">a {{ r.visit_time }}</span></td>
+                        <td class="whitespace-nowrap px-4 py-3"><template v-if="r.service"><b>{{ r.vehicle_id ? 'RDV vente' : 'RDV' }}</b> · {{ r.service }}<span v-if="r.vehicle && !r.vehicle_id" class="block text-xs text-slate-500">{{ r.vehicle }}</span></template><template v-else>{{ r.people }} pers. · {{ formulas[r.formula] ?? r.formula }}</template><span v-if="r.visit_time" class="block text-xs text-slate-500">a {{ r.visit_time }}</span></td>
                         <td class="max-w-xs px-4 py-3 text-slate-600">{{ r.message }}</td>
                         <td class="px-4 py-3">
                             <span :class="badge(r.status)">{{ statuses[r.status] ?? r.status }}</span>

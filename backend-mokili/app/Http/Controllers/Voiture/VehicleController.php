@@ -126,7 +126,7 @@ class VehicleController extends Controller
             'idTypes' => \App\Http\Controllers\Voiture\RentalController::ID_TYPES,
             'sale' => $vehicle->offer_type === 'vente' ? [
                 'reserved' => SaleController::isReserved($vehicle),
-                'deposit' => SaleController::deposit($vehicle),
+                'purposes' => \App\Models\Guide\VisitRequest::SALE_PURPOSES,
                 'finance' => config('catalogue.voiture.finance'),
                 'seller' => $vehicle->owner ? ['name' => $vehicle->owner->company_name ?: $vehicle->owner->name, 'verified' => (bool) $vehicle->owner->partner_verified_at, 'since' => optional($vehicle->owner->created_at)->year] : null,
             ] : null,

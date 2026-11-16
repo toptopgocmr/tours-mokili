@@ -79,6 +79,8 @@ Route::get('/voiture/meta', [VehicleController::class, 'meta']);
 Route::get('/voiture/garages', [VehicleController::class, 'garages']);
 Route::get('/voiture/parkings', [VehicleController::class, 'parkings']);
 Route::get('/voiture/vehicles/{vehicle:slug}', [VehicleController::class, 'show']);
+// Vente : rendez-vous (voir, essayer, acheter), paiement sur place - plus d'achat en ligne.
+Route::middleware('throttle:10,1')->post('/voiture/vehicles/{vehicle:slug}/rendez-vous', [VehicleController::class, 'appointment']);
 
 Route::get('/divertissement/events', [EventController::class, 'index']);
 Route::get('/divertissement/events/{event:slug}', [EventController::class, 'show']);

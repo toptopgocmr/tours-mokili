@@ -10,7 +10,11 @@ const props = defineProps({
     filters: { type: Object, default: () => ({}) },
     stats: { type: Object, default: () => ({}) },
     rubriques: { type: Object, default: () => ({}) },
+    appointments: { type: Array, default: () => [] },
+    appointmentStatuses: { type: Object, default: () => ({}) },
 });
+const day = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) : '');
+const wa = (phone) => `https://wa.me/${String(phone).replace(/\D/g, '')}`;
 
 const TABS = [['', 'Toutes'], ['payees', 'Payees'], ['en_attente', 'En attente'], ['annulees', 'Annulees']];
 const go = (q) => router.get('/partner/reservations', Object.fromEntries(Object.entries({ statut: props.filters.statut, rubrique: props.filters.rubrique, ...q }).filter(([, v]) => v)), { preserveState: true });
@@ -38,6 +42,27 @@ const when = (iso) => (iso ? new Date(`${iso}:00`).toLocaleString('fr-FR', { day
         <div class="console-stat"><p class="text-xs uppercase text-slate-500">Places vendues (mois)</p><p class="mt-1 text-2xl font-bold">{{ stats.month_seats ?? 0 }}</p></div>
         <div class="console-stat"><p class="text-xs uppercase text-slate-500">En attente de paiement</p><p class="mt-1 text-2xl font-bold">{{ stats.awaiting ?? 0 }}</p></div>
         <div class="console-stat"><p class="text-xs uppercase text-slate-500">Reservations payees</p><p class="mt-1 text-2xl font-bold">{{ stats.total_paid ?? 0 }}</p></div>
+    </div>
+
+    <!-- Vente de vehicules : rendez-vous, paiement sur place -->
+    <div v-if="appointments.length" class="mb-6">
+        <h2 class="text-base font-bold text-slate-900">Rendez-vous vente de vehicules</h2>
+        <p class="mb-2 text-xs text-slate-500">Les acheteurs viennent voir, essayer ou acheter le vehicule. Le paiement se fait sur place : rappelez-les pour confirmer.</p>
+        <div class="console-table-wrap">
+            <table class="console-table">
+                <thead><tr><th>Date</th><th>Vehicule</th><th>Objet</th><th>Client</th><th>Message</th><th>Statut</th></tr></thead>
+                <tbody>
+                    <tr v-for="a in appointments" :key="a.id">
+                        <td class="whitespace-nowrap">{{ day(a.date) }}<span v-if="a.time" class="block text-xs text-slate-500">a {{ a.time }}</span></td>
+                        <td><Link v-if="a.vehicle.slug" :href="`/voiture/${a.vehicle.slug}`" class="font-medium text-slate-900 hover:underline">{{ a.vehicle.title }}</Link><span v-else>{{ a.vehicle.title }}</span></td>
+                        <td>{{ a.purpose }}</td>
+                        <td><p class="font-medium text-slate-900">{{ a.name }}</p><a :href="`tel:${a.phone}`" class="text-xs text-emerald-700">{{ a.phone }}</a> · <a :href="wa(a.phone)" target="_blank" rel="noopener" class="text-xs text-emerald-700">WhatsApp</a></td>
+                        <td class="max-w-xs text-xs text-slate-600">{{ a.message }}</td>
+                        <td><span class="console-badge" :class="a.status === 'nouvelle' ? 'console-badge-pending' : a.status === 'annulee' ? 'console-badge-neutral' : 'console-badge-success'">{{ appointmentStatuses[a.status] ?? a.status }}</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div v-if="Object.keys(rubriques).length > 1" class="mb-3 flex flex-wrap gap-1.5">

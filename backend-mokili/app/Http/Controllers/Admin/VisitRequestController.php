@@ -10,7 +10,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
-// Back-office : demandes "Reserver ma visite" des sites touristiques.
+// Back-office : demandes de visite (sites), RDV garages / parkings et RDV vente de vehicules.
 class VisitRequestController extends Controller
 {
     public function index(Request $request): Response
@@ -18,7 +18,7 @@ class VisitRequestController extends Controller
         $status = $request->string('status')->toString();
 
         return Inertia::render('Admin/Visites/Index', [
-            'requests' => VisitRequest::query()->with('business:id,name,slug,city')
+            'requests' => VisitRequest::query()->with(['business:id,name,slug,city', 'saleVehicle:id,title,slug,city'])
                 ->when($status, fn ($q) => $q->where('status', $status))
                 ->orderByRaw("status = 'nouvelle' desc")->orderBy('visit_date')
                 ->paginate(25)->withQueryString(),

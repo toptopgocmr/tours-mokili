@@ -49,6 +49,10 @@ class CheckoutController extends Controller
     public function pay(PayBookingRequest $request, Booking $booking): RedirectResponse
     {
         abort_unless($booking->user_id === Auth::id(), 403);
+        // Vente de vehicule : plus de paiement en ligne (rendez-vous, paiement sur place).
+        if (($booking->meta['kind'] ?? null) === 'acompte_vente' && $booking->status === 'awaiting_payment') {
+            return back()->withErrors(['gateway' => "La vente en ligne n'est plus proposee : prenez rendez-vous depuis l'annonce, le paiement se fait sur place."]);
+        }
 
         try {
             $payment = $this->payments->collect(

@@ -60,7 +60,21 @@ class BookingController extends Controller
         $present = collect(PartnerCatalog::TYPES)->filter(fn ($t) => (clone $base)->where('bookable_type', $t[0])->exists())
             ->map(fn ($t) => $t[2]);
 
+        // Vente de vehicules : rendez-vous demandes par les acheteurs (paiement sur place).
+        $appointments = \App\Models\Guide\VisitRequest::query()
+            ->whereIn('vehicle_id', $user->vehicles()->where('offer_type', 'vente')->pluck('id'))
+            ->with('saleVehicle:id,title,slug')
+            ->where('visit_date', '>=', now()->subDays(30)->toDateString())
+            ->orderByRaw("status = 'nouvelle' desc")->orderBy('visit_date')->limit(50)->get()
+            ->map(fn ($r) => [
+                'id' => $r->id, 'date' => $r->visit_date?->toDateString(), 'time' => $r->visit_time, 'purpose' => $r->service,
+                'name' => $r->name, 'phone' => $r->phone, 'message' => $r->message, 'status' => $r->status,
+                'vehicle' => $r->saleVehicle ? ['title' => $r->saleVehicle->title, 'slug' => $r->saleVehicle->slug] : ['title' => $r->vehicle, 'slug' => null],
+            ]);
+
         return Inertia::render('Partner/Bookings/Index', [
+            'appointments' => $appointments,
+            'appointmentStatuses' => \App\Models\Guide\VisitRequest::STATUSES,
             'bookings' => $bookings,
             'filters' => ['statut' => $status, 'rubrique' => $type],
             'rubriques' => $present,

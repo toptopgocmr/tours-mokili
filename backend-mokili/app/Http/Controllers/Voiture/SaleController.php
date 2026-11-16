@@ -7,14 +7,16 @@ use App\Models\Booking;
 use App\Models\Voiture\Vehicle;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\Guide\VisitRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * VOITURE - vente facon Spoticar : reservation du vehicule par un acompte
- * paye en Mobile Money (deduit du prix chez le vendeur) et comparateur.
+ * VOITURE - vente : prise de rendez-vous (voir, essayer, acheter) avec
+ * paiement sur place chez le vendeur - plus de paiement en ligne - et
+ * comparateur. isReserved() garde les anciennes reservations par acompte.
  */
 class SaleController extends Controller
 {
@@ -38,45 +40,52 @@ class SaleController extends Controller
         return (int) min($d, max(0, (float) ($vehicle->display_price['amount'] ?? $d)));
     }
 
+    /** Ancienne reservation par acompte en ligne : remplacee par le rendez-vous. */
     public function reserve(Request $request, Vehicle $vehicle): RedirectResponse
+    {
+        throw ValidationException::withMessages(['reserve' => "La vente en ligne n'est plus proposee : prenez rendez-vous, le paiement se fait sur place."]);
+    }
+
+    /** Rendez-vous pour voir, essayer ou acheter le vehicule (paiement sur place). */
+    public function appointment(Request $request, Vehicle $vehicle): RedirectResponse
+    {
+        self::createAppointment($request, $vehicle);
+
+        return back()->with('success', 'Demande de rendez-vous envoyee. Le vendeur / l\'equipe MOKILI TOUR vous rappelle pour confirmer. Le paiement se fait sur place.');
+    }
+
+    public static function createAppointment(Request $request, Vehicle $vehicle): VisitRequest
     {
         abort_unless($vehicle->is_active && $vehicle->status === 'published' && $vehicle->offer_type === 'vente', 404);
         if ($vehicle->is_demo) {
-            throw ValidationException::withMessages(['reserve' => "Annonce d'exemple : ce vehicule ne peut pas etre reserve."]);
+            throw ValidationException::withMessages(['visit_date' => "Annonce d'exemple : pas de rendez-vous possible pour ce vehicule."]);
         }
+        $user = $request->user();
         $data = $request->validate([
-            'phone' => ['nullable', 'string', 'max:30'],
+            'name' => [$user ? 'nullable' : 'required', 'string', 'max:120'],
+            'phone' => [$user?->phone ? 'nullable' : 'required', 'string', 'min:6', 'max:40'],
+            'email' => ['nullable', 'email', 'max:160'],
+            'visit_date' => ['required', 'date', 'after_or_equal:today'],
+            'visit_time' => ['nullable', 'date_format:H:i'],
+            'purpose' => ['required', Rule::in(array_keys(VisitRequest::SALE_PURPOSES))],
             'message' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $booking = DB::transaction(function () use ($vehicle, $request, $data) {
-            Vehicle::whereKey($vehicle->id)->lockForUpdate()->first();
-            if (self::isReserved($vehicle)) {
-                throw ValidationException::withMessages(['reserve' => 'Ce vehicule vient d\'etre reserve par un autre client.']);
-            }
-            $amount = self::deposit($vehicle);
-
-            return Booking::create([
-                'user_id' => $request->user()->id,
-                'bookable_type' => Vehicle::class,
-                'bookable_id' => $vehicle->id,
-                'quantity' => 1,
-                'unit_price' => $amount,
-                'total_amount' => $amount,
-                'currency' => $vehicle->currency,
-                'status' => 'awaiting_payment',
-                'meta' => [
-                    'kind' => 'acompte_vente',
-                    'city' => $vehicle->city,
-                    'sale_price' => $vehicle->display_price['amount'] ?? null,
-                    'contact_phone' => $data['phone'] ?? $request->user()->phone,
-                ],
-                'notes' => $data['message'] ?? null,
-            ]);
-        });
-
-        return redirect()->route('checkout.show', $booking)
-            ->with('success', 'Vehicule bloque pour vous pendant '.self::HOLD_MINUTES.' minutes : payez l\'acompte pour le reserver.');
+        return VisitRequest::create([
+            'vehicle_id' => $vehicle->id,
+            'user_id' => $user?->id,
+            'name' => $data['name'] ?? $user?->name,
+            'phone' => $data['phone'] ?? $user?->phone,
+            'email' => $data['email'] ?? $user?->email,
+            'visit_date' => $data['visit_date'],
+            'visit_time' => $data['visit_time'] ?? null,
+            'service' => VisitRequest::SALE_PURPOSES[$data['purpose']],
+            'vehicle' => $vehicle->title,
+            'people' => 1,
+            'formula' => 'individuel',
+            'message' => $data['message'] ?? null,
+            'status' => 'nouvelle',
+        ]);
     }
 
     /** Comparateur (2 a 4 vehicules). */
