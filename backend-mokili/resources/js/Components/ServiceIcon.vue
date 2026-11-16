@@ -66,30 +66,52 @@ const props = defineProps({
         />
     </svg>
 
-    <!-- Tourisme (slug "divertissement") : grande roue de manege avec
-         nacelles, sur son pied. -->
+    <!-- Tourisme (slug "divertissement") : trois grandes roues de manege
+         (une grande au centre, deux petites de chaque cote) sur un socle. -->
     <svg v-else-if="slug === 'divertissement'" :class="props.class" viewBox="0 0 24 24">
-        <circle cx="12" cy="9.5" r="6.6" fill="none" stroke="currentColor" stroke-width="1.6" />
-        <g stroke="currentColor" stroke-width="1">
-            <line x1="12" y1="2.9" x2="12" y2="16.1" />
-            <line x1="5.4" y1="9.5" x2="18.6" y2="9.5" />
-            <line x1="7.33" y1="4.83" x2="16.67" y2="14.17" />
-            <line x1="16.67" y1="4.83" x2="7.33" y2="14.17" />
-        </g>
-        <g fill="currentColor">
-            <!-- nacelles -->
-            <rect x="10.7" y="1.2" width="2.6" height="2.2" rx="0.7" />
-            <rect x="17.4" y="8.4" width="2.6" height="2.2" rx="0.7" />
-            <rect x="4" y="8.4" width="2.6" height="2.2" rx="0.7" />
-            <rect x="15.4" y="3.6" width="2.4" height="2" rx="0.6" />
-            <rect x="6.2" y="3.6" width="2.4" height="2" rx="0.6" />
-            <rect x="15.4" y="13.2" width="2.4" height="2" rx="0.6" />
-            <rect x="6.2" y="13.2" width="2.4" height="2" rx="0.6" />
-            <circle cx="12" cy="9.5" r="1.5" />
-            <!-- pied et socle -->
-            <path d="M12 9.5 7.4 20.5h1.9L12 13.8l2.7 6.7h1.9z" />
-            <rect x="5" y="20.4" width="14" height="1.8" rx="0.9" />
-        </g>
+        <circle cx="4.6" cy="12.6" r="3.4" fill="none" stroke="currentColor" stroke-width="1.0" />
+        <line x1="8.00" y1="12.60" x2="1.20" y2="12.60" stroke="currentColor" stroke-width="0.5" />
+        <line x1="7.00" y1="15.00" x2="2.20" y2="10.20" stroke="currentColor" stroke-width="0.5" />
+        <line x1="4.60" y1="16.00" x2="4.60" y2="9.20" stroke="currentColor" stroke-width="0.5" />
+        <line x1="2.20" y1="15.00" x2="7.00" y2="10.20" stroke="currentColor" stroke-width="0.5" />
+        <rect x="3.80" y="9.40" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="6.20" y="10.40" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="7.20" y="12.80" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="6.20" y="15.20" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="1.40" y="15.20" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="0.40" y="12.80" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="1.40" y="10.40" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <circle cx="4.6" cy="12.6" r="0.68" fill="currentColor" />
+        <path d="M4.6 12.6 2.40 20.6h0.88L4.6 14.64l1.32 5.96h0.88z" fill="currentColor" />
+        <circle cx="19.4" cy="12.6" r="3.4" fill="none" stroke="currentColor" stroke-width="1.0" />
+        <line x1="22.80" y1="12.60" x2="16.00" y2="12.60" stroke="currentColor" stroke-width="0.5" />
+        <line x1="21.80" y1="15.00" x2="17.00" y2="10.20" stroke="currentColor" stroke-width="0.5" />
+        <line x1="19.40" y1="16.00" x2="19.40" y2="9.20" stroke="currentColor" stroke-width="0.5" />
+        <line x1="17.00" y1="15.00" x2="21.80" y2="10.20" stroke="currentColor" stroke-width="0.5" />
+        <rect x="18.60" y="9.40" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="21.00" y="10.40" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="22.00" y="12.80" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="21.00" y="15.20" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="16.20" y="15.20" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="15.20" y="12.80" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <rect x="16.20" y="10.40" width="1.6" height="1.2" rx="0.36" fill="currentColor" />
+        <circle cx="19.4" cy="12.6" r="0.68" fill="currentColor" />
+        <path d="M19.4 12.6 17.20 20.6h0.88L19.4 14.64l1.32 5.96h0.88z" fill="currentColor" />
+        <circle cx="12" cy="8.2" r="5.6" fill="none" stroke="currentColor" stroke-width="1.3" />
+        <line x1="17.60" y1="8.20" x2="6.40" y2="8.20" stroke="currentColor" stroke-width="0.7" />
+        <line x1="15.96" y1="12.16" x2="8.04" y2="4.24" stroke="currentColor" stroke-width="0.7" />
+        <line x1="12.00" y1="13.80" x2="12.00" y2="2.60" stroke="currentColor" stroke-width="0.7" />
+        <line x1="8.04" y1="12.16" x2="15.96" y2="4.24" stroke="currentColor" stroke-width="0.7" />
+        <rect x="10.90" y="2.80" width="2.2" height="1.7" rx="0.51" fill="currentColor" />
+        <rect x="14.86" y="4.44" width="2.2" height="1.7" rx="0.51" fill="currentColor" />
+        <rect x="16.50" y="8.40" width="2.2" height="1.7" rx="0.51" fill="currentColor" />
+        <rect x="14.86" y="12.36" width="2.2" height="1.7" rx="0.51" fill="currentColor" />
+        <rect x="6.94" y="12.36" width="2.2" height="1.7" rx="0.51" fill="currentColor" />
+        <rect x="5.30" y="8.40" width="2.2" height="1.7" rx="0.51" fill="currentColor" />
+        <rect x="6.94" y="4.44" width="2.2" height="1.7" rx="0.51" fill="currentColor" />
+        <circle cx="12" cy="8.2" r="1.12" fill="currentColor" />
+        <path d="M12 8.2 8.40 20.6h1.44L12 11.56l2.16 9.04h1.44z" fill="currentColor" />
+        <rect x="0.8" y="20.4" width="22.4" height="1.8" rx="0.9" fill="currentColor" />
     </svg>
 
     <!-- Marketplace: shopping bag - the EXACT Material Icons "shopping_bag"
