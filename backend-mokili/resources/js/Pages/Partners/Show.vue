@@ -20,8 +20,9 @@ const props = defineProps({
 const { photoFor, isPreview, isIllustration } = usePreviewPhotos();
 const b = computed(() => props.business);
 const isSite = computed(() => b.value.category === 'site_touristique');
-// Garage (ou concession avec atelier) : prise de rendez-vous.
-const isGarage = computed(() => ['garage', 'parking'].includes(b.value.category) || (b.value.category === 'concessionnaire' && (b.value.services ?? []).some((x) => /atelier|remorquage/i.test(x))));
+// Garage, parking ou concessionnaire : prise de rendez-vous (achat : paiement sur place).
+const isDealer = computed(() => b.value.category === 'concessionnaire');
+const isGarage = computed(() => ['garage', 'parking', 'concessionnaire'].includes(b.value.category));
 const canBook = computed(() => isSite.value || isGarage.value);
 
 // --- Galerie ---
@@ -152,7 +153,7 @@ const ctaLabel = computed(() => (isGarage.value ? 'Prendre rendez-vous' : 'Reser
                 <template v-if="canBook">
                     <p v-if="sent" class="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{{ isGarage ? 'Demande de rendez-vous envoyee ! Nous vous rappelons sous 24 h pour confirmer.' : "Demande envoyee ! L'equipe MOKILI TOUR vous rappelle pour confirmer votre visite." }}</p>
                     <button type="button" class="w-full rounded-xl bg-emerald-600 py-3.5 font-bold text-white shadow hover:bg-emerald-700" @click="open = true">📅 {{ ctaLabel }}</button>
-                    <p class="text-center text-xs text-slate-500">Reservation sans engagement</p>
+                    <p class="text-center text-xs text-slate-500">{{ isDealer ? 'Sans engagement · aucun paiement en ligne, paiement sur place' : 'Reservation sans engagement' }}</p>
                     <template v-if="isGarage">
                         <a v-if="business.phone" :href="`tel:${business.phone.replace(/\s/g, '')}`" class="btn-outline block w-full text-center">Appeler</a>
                         <a v-if="whatsappUrl" :href="whatsappUrl" target="_blank" rel="noopener" class="btn-outline block w-full text-center">WhatsApp</a>
@@ -187,7 +188,7 @@ const ctaLabel = computed(() => (isGarage.value ? 'Prendre rendez-vous' : 'Reser
             <div class="flex items-start justify-between border-b px-6 py-4">
                 <div>
                     <h2 class="text-xl font-bold text-navy-900">{{ isGarage ? 'Rendez-vous' : 'Reserver' }} {{ business.name }}</h2>
-                    <p class="mt-1 text-sm text-slate-500">Remplissez le formulaire ci-dessous. Nous reviendrons vers vous rapidement.</p>
+                    <p class="mt-1 text-sm text-slate-500">Remplissez le formulaire ci-dessous. Nous reviendrons vers vous rapidement.<template v-if="isDealer"> Aucun paiement en ligne : vous payez sur place, apres avoir vu le vehicule.</template></p>
                 </div>
                 <button type="button" class="text-2xl leading-none text-slate-400 hover:text-slate-700" aria-label="Fermer" @click="open = false">×</button>
             </div>
@@ -209,17 +210,17 @@ const ctaLabel = computed(() => (isGarage.value ? 'Prendre rendez-vous' : 'Reser
                 </section>
 
                 <section>
-                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ isGarage ? 'Votre vehicule et la prestation' : 'Details de la visite' }}</p>
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ isDealer ? "Votre projet d'achat" : isGarage ? 'Votre vehicule et la prestation' : 'Details de la visite' }}</p>
                     <div class="mt-2 grid grid-cols-2 gap-3">
                         <template v-if="isGarage">
-                            <label class="col-span-2 block text-sm"><span class="font-semibold text-slate-700">Prestation <span class="text-red-500">*</span></span>
+                            <label class="col-span-2 block text-sm"><span class="font-semibold text-slate-700">{{ isDealer ? 'Objet du rendez-vous' : 'Prestation' }} <span class="text-red-500">*</span></span>
                                 <select v-model="form.service" required class="mt-1 w-full rounded-lg border-slate-300 text-sm">
-                                    <option value="" disabled>Choisir une prestation</option>
+                                    <option value="" disabled>{{ isDealer ? 'Choisir' : 'Choisir une prestation' }}</option>
                                     <option v-for="m in garageServices" :key="m" :value="m">{{ m }}</option>
                                 </select>
                                 <span v-if="form.errors.service" class="text-xs text-red-600">{{ form.errors.service }}</span></label>
-                            <label class="col-span-2 block text-sm"><span class="font-semibold text-slate-700">Vehicule</span>
-                                <input v-model="form.vehicle" type="text" placeholder="Marque, modele, annee (ex. Toyota Corolla 2015)" class="mt-1 w-full rounded-lg border-slate-300 text-sm" /></label>
+                            <label class="col-span-2 block text-sm"><span class="font-semibold text-slate-700">{{ isDealer ? 'Vehicule recherche' : 'Vehicule' }}</span>
+                                <input v-model="form.vehicle" type="text" :placeholder="isDealer ? 'Marque, modele, budget (ex. Toyota RAV4, 15 M FCFA)' : 'Marque, modele, annee (ex. Toyota Corolla 2015)'" class="mt-1 w-full rounded-lg border-slate-300 text-sm" /></label>
                         </template>
                         <label class="block text-sm"><span class="font-semibold text-slate-700">{{ isGarage ? 'Date souhaitee' : 'Date de visite' }} <span class="text-red-500">*</span></span>
                             <input v-model="form.visit_date" type="date" :min="today" required class="mt-1 w-full rounded-lg border-slate-300 text-sm" />
@@ -235,7 +236,7 @@ const ctaLabel = computed(() => (isGarage.value ? 'Prendre rendez-vous' : 'Reser
                         <label v-if="!isGarage && Object.keys(formulas).length" class="col-span-2 block text-sm"><span class="font-semibold text-slate-700">Formule</span>
                             <select v-model="form.formula" class="mt-1 w-full rounded-lg border-slate-300 text-sm"><option v-for="(l, k) in formulas" :key="k" :value="k">{{ l }}</option></select></label>
                         <label class="col-span-2 block text-sm"><span class="font-semibold text-slate-700">Notes / Commentaires</span>
-                            <textarea v-model="form.message" rows="2" :placeholder="isGarage ? 'Symptomes, bruit, voyant allume, depannage a domicile...' : 'Besoins particuliers, langue du guide, horaire prefere...'" class="mt-1 w-full rounded-lg border-slate-300 text-sm" /></label>
+                            <textarea v-model="form.message" rows="2" :placeholder="isDealer ? 'Couleur, options, reprise de votre vehicule, questions...' : isGarage ? 'Symptomes, bruit, voyant allume, depannage a domicile...' : 'Besoins particuliers, langue du guide, horaire prefere...'" class="mt-1 w-full rounded-lg border-slate-300 text-sm" /></label>
                     </div>
                 </section>
 

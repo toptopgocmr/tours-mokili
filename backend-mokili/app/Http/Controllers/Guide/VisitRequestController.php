@@ -26,9 +26,8 @@ class VisitRequestController extends Controller
 
     public static function isGarage(Business $business): bool
     {
-        return in_array($business->category, ['garage', 'parking'], true)
-            || ($business->category === 'concessionnaire'
-                && collect($business->services ?? [])->contains(fn ($s) => (bool) preg_match('/atelier|remorquage/i', (string) $s)));
+        // Garages, parkings et concessionnaires (rendez-vous d'achat, paiement sur place).
+        return in_array($business->category, ['garage', 'parking', 'concessionnaire'], true);
     }
 
     public static function isBookable(Business $business): bool

@@ -60,9 +60,17 @@ class GarageSearch
     /** Prestations proposees pour la prise de rendez-vous de cette societe. */
     public static function servicesFor(Business $business): array
     {
-        return $business->category === 'parking'
-            ? config('catalogue.voiture.parking_services')
-            : config('catalogue.voiture.mechanic_services');
+        if ($business->category === 'parking') {
+            return config('catalogue.voiture.parking_services');
+        }
+        if ($business->category === 'concessionnaire') {
+            // Achat d'abord ; prestations atelier si la concession en a un.
+            $atelier = collect($business->services ?? [])->contains(fn ($s) => (bool) preg_match('/atelier|remorquage/i', (string) $s));
+
+            return array_values(array_merge(config('catalogue.voiture.dealer_services'), $atelier ? config('catalogue.voiture.mechanic_services') : []));
+        }
+
+        return config('catalogue.voiture.mechanic_services');
     }
 
     /** Vendeurs / concessionnaires partenaires qui proposent cette marque. */

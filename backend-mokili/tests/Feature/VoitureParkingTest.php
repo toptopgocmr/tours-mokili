@@ -52,4 +52,21 @@ class VoitureParkingTest extends TestCase
             ->assertJsonPath('data.0.name', 'Lavage Express')
             ->assertJsonFragment(['services' => ['Parking', 'Gardiennage', 'Lavage', 'Nettoyage interieur', 'Lustrage / polissage']]);
     }
+
+    public function test_dealer_page_offers_purchase_appointment(): void
+    {
+        $d = Business::create(['name' => 'Prestige Cars', 'category' => 'concessionnaire', 'city' => 'Brazzaville', 'services' => ['Multimarque'], 'is_active' => true]);
+
+        $this->get("/partenaires/{$d->slug}")->assertOk()->assertInertia(fn ($p) => $p
+            ->where('mechanicServices.0', "Achat d'un vehicule (paiement sur place)")
+            ->where('mechanicServices', fn ($s) => ! collect($s)->contains('Vidange')));
+
+        $this->post("/partenaires/{$d->slug}/visite", [
+            'name' => 'Jean Malonga', 'phone' => '+242 06 000 0000', 'visit_date' => now()->addDay()->toDateString(),
+            'service' => "Achat d'un vehicule (paiement sur place)", 'vehicle' => 'Toyota RAV4',
+        ])->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertSame('Toyota RAV4', VisitRequest::firstOrFail()->vehicle);
+
+        $this->getJson("/api/partners/{$d->slug}")->assertOk()->assertJsonPath("booking", "rdv");
+    }
 }

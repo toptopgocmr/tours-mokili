@@ -158,6 +158,11 @@ return [
             'Climatisation', 'Carrosserie', 'Peinture', 'Electricite auto', 'Batterie', 'Pieces detachees',
             'Depannage / remorquage', 'Poids lourds',
         ],
+        // Concessionnaires / vendeurs : rendez-vous d'achat (paiement sur place).
+        'dealer_services' => [
+            'Achat d\'un vehicule (paiement sur place)', 'Voir les vehicules en stock', 'Essai routier',
+            'Reprise de mon vehicule', 'Financement / credit auto',
+        ],
         // Voiture > Parking : stationnement, gardiennage et lavage (hors Mecanique).
         'parking_services' => [
             'Parking', 'Gardiennage', 'Lavage', 'Nettoyage interieur', 'Lustrage / polissage',
