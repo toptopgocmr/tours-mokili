@@ -42,7 +42,7 @@ class Vehicle extends Model
     {
         $price = match ($this->offer_type) {
             'vente' => $this->sale_price !== null ? ['amount' => (float) $this->sale_price, 'suffix' => ''] : null,
-            'mecanique' => $this->sale_price !== null ? ['amount' => (float) $this->sale_price, 'suffix' => 'a partir de'] : null,
+            'mecanique', 'parking' => $this->sale_price !== null ? ['amount' => (float) $this->sale_price, 'suffix' => 'a partir de'] : null,
             default => $this->price_per_day !== null ? ['amount' => (float) $this->price_per_day, 'suffix' => '/ jour'] : null,
         };
         // Promotion en cours : prix remise + prix d'origine barre.
@@ -114,7 +114,7 @@ class Vehicle extends Model
     {
         if (! $this->image) {
             // Annonce sans photo : photo d'illustration de la marque / du modele.
-            return $this->offer_type === 'mecanique' ? null : \App\Support\VehiclePhotos::for($this->brand, $this->model);
+            return in_array($this->offer_type, ['mecanique', 'parking'], true) ? null : \App\Support\VehiclePhotos::for($this->brand, $this->model);
         }
 
         // Demo listings store a full external photo URL directly; real

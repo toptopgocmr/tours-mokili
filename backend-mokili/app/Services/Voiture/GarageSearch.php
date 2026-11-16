@@ -33,6 +33,38 @@ class GarageSearch
             ->orderByDesc('is_featured')->orderBy('city')->orderBy('name');
     }
 
+    /**
+     * Voiture > Parking : parkings, gardiennage et lavage auto, plus les
+     * garages / concessionnaires qui proposent ces prestations.
+     */
+    public static function parking(?string $city = null, ?string $term = null): Builder
+    {
+        $city = trim((string) $city);
+        $term = trim((string) $term);
+        $words = ['Parking', 'Gardiennage', 'Lavage'];
+
+        return Business::query()->active()
+            ->where(fn ($c) => $c->where('category', 'parking')->orWhere(fn ($g) => $g->whereIn('category', ['garage', 'concessionnaire'])
+                ->where(fn ($x) => collect($words)->each(fn ($w) => $x->orWhere('services', 'like', '%"'.$w.'"%')))))
+            ->when($city !== '', fn ($q) => $q->where('city', 'like', "%{$city}%"))
+            ->when($term !== '', function ($q) use ($term) {
+                $key = collect(explode('/', $term))->map(fn ($w) => trim($w))->sortByDesc(fn ($w) => strlen($w))->first() ?: $term;
+                $q->where(fn ($w) => $w->where('name', 'like', "%{$term}%")
+                    ->orWhere('description', 'like', "%{$term}%")
+                    ->orWhere('district', 'like', "%{$term}%")
+                    ->orWhere('services', 'like', '%'.$key.'%'));
+            })
+            ->orderByRaw("category = 'parking' desc")->orderByDesc('is_featured')->orderBy('city')->orderBy('name');
+    }
+
+    /** Prestations proposees pour la prise de rendez-vous de cette societe. */
+    public static function servicesFor(Business $business): array
+    {
+        return $business->category === 'parking'
+            ? config('catalogue.voiture.parking_services')
+            : config('catalogue.voiture.mechanic_services');
+    }
+
     /** Vendeurs / concessionnaires partenaires qui proposent cette marque. */
     public static function dealersFor(?string $brand, ?string $city = null)
     {

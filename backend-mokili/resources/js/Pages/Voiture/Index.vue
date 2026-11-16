@@ -25,6 +25,7 @@ const props = defineProps({
     reservedIds: { type: Array, default: () => [] },
     finance: { type: Object, default: () => ({}) },
     mechanicServices: { type: Array, default: () => [] },
+    parkingServices: { type: Array, default: () => [] },
 });
 const { favorites, compare, isFav, inCompare, toggleFav, toggleCompare, clearCompare } = useCarShortlist();
 const showFavs = () => router.get('/voiture', { type: 'vente', ids: favorites.value.join(',') || '0' }, { preserveScroll: true });
@@ -72,6 +73,7 @@ const query = () => {
         location: ['type', 'city', 'vehicule', 'start', 'end', 'start_time', 'end_time', 'return_city', 'age', 'sort', 'transmission', 'category', 'price_max'],
         vente: ['type', 'q', 'city', 'brand', 'model', 'color', 'condition', 'doors', 'first_owner', 'fuel', 'transmission', 'category', 'price_min', 'price_max', 'year_min', 'km_max', 'sort'],
         mecanique: ['type', 'q', 'city'],
+        parking: ['type', 'q', 'city'],
         '': ['type', 'q', 'city'],
     }[s.type] ?? ['type'];
     const out = {};
@@ -126,7 +128,11 @@ const HERO = {
     location: ['Location de voitures et utilitaires', 'Citadines, SUV, berlines et utilitaires, avec ou sans chauffeur.'],
     vente: ['Voitures a vendre', 'Annonces de particuliers et de professionnels au Congo et en Afrique centrale.'],
     mecanique: ['Mecanique & entretien', 'Garages, vidange, diagnostic, carrosserie, depannage.'],
+    parking: ['Parking, gardiennage & lavage', 'Garez, faites garder ou laver votre vehicule en toute securite.'],
 };
+// Mecanique et Parking : recherche par prestation + liste de societes.
+const isServiceTab = computed(() => s.type === 'mecanique' || s.type === 'parking');
+const services = computed(() => (s.type === 'parking' ? props.parkingServices : props.mechanicServices));
 const PRICE_STEPS = [2000000, 5000000, 10000000, 20000000];
 const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i);
 </script>
@@ -261,13 +267,13 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
         <!-- ===== TOUT / MECANIQUE : barre de recherche ===== -->
         <form v-else class="mx-auto max-w-6xl rounded-2xl bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.18)]" @submit.prevent="submit">
             <div class="flex flex-col gap-2 sm:flex-row">
-                <template v-if="s.type === 'mecanique'">
+                <template v-if="isServiceTab">
                     <!-- Liste des prestations directement dans le champ (saisie libre possible). -->
-                    <input v-model="s.q" type="text" list="mecanique-services" placeholder="Prestation ou garage : vidange, depannage..." class="h-12 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" @change="submit" />
-                    <datalist id="mecanique-services"><option v-for="m in mechanicServices" :key="m" :value="m" /></datalist>
+                    <input v-model="s.q" type="text" list="voiture-services" :placeholder="s.type === 'parking' ? 'Prestation ou parking : gardiennage, lavage...' : 'Prestation ou garage : vidange, depannage...'" class="h-12 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" @change="submit" />
+                    <datalist id="voiture-services"><option v-for="m in services" :key="m" :value="m" /></datalist>
                     <select v-model="s.q" class="h-12 rounded-xl border-slate-300 text-sm font-medium text-slate-900 sm:w-60" @change="submit">
                         <option value="">Toutes les prestations</option>
-                        <option v-for="m in mechanicServices" :key="m" :value="m">{{ m }}</option>
+                        <option v-for="m in services" :key="m" :value="m">{{ m }}</option>
                     </select>
                 </template>
                 <input v-else v-model="s.q" type="text" placeholder="Marque, modele (ex. Toyota RAV4)..." class="h-12 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" />
@@ -275,8 +281,8 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                 <datalist id="voiture-villes"><option value="Brazzaville" /><option value="Pointe-Noire" /><option value="Dolisie" /><option value="Ouesso" /></datalist>
                 <button type="submit" class="h-12 rounded-xl bg-gold-500 px-10 font-bold text-navy-900 transition hover:bg-gold-400">Rechercher</button>
             </div>
-            <div v-if="s.type === 'mecanique'" class="mt-3 flex flex-wrap gap-2">
-                <button v-for="m in mechanicServices" :key="m" type="button" class="rounded-full border px-3 py-1 text-xs font-semibold transition" :class="s.q === m ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700 hover:border-navy-900'" @click="pickService(m)">{{ m }}</button>
+            <div v-if="isServiceTab" class="mt-3 flex flex-wrap gap-2">
+                <button v-for="m in services" :key="m" type="button" class="rounded-full border px-3 py-1 text-xs font-semibold transition" :class="s.q === m ? 'border-navy-900 bg-navy-900 text-white' : 'border-slate-300 text-slate-700 hover:border-navy-900'" @click="pickService(m)">{{ m }}</button>
             </div>
         </form>
     </div>
@@ -298,15 +304,15 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
     </div>
 
     <div class="mx-auto max-w-6xl px-4 py-8">
-        <!-- Garages, mecanique & depannage -->
-        <section v-if="s.type === 'mecanique'" class="mb-10">
+        <!-- Garages, mecanique & depannage / Parkings, gardiennage & lavage -->
+        <section v-if="isServiceTab" class="mb-10">
             <div class="flex flex-wrap items-end justify-between gap-2">
-                <h2 class="text-xl font-bold text-navy-900">{{ garages.length }} garage(s) &amp; depanneur(s){{ f.q ? ` : ${f.q}` : '' }}{{ f.city ? ` a ${f.city}` : '' }}</h2>
-                <button v-if="f.q || f.city" type="button" class="text-sm font-semibold text-[#006ce4]" @click="pickService('', true)">Voir tous les garages</button>
+                <h2 class="text-xl font-bold text-navy-900">{{ garages.length }} {{ s.type === 'parking' ? 'parking(s), gardiennage & lavage' : 'garage(s) & depanneur(s)' }}{{ f.q ? ` : ${f.q}` : '' }}{{ f.city ? ` a ${f.city}` : '' }}</h2>
+                <button v-if="f.q || f.city" type="button" class="text-sm font-semibold text-[#006ce4]" @click="pickService('', true)">{{ s.type === 'parking' ? 'Voir tous les parkings' : 'Voir tous les garages' }}</button>
             </div>
             <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <article v-for="g in garages" :key="g.id" class="flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-lg">
-                    <Link :href="`/partenaires/${g.slug}`" class="relative block h-32"><GuideCover :src="g.image_url" category="garage" :alt="g.name" icon-class="h-10 w-10" />
+                    <Link :href="`/partenaires/${g.slug}`" class="relative block h-32"><GuideCover :src="g.image_url" :category="g.category" :alt="g.name" icon-class="h-10 w-10" />
                         <span class="absolute right-2 top-2 rounded-full bg-navy-900/80 px-2 py-0.5 text-[11px] font-semibold text-white">{{ g.city }}</span>
                         <span v-if="g.image_is_illustration" class="absolute bottom-2 right-2 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">Photo d'illustration</span></Link>
                     <div class="flex flex-1 flex-col p-4">
@@ -322,7 +328,7 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                     </div>
                 </article>
             </div>
-            <p v-if="!garages.length" class="mt-6 rounded-2xl bg-slate-50 p-6 text-center text-slate-600">Aucun garage pour cette recherche. Essayez une autre prestation ou une autre ville.</p>
+            <p v-if="!garages.length" class="mt-6 rounded-2xl bg-slate-50 p-6 text-center text-slate-600">{{ s.type === 'parking' ? 'Aucun parking ou lavage pour cette recherche.' : 'Aucun garage pour cette recherche.' }} Essayez une autre prestation ou une autre ville.</p>
         </section>
 
         <!-- ===== VENTE : sidebar de filtres + annonces ===== -->
@@ -503,7 +509,7 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                     <div class="flex flex-1 flex-col p-4">
                         <p class="font-bold text-slate-900">{{ v.title }}</p>
                         <p class="text-xs text-slate-500">{{ cap(v.category) || 'Vehicule' }} · {{ v.city }}</p>
-                        <div v-if="v.offer_type !== 'mecanique'" class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+                        <div v-if="!['mecanique', 'parking'].includes(v.offer_type)" class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
                             <span v-if="v.seats">{{ v.seats }} places</span>
                             <span v-if="v.transmission">{{ cap(v.transmission) }}</span>
                             <span v-if="v.fuel">{{ cap(v.fuel) }}</span>
@@ -524,7 +530,7 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
                     </div>
                 </Link>
             </div>
-            <p v-if="!vehicles.data.length && s.type !== 'mecanique'" class="mt-10 text-center text-navy-500">
+            <p v-if="!vehicles.data.length && !isServiceTab" class="mt-10 text-center text-navy-500">
                 {{ datesSearched ? 'Aucun vehicule libre sur ces dates : essayez d\'autres dates.' : 'Aucune annonce pour le moment dans cette categorie.' }}
             </p>
             <Paginator :page="vehicles" />
@@ -540,6 +546,6 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
         </div>
 
         <PartnersSection v-if="s.type === 'vente'" module="voiture" only="concessionnaire" title="Concessionnaires & vendeurs partenaires" subtitle="Les distributeurs officiels des marques au Congo : vehicules neufs, reprise, financement et garantie constructeur." />
-        <PartnersSection v-else-if="s.type !== 'mecanique'" module="voiture" only="taxi_vtc,garage" title="Taxis, VTC & garages" subtitle="Applications de taxi, chauffeurs prives et garages a Brazzaville." />
+        <PartnersSection v-else-if="!isServiceTab" module="voiture" only="taxi_vtc,garage" title="Taxis, VTC & garages" subtitle="Applications de taxi, chauffeurs prives et garages a Brazzaville." />
     </div>
 </template>

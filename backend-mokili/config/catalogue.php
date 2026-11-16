@@ -49,6 +49,7 @@ return [
             'location' => 'Location',
             'vente' => 'Vente',
             'mecanique' => 'Mecanique',
+            'parking' => 'Parking',
         ],
         // Annonces de vente : listes proposees aux vendeurs et aux acheteurs.
         'brands' => [
@@ -155,7 +156,11 @@ return [
         'mechanic_services' => [
             'Mecanique generale', 'Entretien / revision', 'Vidange', 'Diagnostic', 'Freinage', 'Pneumatiques',
             'Climatisation', 'Carrosserie', 'Peinture', 'Electricite auto', 'Batterie', 'Pieces detachees',
-            'Depannage / remorquage', 'Poids lourds', 'Lavage', 'Gardiennage',
+            'Depannage / remorquage', 'Poids lourds',
+        ],
+        // Voiture > Parking : stationnement, gardiennage et lavage (hors Mecanique).
+        'parking_services' => [
+            'Parking', 'Gardiennage', 'Lavage', 'Nettoyage interieur', 'Lustrage / polissage',
         ],
     ],
 

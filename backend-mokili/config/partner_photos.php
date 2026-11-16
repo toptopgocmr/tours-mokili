@@ -27,6 +27,11 @@ return [
     // Tourisme : photo d'illustration par categorie (en attendant les photos
     // officielles). Choisies visuellement, licences libres.
     'categories' => [
+        // Parkings, gardiennage et lavage auto.
+        'parking' => [
+            $w.'a/a2/Cars_at_parking_slots_in_Maiduguri_Borno_State_%285%29.jpg/960px-Cars_at_parking_slots_in_Maiduguri_Borno_State_%285%29.jpg',
+            $w.'8/85/Car_park%2C_Accra_%28IMG_20230201_143906_1%29.jpg/960px-Car_park%2C_Accra_%28IMG_20230201_143906_1%29.jpg',
+        ],
         'restaurant' => [
             'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/65/Plats_congolais.jpg/960px-Plats_congolais.jpg',
             'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Poisson_brais%C3%A9%2C_accompagn%C3%A9_d%E2%80%99aloco.jpg/960px-Poisson_brais%C3%A9%2C_accompagn%C3%A9_d%E2%80%99aloco.jpg',

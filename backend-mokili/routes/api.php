@@ -77,6 +77,7 @@ Route::get('/logement/listings/{listing:slug}', [LodgingListingController::class
 Route::get('/voiture/vehicles', [VehicleController::class, 'index']);
 Route::get('/voiture/meta', [VehicleController::class, 'meta']);
 Route::get('/voiture/garages', [VehicleController::class, 'garages']);
+Route::get('/voiture/parkings', [VehicleController::class, 'parkings']);
 Route::get('/voiture/vehicles/{vehicle:slug}', [VehicleController::class, 'show']);
 
 Route::get('/divertissement/events', [EventController::class, 'index']);

@@ -55,6 +55,7 @@ class VehicleController extends Controller
             'brands' => $brands,
             'fuels' => config('catalogue.voiture.fuels'),
             'mechanic_services' => config('catalogue.voiture.mechanic_services'),
+            'parking_services' => config('catalogue.voiture.parking_services'),
         ]);
     }
 
@@ -64,6 +65,15 @@ class VehicleController extends Controller
         return response()->json([
             'services' => config('catalogue.voiture.mechanic_services'),
             'data' => GarageSearch::query($request->input('city'), $request->input('q'))->limit(60)->get(),
+        ]);
+    }
+
+    /** Voiture > Parking : parkings, gardiennage et lavage (?city=&q=prestation). */
+    public function parkings(Request $request): JsonResponse
+    {
+        return response()->json([
+            'services' => config('catalogue.voiture.parking_services'),
+            'data' => GarageSearch::parking($request->input('city'), $request->input('q'))->limit(60)->get(),
         ]);
     }
 

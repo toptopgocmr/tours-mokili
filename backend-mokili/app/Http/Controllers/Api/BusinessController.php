@@ -33,7 +33,7 @@ class BusinessController extends Controller
         // booking : "visite" (site touristique), "rdv" (garage / atelier) ou null.
         return response()->json($business->toArray() + [
             'booking' => VisitRequestController::isBookable($business) ? (VisitRequestController::isGarage($business) ? 'rdv' : 'visite') : null,
-            'mechanic_services' => VisitRequestController::isGarage($business) ? config('catalogue.voiture.mechanic_services') : [],
+            'mechanic_services' => VisitRequestController::isGarage($business) ? \App\Services\Voiture\GarageSearch::servicesFor($business) : [],
             'formulas' => VisitRequest::FORMULAS,
         ]);
     }

@@ -21,7 +21,7 @@ const { photoFor, isPreview, isIllustration } = usePreviewPhotos();
 const b = computed(() => props.business);
 const isSite = computed(() => b.value.category === 'site_touristique');
 // Garage (ou concession avec atelier) : prise de rendez-vous.
-const isGarage = computed(() => b.value.category === 'garage' || (b.value.category === 'concessionnaire' && (b.value.services ?? []).some((x) => /atelier|remorquage/i.test(x))));
+const isGarage = computed(() => ['garage', 'parking'].includes(b.value.category) || (b.value.category === 'concessionnaire' && (b.value.services ?? []).some((x) => /atelier|remorquage/i.test(x))));
 const canBook = computed(() => isSite.value || isGarage.value);
 
 // --- Galerie ---
@@ -47,7 +47,7 @@ const MODULE_PAGES = {
     divertissement: ['/divertissement', 'Tourisme'],
     marketplace: ['/marketplace', 'Marketplace'],
 };
-const back = computed(() => (isSite.value ? ['/divertissement?tab=visite', 'Sites touristiques'] : b.value.category === 'garage' ? ['/voiture?type=mecanique', 'Mecanique'] : b.value.category === 'concessionnaire' ? ['/voiture?type=vente', 'Voitures a vendre'] : MODULE_PAGES[b.value.module] ?? ['/', 'Accueil']));
+const back = computed(() => (isSite.value ? ['/divertissement?tab=visite', 'Sites touristiques'] : b.value.category === 'parking' ? ['/voiture?type=parking', 'Parking, gardiennage & lavage'] : b.value.category === 'garage' ? ['/voiture?type=mecanique', 'Mecanique'] : b.value.category === 'concessionnaire' ? ['/voiture?type=vente', 'Voitures a vendre'] : MODULE_PAGES[b.value.module] ?? ['/', 'Accueil']));
 const whatsappUrl = computed(() => (b.value.whatsapp ? `https://wa.me/${b.value.whatsapp.replace(/\D/g, '')}` : null));
 const price = computed(() => b.value.price_range || (isSite.value ? 'Gratuit' : null));
 const badge = computed(() => (isGarage.value ? b.value.category_label : (b.value.services ?? []).find((s) => /visite/i.test(s)) ?? b.value.services?.[0] ?? b.value.category_label));

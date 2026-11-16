@@ -72,7 +72,7 @@ const specs = computed(() => [
     v.value.condition && ['Etat', cat.value.conditions?.[v.value.condition] ?? v.value.condition],
     v.value.year && ['Annee', v.value.year],
     v.value.seats && ['Places', `${v.value.seats} places`],
-    v.value.offer_type !== 'mecanique' && v.value.transmission && ['Boite', v.value.transmission === 'manuelle' ? 'Manuelle' : 'Automatique'],
+    !['mecanique', 'parking'].includes(v.value.offer_type) && v.value.transmission && ['Boite', v.value.transmission === 'manuelle' ? 'Manuelle' : 'Automatique'],
     v.value.fuel && ['Carburant', cat.value.fuels?.[v.value.fuel] ?? v.value.fuel],
     v.value.color && ['Couleur', cat.value.colors?.[v.value.color]?.[0] ?? v.value.color],
     v.value.doors && ['Portes', `${v.value.doors} portes`],
@@ -279,7 +279,7 @@ const CONDITIONS = [
                 </section>
 
                 <section v-if="v.services?.length" class="mt-8">
-                    <h2 class="text-xl font-extrabold text-slate-900">{{ v.offer_type === 'mecanique' ? 'Prestations' : 'Inclus' }}</h2>
+                    <h2 class="text-xl font-extrabold text-slate-900">{{ ['mecanique', 'parking'].includes(v.offer_type) ? 'Prestations' : 'Inclus' }}</h2>
                     <div class="mt-3 flex flex-wrap gap-2">
                         <span v-for="s in v.services" :key="s" class="rounded-full bg-green-50 px-3 py-1 text-sm font-medium text-green-800">✓ {{ s }}</span>
                     </div>

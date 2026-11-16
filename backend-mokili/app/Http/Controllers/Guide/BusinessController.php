@@ -25,7 +25,7 @@ class BusinessController extends Controller
                 ->limit(4)
                 ->get(),
             'formulas' => \App\Models\Guide\VisitRequest::FORMULAS,
-            'mechanicServices' => config('catalogue.voiture.mechanic_services'),
+            'mechanicServices' => \App\Services\Voiture\GarageSearch::servicesFor($business),
         ]);
     }
 }

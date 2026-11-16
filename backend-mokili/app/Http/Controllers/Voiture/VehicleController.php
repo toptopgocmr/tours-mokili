@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-// VOITURE : location, vente et mecanique (garages et prestations).
+// VOITURE : location, vente, mecanique (garages) et parking (gardiennage, lavage).
 class VehicleController extends Controller
 {
     public const SORTS = [
@@ -91,13 +91,17 @@ class VehicleController extends Controller
 
         return Inertia::render('Voiture/Index', [
             'mechanicServices' => config('catalogue.voiture.mechanic_services'),
+            'parkingServices' => config('catalogue.voiture.parking_services'),
             'vehicles' => $page,
             'reservedIds' => $reserved,
             'finance' => config('catalogue.voiture.finance'),
             // Mecanique : les garages partenaires en plus des annonces.
-            'garages' => $type === 'mecanique'
-                ? \App\Services\Voiture\GarageSearch::query($request->input('city'), $request->input('q'))->limit(48)->get()
-                : [],
+            'garages' => match ($type) {
+                'mecanique' => \App\Services\Voiture\GarageSearch::query($request->input('city'), $request->input('q'))->limit(48)->get(),
+                // Parking : parkings, gardiennage et lavage.
+                'parking' => \App\Services\Voiture\GarageSearch::parking($request->input('city'), $request->input('q'))->limit(48)->get(),
+                default => [],
+            },
             'filters' => (object) ($request->only('city', 'q', 'start', 'end', 'start_time', 'end_time', 'vehicule', 'brand', 'model', 'color', 'condition', 'doors', 'first_owner', 'fuel', 'transmission', 'category', 'seats', 'price_min', 'price_max', 'year_min', 'km_max', 'sort', 'age', 'return_city', 'ids') + ['type' => $type]),
             'offerTypes' => $types,
             'facets' => ['brands' => $count('brand'), 'fuels' => $count('fuel'), 'transmissions' => $count('transmission'), 'categories' => $count('category'), 'colors' => $count('color'), 'conditions' => $count('condition')],
