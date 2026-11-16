@@ -70,6 +70,21 @@ class CountryController extends Controller
         ]);
     }
 
+    /** API (app mobile) : un pays, ses villes et les sites de la ville choisie. */
+    public function apiShow(Request $request, string $slug, WorldPlaces $world): JsonResponse
+    {
+        $country = TourismeCountries::find($slug);
+        abort_unless($country, 404);
+        $city = in_array($request->query('ville'), $country['cities'], true) ? $request->query('ville') : $country['cities'][0];
+
+        return response()->json([
+            'country' => $country,
+            'ville' => $city,
+            'categories' => WorldPlaces::CATEGORIES,
+            'result' => $country['local'] ? ['city' => null, 'places' => [], 'error' => null] : $world->search($city),
+        ]);
+    }
+
     private function localCount(TourismeCatalog $catalog): int
     {
         try {

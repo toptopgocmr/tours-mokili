@@ -54,6 +54,7 @@ Route::post('/auth/phone/verify-code', [PhoneOtpController::class, 'verify']);
 Route::get('/catalogue', [CatalogueController::class, 'index']);
 Route::get('/tourisme', [CatalogueController::class, 'tourisme']);
 Route::get('/tourisme/pays', [\App\Http\Controllers\Tourisme\CountryController::class, 'api']);
+Route::get('/tourisme/pays/{slug}', [\App\Http\Controllers\Tourisme\CountryController::class, 'apiShow'])->middleware('throttle:60,1');
 Route::get('/voyage/offers', [TravelOfferController::class, 'index']);
 Route::get('/voyage/transport-modes', [TravelOfferController::class, 'modes']);
 Route::get('/voyage/schedules', [TravelOfferController::class, 'schedules'])->middleware('throttle:60,1');

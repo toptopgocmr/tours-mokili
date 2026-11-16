@@ -46,4 +46,13 @@ class TourismeCountryTest extends TestCase
     {
         $this->getJson('/api/tourisme/pays')->assertOk()->assertJsonPath('countries.0.slug', 'congo')->assertJsonStructure(['continents', 'countries', 'local_count']);
     }
+
+    public function test_api_country_page(): void
+    {
+        Http::fake(fn () => Http::response(['query' => ['pages' => [9 => ['title' => 'Kribi', 'extract' => 'Station balneaire.', 'coordinates' => [['lat' => 2.9, 'lon' => 9.9]]]]]]));
+
+        $this->getJson('/api/tourisme/pays/cameroun?ville=Kribi')->assertOk()
+            ->assertJsonPath('country.name', 'Cameroun')->assertJsonPath('ville', 'Kribi')->assertJsonStructure(['categories', 'result' => ['places']]);
+        $this->getJson('/api/tourisme/pays/inconnu')->assertNotFound();
+    }
 }
