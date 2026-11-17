@@ -72,6 +72,7 @@ Route::get('/flights/offers/{flightOffer}', [FlightController::class, 'offer']);
 // LOGEMENT (style Booking.com), VOITURE, DIVERTISSEMENT, MARKETPLACE
 // (style Amazon) and FRET (style DHL) catalogues - public browsing like
 // Voyage, "book" actions require login (see auth:sanctum group below).
+Route::get('/logement/accueil', [LodgingListingController::class, 'home']);
 Route::get('/logement/listings', [LodgingListingController::class, 'index']);
 Route::get('/logement/listings/{listing:slug}', [LodgingListingController::class, 'show']);
 

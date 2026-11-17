@@ -83,13 +83,13 @@ const ACTIVITY_QUICK = {
 const quick = computed(() => (QUICK[ACTIVITY_QUICK[act.value]] ?? [
     ['/partner/entreprise', 'Completer mon entreprise', 'Choisir votre activite'],
     ['/partner/transport/creer', 'Ajouter un trajet', 'Bus, train, canot, taxi'],
-    ['/partner/logement/creer', 'Ajouter un logement', 'Hotel, appartement, villa'],
+    ['/partner/logement/creer', 'Ajouter un hébergement', 'Hotel, appartement, villa'],
 ]).map(([href, label, hint]) => ({ href, label, hint })));
 
 const modules = [
     { key: 'transport', label: 'Trajets a venir', href: '/partner/transport', icon: MapIcon, color: 'text-sky-700', bg: 'bg-sky-50', for: ['transport'] },
     { key: 'vols', label: 'Offres vols', href: '/partner/transport?vue=vols', icon: PaperAirplaneIcon, color: 'text-indigo-600', bg: 'bg-indigo-50', for: ['vols'] },
-    { key: 'logement', label: 'Hotels & logements', href: '/partner/logement', icon: BuildingOfficeIcon, color: 'text-green-600', bg: 'bg-green-50', for: ['hotel', 'appartement'] },
+    { key: 'logement', label: 'Hotels & hébergements', href: '/partner/logement', icon: BuildingOfficeIcon, color: 'text-green-600', bg: 'bg-green-50', for: ['hotel', 'appartement'] },
     { key: 'location', label: 'Voitures (location / vente)', href: '/partner/voiture', icon: TruckIcon, color: 'text-orange-600', bg: 'bg-orange-50', for: ['location', 'vente'] },
     { key: 'garage', label: 'Prestations garage', href: '/partner/voiture', icon: WrenchScrewdriverIcon, color: 'text-amber-700', bg: 'bg-amber-50', for: ['garage'] },
     { key: 'divertissement', label: 'Concerts, cinema...', href: '/partner/divertissement', icon: TicketIcon, color: 'text-purple-600', bg: 'bg-purple-50', for: ['evenements', 'cinema'] },
@@ -193,7 +193,7 @@ const when = (iso) => {
                 <li v-if="isTransport">&bull; Creez un <strong>trajet regulier</strong> en une fois : cochez les jours (ex. lundi, mercredi, vendredi) et la date de fin.</li>
                 <li v-if="isTransport">&bull; Vos departs apparaissent dans la recherche et le <strong>Programme des departs</strong> du site et de l'application.</li>
                 <li v-else>&bull; Ajoutez de belles photos et une description precise : elles s'affichent sur le site et dans l'application.</li>
-                <li>&bull; Vos nouvelles annonces (logements, voitures, evenements) sont verifiees par MOKILI TOUR avant publication.</li>
+                <li>&bull; Vos nouvelles annonces (hébergements, voitures, evenements) sont verifiees par MOKILI TOUR avant publication.</li>
                 <li>&bull; Une <strong>promotion</strong> s'arrete toute seule a sa date de fin.</li>
                 <li>&bull; Les clients paient par Mobile Money ; la place est confirmee au paiement.</li>
             </ul>

@@ -159,7 +159,7 @@ const features = [
             <h2 class="text-2xl font-bold text-navy-900">À propos de MOKILI TOUR</h2>
             <p class="mt-4 text-navy-700">
                 MOKILI TOUR reunit en une seule plateforme tous vos besoins de mobilite et de vie quotidienne :
-                voyage, logement, location de vehicule, divertissement, marketplace et fret. Une filiale de
+                voyage, hébergement, location de vehicule, divertissement, marketplace et fret. Une filiale de
                 Bilenium Conciergerie, avec des paiements verifies par portefeuille mobile money.
             </p>
         </div>

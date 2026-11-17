@@ -13,7 +13,7 @@ class ServiceCategorySeeder extends Seeder
     {
         $categories = [
             ['slug' => 'voyage', 'name' => 'Voyage', 'icon' => 'plane', 'color' => '#0B2A5B', 'position' => 1],
-            ['slug' => 'logement', 'name' => 'Logement', 'icon' => 'building-2', 'color' => '#1E8A3E', 'position' => 2],
+            ['slug' => 'logement', 'name' => 'Hébergement', 'icon' => 'building-2', 'color' => '#1E8A3E', 'position' => 2],
             ['slug' => 'voiture', 'name' => 'Voiture', 'icon' => 'car', 'color' => '#E06A1D', 'position' => 3],
             ['slug' => 'divertissement', 'name' => 'Tourisme', 'icon' => 'ticket', 'color' => '#7A2FBF', 'position' => 4],
             ['slug' => 'marketplace', 'name' => 'Marketplace', 'icon' => 'shopping-bag', 'color' => '#D6216B', 'position' => 5],

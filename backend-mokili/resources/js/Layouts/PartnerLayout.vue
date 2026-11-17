@@ -36,7 +36,7 @@ const links = [
     { href: '/partner/transport?vue=vols', label: 'Offres vols', icon: PaperAirplaneIcon },
 
     { section: 'Hebergement, voitures, loisirs' },
-    { href: '/partner/logement', label: 'Hotels & logements', icon: BuildingOfficeIcon },
+    { href: '/partner/logement', label: 'Hotels & hébergements', icon: BuildingOfficeIcon },
     { href: '/partner/voiture', label: 'Voitures & garage', icon: WrenchScrewdriverIcon },
     { href: '/partner/divertissement', label: 'Concerts, cinema...', icon: TicketIcon },
     { href: '/partner/parcs', label: "Parcs d'attractions", icon: SparklesIcon },

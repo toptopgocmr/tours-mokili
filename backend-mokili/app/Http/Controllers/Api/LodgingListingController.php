@@ -19,20 +19,55 @@ class LodgingListingController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        // Meme recherche que le site : destination (ville, quartier, nom),
+        // voyageurs (adultes + enfants) et chambres.
+        $guests = $request->filled('adults') || $request->filled('children')
+            ? max(1, $request->integer('adults') + $request->integer('children'))
+            : $request->integer('guests');
+
         $listings = LodgingListing::query()
             ->active()
-            ->when($request->string('city')->isNotEmpty(), fn ($q) => $q->where(
-                'city', 'like', '%'.$request->string('city').'%'
-            ))
-            ->when($request->integer('guests') > 0, fn ($q) => $q->where(
-                'max_guests', '>=', $request->integer('guests')
-            ))
+            ->when($request->string('city')->isNotEmpty(), fn ($q) => $q->where(fn ($w) => $w
+                ->where('city', 'like', '%'.$request->string('city').'%')
+                ->orWhere('title', 'like', '%'.$request->string('city').'%')
+                ->orWhere('address', 'like', '%'.$request->string('city').'%')))
+            ->when($guests > 0, fn ($q) => $q->where('max_guests', '>=', $guests))
+            ->when($request->integer('rooms') > 1, fn ($q) => $q->where('bedrooms', '>=', $request->integer('rooms')))
             // Villa, hotel, appartement.
             ->when($request->string('property_type')->isNotEmpty(), fn ($q) => $q->where('property_type', $request->string('property_type')))
-            ->orderByDesc('created_at')
-            ->paginate(10);
+            ->tap(fn ($q) => match ($request->input('sort')) {
+                'prix_asc' => $q->orderBy('price_per_night'),
+                'prix_desc' => $q->orderByDesc('price_per_night'),
+                'capacite' => $q->orderByDesc('max_guests')->orderByDesc('bedrooms'),
+                default => $q->orderByDesc('discount_percent')->latest(),
+            })
+            ->paginate(10)
+            ->withQueryString();
+
+        // Dates choisies : signale les hebergements deja reserves sur ces dates.
+        $busy = \App\Http\Controllers\Logement\LodgingListingController::busyIds(
+            $listings->getCollection()->pluck('id')->all(), $request->input('check_in'), $request->input('check_out')
+        );
+        $listings->getCollection()->transform(fn (LodgingListing $l) => $l->setAttribute('booked_on_dates', in_array($l->id, $busy, true)));
 
         return response()->json($listings);
+    }
+
+    /**
+     * Accueil Hébergement de l'app (comme la page web) : compteurs Villa /
+     * Hotel / Appartement et "Destinations en vogue".
+     */
+    public function home(): JsonResponse
+    {
+        $pool = LodgingListing::query()->active()->get(['id', 'property_type']);
+
+        return response()->json([
+            'types' => collect(config('catalogue.logement.property_types'))->map(fn ($label, $key) => [
+                'key' => $key, 'label' => $label, 'count' => $pool->where('property_type', $key)->count(),
+            ])->values(),
+            'sorts' => \App\Http\Controllers\Logement\LodgingListingController::SORTS,
+            'popular_cities' => \App\Http\Controllers\Logement\LodgingListingController::popularCities(),
+        ]);
     }
 
     public function show(LodgingListing $listing): JsonResponse

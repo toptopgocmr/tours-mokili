@@ -23,10 +23,10 @@ const statusLabel = (status) => ({
 </script>
 
 <template>
-    <Head title="Mes logements" />
+    <Head title="Mes hébergements" />
 
     <div class="mb-5 flex items-center justify-between">
-        <h1 class="text-xl font-bold text-slate-900">Mes logements</h1>
+        <h1 class="text-xl font-bold text-slate-900">Mes hébergements</h1>
         <Link href="/partner/logement/creer" class="btn-console-primary">+ Ajouter un logement</Link>
     </div>
 
@@ -46,7 +46,7 @@ const statusLabel = (status) => ({
                         <button class="font-semibold text-red-600 hover:underline" @click="remove(l)">Supprimer</button>
                     </td>
                 </tr>
-                <tr v-if="!listings.data.length"><td colspan="5" class="py-6 text-center text-slate-400">Aucun logement publie.</td></tr>
+                <tr v-if="!listings.data.length"><td colspan="5" class="py-6 text-center text-slate-400">Aucun hébergement publie.</td></tr>
             </tbody>
         </table>
     </div>

@@ -25,7 +25,7 @@ class ModerationController extends Controller
 {
     /** @var array<string, array{model: class-string, owner: string, label: string}> */
     private const MODULES = [
-        'logement' => ['model' => LodgingListing::class, 'owner' => 'owner', 'label' => 'Logement'],
+        'logement' => ['model' => LodgingListing::class, 'owner' => 'owner', 'label' => 'Hébergement'],
         'voiture' => ['model' => Vehicle::class, 'owner' => 'owner', 'label' => 'Voiture'],
         'divertissement' => ['model' => Event::class, 'owner' => 'organizer', 'label' => 'Tourisme'],
         'marketplace' => ['model' => Product::class, 'owner' => 'seller', 'label' => 'Marketplace (annonces)'],

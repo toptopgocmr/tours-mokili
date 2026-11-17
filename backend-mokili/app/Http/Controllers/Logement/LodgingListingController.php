@@ -81,7 +81,7 @@ class LodgingListingController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $busy = $this->busyIds($listings->getCollection()->pluck('id')->all(), $request->input('check_in'), $request->input('check_out'));
+        $busy = self::busyIds($listings->getCollection()->pluck('id')->all(), $request->input('check_in'), $request->input('check_out'));
         $listings->getCollection()->transform(fn (LodgingListing $l) => $l->setAttribute('booked_on_dates', in_array($l->id, $busy, true)));
 
         return Inertia::render('Logement/Index', [
@@ -90,7 +90,7 @@ class LodgingListingController extends Controller
             'propertyTypes' => config('catalogue.logement.property_types'),
             'facets' => $facets,
             'sorts' => self::SORTS,
-            'popularCities' => $this->popularCities(),
+            'popularCities' => self::popularCities(),
         ]);
     }
 
@@ -103,7 +103,7 @@ class LodgingListingController extends Controller
             'listing' => $lodgingListing,
             'search' => $search,
             'amenityLabels' => self::AMENITIES,
-            'bookedOnDates' => in_array($lodgingListing->id, $this->busyIds([$lodgingListing->id], $search['check_in'] ?? null, $search['check_out'] ?? null), true),
+            'bookedOnDates' => in_array($lodgingListing->id, self::busyIds([$lodgingListing->id], $search['check_in'] ?? null, $search['check_out'] ?? null), true),
             'similar' => LodgingListing::query()->active()->where('id', '!=', $lodgingListing->id)
                 ->orderByRaw('case when city = ? then 0 else 1 end', [$lodgingListing->city])
                 ->latest()->take(4)->get(),
@@ -111,7 +111,7 @@ class LodgingListingController extends Controller
     }
 
     /** Logements ayant une reservation payee / en attente qui chevauche les dates. */
-    protected function busyIds(array $ids, ?string $in, ?string $out): array
+    public static function busyIds(array $ids, ?string $in, ?string $out): array
     {
         if (! $ids || ! $in || ! $out || $out <= $in) {
             return [];
@@ -125,7 +125,7 @@ class LodgingListingController extends Controller
     }
 
     /** "Destinations en vogue" : villes les plus fournies, avec une photo. */
-    protected function popularCities(): array
+    public static function popularCities(): array
     {
         return LodgingListing::query()->active()
             ->selectRaw('city, country, count(*) as total, min(price_per_night) as from_price')

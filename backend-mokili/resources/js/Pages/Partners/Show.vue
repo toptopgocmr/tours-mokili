@@ -42,7 +42,7 @@ const mapsUrl = computed(() =>
         : `https://www.google.com/maps/search/${encodeURIComponent(`${b.value.name} ${b.value.address ?? ''} ${b.value.city} ${b.value.country_name ?? 'Congo'}`)}`,
 );
 const MODULE_PAGES = {
-    logement: ['/logement', 'Logement'],
+    logement: ['/logement', 'Hébergement'],
     voyage: ['/voyage', 'Voyage'],
     voiture: ['/voiture', 'Voiture'],
     divertissement: ['/divertissement', 'Tourisme'],

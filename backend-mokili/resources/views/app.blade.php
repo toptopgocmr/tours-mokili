@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title inertia>{{ config('app.name', 'MOKILI TOUR') }}</title>
-    <meta name="description" content="MOKILI TOUR - Le monde a portee de main. Voyage, Logement, Voiture, Divertissement, Marketplace, Fret.">
+    <meta name="description" content="MOKILI TOUR - Le monde a portee de main. Voyage, Hébergement, Voiture, Tourisme, Marketplace, Fret.">
 
     <!-- Favicon (globe emblem from the MOKILI TOUR logo) - this single
          root view is shared by the public site, /admin and /partner, so

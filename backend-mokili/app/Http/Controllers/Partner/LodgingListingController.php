@@ -37,8 +37,8 @@ class LodgingListingController extends Controller
         $request->user()->lodgingListings()->create($data);
 
         $message = $data['status'] === 'pending'
-            ? 'Logement soumis pour validation par un administrateur.'
-            : 'Logement enregistre comme brouillon.';
+            ? 'Hébergement soumis pour validation par un administrateur.'
+            : 'Hébergement enregistre comme brouillon.';
 
         return redirect()->route('partner.logement.index')->with('success', $message);
     }
@@ -61,7 +61,7 @@ class LodgingListingController extends Controller
 
         $listing->update($data);
 
-        return redirect()->route('partner.logement.index')->with('success', 'Logement mis a jour.');
+        return redirect()->route('partner.logement.index')->with('success', 'Hébergement mis a jour.');
     }
 
     public function destroy(LodgingListing $listing): RedirectResponse
@@ -69,7 +69,7 @@ class LodgingListingController extends Controller
         $this->authorizeOwner($listing);
         $listing->delete();
 
-        return back()->with('success', 'Logement supprime.');
+        return back()->with('success', 'Hébergement supprime.');
     }
 
     protected function authorizeOwner(LodgingListing $listing): void

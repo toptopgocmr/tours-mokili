@@ -81,7 +81,7 @@ const submit = () => {
             <!-- Fil d'ariane -->
             <nav class="text-xs text-[#006ce4]">
                 <Link href="/" class="hover:underline">Accueil</Link> ›
-                <Link href="/logement" class="hover:underline">Hebergements</Link> ›
+                <Link href="/logement" class="hover:underline">Hébergements</Link> ›
                 <Link :href="`/logement?city=${encodeURIComponent(listing.city)}`" class="hover:underline">{{ listing.city }}</Link> ›
                 <span class="text-slate-500">{{ listing.title }}</span>
             </nav>
@@ -167,7 +167,7 @@ const submit = () => {
                             <table class="w-full min-w-[640px] text-sm">
                                 <thead class="bg-[#003b95] text-left text-white">
                                     <tr>
-                                        <th class="px-4 py-3 font-semibold">Type d'hebergement</th>
+                                        <th class="px-4 py-3 font-semibold">Type d'hébergement</th>
                                         <th class="px-4 py-3 font-semibold">Nombre de personnes</th>
                                         <th class="px-4 py-3 font-semibold">Tarif pour {{ nights || 1 }} nuit(s)</th>
                                         <th class="px-4 py-3 font-semibold">Vos options</th>
@@ -176,7 +176,7 @@ const submit = () => {
                                 <tbody>
                                     <tr class="align-top">
                                         <td class="border-r px-4 py-4">
-                                            <p class="font-bold text-[#006ce4] underline">{{ listing.property_type_label || 'Logement entier' }} · {{ listing.bedrooms }} chambre(s)</p>
+                                            <p class="font-bold text-[#006ce4] underline">{{ listing.property_type_label || 'Hébergement entier' }} · {{ listing.bedrooms }} chambre(s)</p>
                                             <p class="mt-1 text-xs text-slate-600">{{ listing.bathrooms }} salle(s) de bain</p>
                                             <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
                                                 <span v-for="a in amenities.slice(0, 4)" :key="a">✓ {{ label(a) }}</span>
@@ -242,7 +242,7 @@ const submit = () => {
                         <label class="mt-3 block text-xs font-semibold text-slate-700">Demandes particulieres (optionnel)</label>
                         <textarea v-model="form.notes" rows="2" placeholder="Heure d'arrivee, lit bebe..." class="mt-1 w-full rounded-md border-slate-300 text-sm"></textarea>
 
-                        <p v-if="bookedOnDates" class="mt-3 rounded-md bg-red-50 p-2 text-xs font-semibold text-red-700">Ce logement est deja reserve sur une partie de ces dates. Choisissez d'autres dates.</p>
+                        <p v-if="bookedOnDates" class="mt-3 rounded-md bg-red-50 p-2 text-xs font-semibold text-red-700">Cet hébergement est deja reserve sur une partie de ces dates. Choisissez d'autres dates.</p>
                         <button type="submit" class="mt-4 w-full rounded-md bg-[#006ce4] py-3 font-semibold text-white hover:bg-[#0057b8] disabled:opacity-50" :disabled="form.processing || !nights || tooMany || bookedOnDates">
                             {{ form.processing ? 'Reservation...' : 'Je reserve' }}
                         </button>

@@ -111,6 +111,8 @@ Route::prefix('voyage')->name('voyage.')->group(function () {
 });
 
 // --- LOGEMENT / VOITURE / DIVERTISSEMENT / MARKETPLACE / FRET (skeletons) ---
+// "Hébergement" : nouveau nom de la rubrique, adresse courte vers /logement.
+Route::get('/hebergement', fn (\Illuminate\Http\Request $r) => redirect('/logement'.($r->getQueryString() ? '?'.$r->getQueryString() : ''), 301));
 Route::prefix('logement')->name('logement.')->group(function () {
     Route::get('/', [LodgingListingController::class, 'index'])->name('index');
     Route::get('/{lodgingListing:slug}', [LodgingListingController::class, 'show'])->name('show');

@@ -47,9 +47,9 @@ const submit = (intent) => {
 </script>
 
 <template>
-    <Head :title="isEdit ? 'Editer le logement' : 'Nouveau logement'" />
+    <Head :title="isEdit ? 'Editer l\'hébergement' : 'Nouvel hébergement'" />
     <div class="mb-5">
-        <h1 class="text-xl font-bold text-slate-900">{{ isEdit ? 'Editer' : 'Nouveau' }} logement</h1>
+        <h1 class="text-xl font-bold text-slate-900">{{ isEdit ? 'Editer l\'hébergement' : 'Nouvel hébergement' }}</h1>
     </div>
 
     <form class="console-panel grid max-w-3xl gap-4 sm:grid-cols-2" @submit.prevent="submit">
@@ -71,7 +71,7 @@ const submit = (intent) => {
             <input v-model="form.title" type="text" class="mt-1 w-full rounded border-slate-300" required />
         </div>
         <div class="sm:col-span-2">
-            <label class="text-sm font-medium text-slate-700">Type de logement</label>
+            <label class="text-sm font-medium text-slate-700">Type d'hébergement</label>
             <div class="mt-1 flex flex-wrap gap-2">
                 <label v-for="(label, key) in $page.props.catalogue.logement.property_types" :key="key" class="flex items-center gap-1.5 rounded border border-slate-300 px-3 py-1.5 text-sm">
                     <input v-model="form.property_type" type="radio" :value="key" /> {{ label }}

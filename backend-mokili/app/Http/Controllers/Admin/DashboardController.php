@@ -71,7 +71,7 @@ class DashboardController extends Controller
 
         $moduleLabels = [
             TravelOffer::class => 'Voyage',
-            LodgingListing::class => 'Logement',
+            LodgingListing::class => 'Hébergement',
             Vehicle::class => 'Voiture',
             Event::class => 'Divertissement',
             Product::class => 'Marketplace',

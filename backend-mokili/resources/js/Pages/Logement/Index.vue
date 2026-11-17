@@ -331,6 +331,6 @@ const activeFilters = computed(() => s.type.length + s.amenities.length + (s.pri
             </div>
         </div>
 
-        <PartnersSection module="logement" title="Hotels a Brazzaville" subtitle="Les grands hotels de la capitale, en complement de nos logements." />
+        <PartnersSection module="logement" title="Hotels a Brazzaville" subtitle="Les grands hotels de la capitale, en complement de nos hébergements." />
     </div>
 </template>

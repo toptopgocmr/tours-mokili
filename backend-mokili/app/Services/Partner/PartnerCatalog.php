@@ -21,7 +21,7 @@ class PartnerCatalog
     /** type => [modele, colonne proprietaire, libelle] */
     public const TYPES = [
         'trajets' => [TravelOffer::class, 'owner_id', 'Trajets et offres vols'],
-        'logements' => [LodgingListing::class, 'owner_id', 'Hotels et logements'],
+        'logements' => [LodgingListing::class, 'owner_id', 'Hotels et hébergements'],
         'vehicules' => [Vehicle::class, 'owner_id', 'Voitures et garage'],
         'evenements' => [Event::class, 'organizer_id', 'Concerts, spectacles et cinema'],
         'parcs' => [AttractionPark::class, 'owner_id', 'Parcs et loisirs'],
