@@ -136,7 +136,7 @@ const breadcrumb = computed(() => {
                 <div v-if="flash.success" class="border-b border-green-100 bg-green-50 px-6 py-2 text-sm text-green-700">{{ flash.success }}</div>
                 <div v-if="flash.error" class="border-b border-red-100 bg-red-50 px-6 py-2 text-sm text-red-700">{{ flash.error }}</div>
 
-                <main class="p-6">
+                <main class="p-4 sm:p-6">
                     <slot />
                 </main>
             </div>

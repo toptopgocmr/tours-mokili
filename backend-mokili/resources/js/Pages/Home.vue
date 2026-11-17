@@ -49,7 +49,7 @@ const features = [
          hero's bottom edge (negative margin-top on the next section) -
          matching the reference mockup's floating white tiles instead
          of a flat navy band. -->
-    <section class="relative h-[360px] overflow-hidden sm:h-[420px] md:h-[480px]">
+    <section class="relative min-h-[360px] overflow-hidden pb-20 sm:min-h-[420px] md:min-h-[480px]">
         <div class="absolute inset-0">
             <img
                 v-if="!heroPhotoFailed"
@@ -65,9 +65,9 @@ const features = [
         <!-- Text sits high, over the open sea/sky (left side of the photo),
              stacked tightly like the mockup so it reads as one compact
              block instead of floating in a big empty middle. -->
-        <div class="relative flex h-full max-w-2xl flex-col justify-start px-6 pt-16 text-left sm:px-10 sm:pt-20 md:px-16 md:pt-24">
+        <div class="relative flex max-w-2xl flex-col justify-start px-5 pt-12 text-left sm:px-10 sm:pt-20 md:px-16 md:pt-24">
             <p class="text-sm font-semibold uppercase tracking-widest text-gold-600">MOKILI TOUR</p>
-            <h1 class="mt-2 text-3xl font-extrabold text-white drop-shadow sm:text-4xl md:text-5xl">
+            <h1 class="mt-2 text-[26px] font-extrabold leading-tight text-white drop-shadow min-[360px]:text-3xl sm:text-4xl md:text-5xl">
                 LE MONDE À <span class="text-gold-600">PORTÉE</span> DE MAIN
             </h1>
             <p class="mt-2 max-w-lg text-base text-white/90 drop-shadow sm:text-lg">
@@ -91,16 +91,16 @@ const features = [
          reference mockup - each card is a white rounded square with a
          big colored icon (that service's own brand color) and a bold
          uppercase label in the same color underneath. -->
-    <section id="services" class="relative z-10 -mt-14 px-6 pb-2 sm:-mt-16">
-        <div class="mx-auto grid max-w-6xl grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 lg:grid-cols-6">
+    <section id="services" class="relative z-10 -mt-14 px-3 pb-2 sm:-mt-16 sm:px-6">
+        <div class="mx-auto grid max-w-6xl grid-cols-3 gap-2 min-[360px]:gap-3 sm:grid-cols-4 sm:gap-4 lg:grid-cols-6">
             <Link
                 v-for="c in categories"
                 :key="c.slug"
                 :href="c.slug === 'divertissement' ? '/tourisme' : `/${c.slug}`"
-                class="flex flex-col items-center justify-center gap-2 rounded-2xl bg-white p-4 text-center shadow-[0_4px_10px_rgba(0,0,0,0.12)] transition hover:-translate-y-1 hover:shadow-[0_8px_18px_rgba(0,0,0,0.16)]"
+                class="flex min-w-0 flex-col items-center justify-center gap-2 rounded-2xl bg-white px-1 py-3 text-center sm:p-4 shadow-[0_4px_10px_rgba(0,0,0,0.12)] transition hover:-translate-y-1 hover:shadow-[0_8px_18px_rgba(0,0,0,0.16)]"
             >
                 <ServiceIcon :slug="c.slug" class="h-11 w-11" :style="{ color: serviceColor(c.slug) }" />
-                <span class="text-[11px] font-bold uppercase tracking-wide" :style="{ color: serviceColor(c.slug) }">{{ c.name }}</span>
+                <span class="max-w-full truncate text-[9.5px] font-bold uppercase min-[360px]:text-[10.5px] sm:text-[11px] sm:tracking-wide" :style="{ color: serviceColor(c.slug) }">{{ c.name }}</span>
             </Link>
         </div>
     </section>

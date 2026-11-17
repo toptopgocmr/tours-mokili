@@ -157,7 +157,12 @@ const mapUrl = (b) =>
                         <p v-if="b.whatsapp"><span class="text-slate-500">WhatsApp </span><a :href="wa(b.whatsapp)" target="_blank" rel="noopener" class="font-semibold text-green-700 hover:underline">{{ b.whatsapp }}</a></p>
                         <p v-if="b.email" class="truncate"><span class="text-slate-500">E-mail </span><a :href="`mailto:${b.email}`" class="text-navy-800 hover:underline">{{ b.email }}</a></p>
                         <p v-if="b.website" class="truncate"><span class="text-slate-500">Site </span><a :href="b.website" target="_blank" rel="noopener" class="text-navy-800 hover:underline">{{ site(b.website) }}</a></p>
-                        <p v-if="!b.phone && !b.email && !b.whatsapp && !b.website" class="text-xs italic text-slate-500">Coordonnees en cours de mise a jour.</p>
+                        <template v-if="!b.phone && !b.email && !b.whatsapp && !b.website">
+                            <p class="text-xs italic text-slate-500">Coordonnees en cours de mise a jour.</p>
+                            <Link :href="`/annuaire/inscription?nom=${encodeURIComponent(b.name)}&domaine=${b.category}&ville=${encodeURIComponent(b.city ?? '')}&pays=${b.country ?? 'CG'}`" class="mt-1 inline-block text-xs font-semibold text-gold-700 hover:underline">
+                                Vous etes cette entreprise ? Ajoutez vos coordonnees →
+                            </Link>
+                        </template>
                     </div>
                 </li>
             </ul>

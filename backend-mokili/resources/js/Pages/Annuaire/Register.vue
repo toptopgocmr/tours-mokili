@@ -13,11 +13,14 @@ defineProps({
     countries: { type: Array, default: () => [] },
 });
 
+// Lien "Vous etes cette entreprise ?" de l'annuaire : champs pre-remplis.
+const qs = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+
 const form = useForm({
-    name: '',
-    category: '',
-    country: 'CG',
-    city: '',
+    name: qs.get('nom') ?? '',
+    category: qs.get('domaine') ?? '',
+    country: qs.get('pays') ?? 'CG',
+    city: qs.get('ville') ?? '',
     district: '',
     address: '',
     description: '',

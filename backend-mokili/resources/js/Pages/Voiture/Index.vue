@@ -266,18 +266,18 @@ const YEARS = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() - i)
 
         <!-- ===== TOUT / MECANIQUE : barre de recherche ===== -->
         <form v-else class="mx-auto max-w-6xl rounded-2xl bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.18)]" @submit.prevent="submit">
-            <div class="flex flex-col gap-2 sm:flex-row">
+            <div class="flex flex-col gap-2 md:flex-row">
                 <template v-if="isServiceTab">
                     <!-- Liste des prestations directement dans le champ (saisie libre possible). -->
-                    <input v-model="s.q" type="text" list="voiture-services" :placeholder="s.type === 'parking' ? 'Prestation ou parking : gardiennage, lavage...' : 'Prestation ou garage : vidange, depannage...'" class="h-12 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" @change="submit" />
+                    <input v-model="s.q" type="text" list="voiture-services" :placeholder="s.type === 'parking' ? 'Prestation ou parking : gardiennage, lavage...' : 'Prestation ou garage : vidange, depannage...'" class="h-12 min-w-0 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" @change="submit" />
                     <datalist id="voiture-services"><option v-for="m in services" :key="m" :value="m" /></datalist>
-                    <select v-model="s.q" class="h-12 rounded-xl border-slate-300 text-sm font-medium text-slate-900 sm:w-60" @change="submit">
+                    <select v-model="s.q" class="h-12 rounded-xl border-slate-300 text-sm font-medium text-slate-900 md:w-60" @change="submit">
                         <option value="">Toutes les prestations</option>
                         <option v-for="m in services" :key="m" :value="m">{{ m }}</option>
                     </select>
                 </template>
-                <input v-else v-model="s.q" type="text" placeholder="Marque, modele (ex. Toyota RAV4)..." class="h-12 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" />
-                <input v-model="s.city" type="text" list="voiture-villes" placeholder="Ville" class="h-12 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500 sm:w-52" />
+                <input v-else v-model="s.q" type="text" placeholder="Marque, modele (ex. Toyota RAV4)..." class="h-12 min-w-0 flex-1 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500" />
+                <input v-model="s.city" type="text" list="voiture-villes" placeholder="Ville" class="h-12 rounded-xl border-slate-300 text-sm focus:border-gold-500 focus:ring-gold-500 md:w-52" />
                 <datalist id="voiture-villes"><option value="Brazzaville" /><option value="Pointe-Noire" /><option value="Dolisie" /><option value="Ouesso" /></datalist>
                 <button type="submit" class="h-12 rounded-xl bg-gold-500 px-10 font-bold text-navy-900 transition hover:bg-gold-400">Rechercher</button>
             </div>

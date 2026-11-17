@@ -152,7 +152,7 @@ const refresh = (p) => router.post(`/admin/decaissements/${p.id}/verifier`, {}, 
         </div>
     </form>
 
-    <div class="mb-4 mt-5 flex gap-2">
+    <div class="mb-4 mt-5 flex flex-wrap gap-2">
         <select v-model="status" class="max-w-full rounded border-slate-300 text-sm" @change="filter">
             <option value="">Tous les statuts</option>
             <option v-for="(label, key) in STATUS_LABELS" :key="key" :value="key">{{ label }}</option>

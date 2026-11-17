@@ -275,7 +275,7 @@ const submit = (intent) => {
             <label for="active" class="text-sm text-slate-700">Actif (visible une fois publie)</label>
         </div>
         <p class="text-sm text-slate-500 sm:col-span-2">Statut actuel : <span class="font-semibold text-slate-700">{{ statusLabel }}</span></p>
-        <div class="sm:col-span-2 flex gap-3">
+        <div class="sm:col-span-2 flex flex-wrap gap-3">
             <button type="button" class="btn-console-secondary flex-1" :disabled="form.processing" @click="submit('draft')">Enregistrer comme brouillon</button>
             <button type="button" class="btn-console-primary flex-1" :disabled="form.processing" @click="submit('submit')">Soumettre pour validation</button>
         </div>

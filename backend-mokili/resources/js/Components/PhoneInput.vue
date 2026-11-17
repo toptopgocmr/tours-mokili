@@ -64,7 +64,7 @@ watch(localNumber, emitValue);
             type="tel"
             inputmode="numeric"
             placeholder="Numero de telephone"
-            class="flex-1 border-0 py-2 text-sm focus:ring-0"
+            class="min-w-0 flex-1 border-0 py-2 text-sm focus:ring-0"
         />
     </div>
 </template>

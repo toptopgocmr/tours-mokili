@@ -72,7 +72,7 @@ const remove = (park) => {
         </table>
     </div>
 
-    <div v-if="parks.last_page > 1" class="mt-4 flex gap-2">
+    <div v-if="parks.last_page > 1" class="mt-4 flex flex-wrap gap-2">
         <Link
             v-for="l in parks.links"
             :key="l.label"
