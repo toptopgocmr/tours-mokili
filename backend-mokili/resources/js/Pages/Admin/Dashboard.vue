@@ -60,7 +60,7 @@ const badgeClass = (status) => ({
     </div>
 
     <!-- Dynamic decision KPIs: revenue trend, bookings by module, top partners -->
-    <div class="mt-6 grid gap-6 lg:grid-cols-3">
+    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div class="console-panel">
             <h2 class="font-semibold text-slate-900">Revenu ce mois-ci</h2>
             <p class="mt-2 text-2xl font-bold text-slate-900">{{ money(kpis.revenueThisMonth) }}</p>
@@ -107,9 +107,9 @@ const badgeClass = (status) => ({
         </div>
     </div>
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-3">
+    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div class="console-panel lg:col-span-2">
-            <div class="mb-4 flex items-center justify-between">
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <h2 class="font-semibold text-slate-900">Dernieres reservations</h2>
                 <Link href="/admin/reservations" class="text-sm font-semibold text-[#0972D3] hover:underline">Voir tout &rarr;</Link>
             </div>

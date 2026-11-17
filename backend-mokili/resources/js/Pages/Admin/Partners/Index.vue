@@ -32,12 +32,12 @@ const remove = (b) => {
 <template>
     <Head title="Societes partenaires" />
 
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-slate-900">Societes partenaires</h1>
             <p class="text-sm text-slate-500">Chaque societe apparait dans la rubrique de son activite : hotels → Hébergement, compagnies / bus / canots → Voyage, taxis → Voiture, restaurants / bars / night clubs / visites → Tourisme, garages → Voiture, supermarches / e-commerce → Marketplace.</p>
         </div>
-        <div class="flex shrink-0 items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             <Link
                 :href="pending ? '/admin/partenaires' : '/admin/partenaires?pending=1'"
                 class="rounded border px-3 py-2 text-sm font-semibold"
@@ -50,9 +50,9 @@ const remove = (b) => {
         </div>
     </div>
 
-    <div class="mb-4 flex gap-2">
-        <input v-model="search" type="text" placeholder="Rechercher..." class="w-64 rounded border-slate-300 text-sm" @keyup.enter="filter" />
-        <select v-model="category" class="rounded border-slate-300 text-sm" @change="filter">
+    <div class="mb-4 flex flex-wrap gap-2">
+        <input v-model="search" type="text" placeholder="Rechercher..." class="w-full sm:w-64 rounded border-slate-300 text-sm" @keyup.enter="filter" />
+        <select v-model="category" class="max-w-full rounded border-slate-300 text-sm" @change="filter">
             <option value="">Toutes les categories</option>
             <option v-for="(label, key) in categories" :key="key" :value="key">{{ label }}</option>
         </select>

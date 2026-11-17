@@ -30,7 +30,7 @@ const DAYS = ['', 'Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
         <Link href="/admin/vols/tarifs/creer" class="btn-console-primary">+ Nouveau tarif</Link>
     </div>
 
-    <div class="mb-5 grid gap-4 lg:grid-cols-2">
+    <div class="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div class="console-panel text-sm">
             <h2 class="mb-2 font-semibold">Fournisseurs aeriens</h2>
             <table class="console-table">
@@ -58,7 +58,7 @@ const DAYS = ['', 'Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
         </div>
     </div>
 
-    <input v-model="q" type="text" placeholder="Code aeroport (BZV) ou compagnie..." class="mb-4 w-72 rounded border-slate-300 text-sm" @keyup.enter="search" />
+    <input v-model="q" type="text" placeholder="Code aeroport (BZV) ou compagnie..." class="mb-4 w-full sm:w-72 rounded border-slate-300 text-sm" @keyup.enter="search" />
 
     <div class="console-table-wrap">
         <table class="console-table">

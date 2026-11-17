@@ -25,7 +25,7 @@ const statusLabel = (status) => ({
 <template>
     <Head title="Mes hébergements" />
 
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-xl font-bold text-slate-900">Mes hébergements</h1>
         <Link href="/partner/logement/creer" class="btn-console-primary">+ Ajouter un logement</Link>
     </div>

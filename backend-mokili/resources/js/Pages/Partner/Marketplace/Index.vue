@@ -23,7 +23,7 @@ const statusLabel = (status) => ({
 
 <template>
     <Head title="Mes produits" />
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-xl font-bold text-slate-900">Mes produits</h1>
         <Link href="/partner/marketplace/creer" class="btn-console-primary">+ Ajouter un produit</Link>
     </div>

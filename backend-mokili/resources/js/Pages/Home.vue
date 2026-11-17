@@ -78,9 +78,9 @@ const features = [
                 <input
                     type="text"
                     placeholder="Rechercher une destination, un service..."
-                    class="flex-1 border-0 px-5 py-3 text-sm focus:ring-0"
+                    class="min-w-0 flex-1 border-0 px-4 py-3 text-sm focus:ring-0 sm:px-5"
                 />
-                <button type="submit" class="btn-gold rounded-none px-8">Rechercher</button>
+                <button type="submit" class="btn-gold shrink-0 rounded-none !px-4 sm:!px-8">Rechercher</button>
             </form>
         </div>
     </section>

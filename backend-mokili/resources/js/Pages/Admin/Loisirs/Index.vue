@@ -24,7 +24,7 @@ const remove = (park) => {
 <template>
     <Head title="Loisirs & Parcs" />
 
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-slate-900">Loisirs &amp; Parcs d'attractions</h1>
             <p class="text-sm text-slate-500">Parcs, zoos, parcs aquatiques et sites naturels du Congo affiches sur le site et l'app.</p>
@@ -32,7 +32,7 @@ const remove = (park) => {
         <Link href="/admin/loisirs/creer" class="btn-console-primary">+ Nouveau parc</Link>
     </div>
 
-    <input v-model="search" type="text" placeholder="Rechercher un parc..." class="mb-4 w-64 rounded border-slate-300 text-sm" @keyup.enter="filter" />
+    <input v-model="search" type="text" placeholder="Rechercher un parc..." class="mb-4 w-full sm:w-64 rounded border-slate-300 text-sm" @keyup.enter="filter" />
 
     <div class="console-table-wrap">
         <table class="console-table">

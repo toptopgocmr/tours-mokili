@@ -37,8 +37,8 @@ const quick = (status, attention = '') => { f.status = status; f.attention = att
     </div>
 
     <div class="mb-4 flex flex-wrap gap-2">
-        <input v-model="f.q" type="text" placeholder="Reference, PNR, nom, telephone..." class="w-72 rounded border-slate-300 text-sm" @keyup.enter="apply" />
-        <select v-model="f.status" class="rounded border-slate-300 text-sm" @change="apply">
+        <input v-model="f.q" type="text" placeholder="Reference, PNR, nom, telephone..." class="w-full sm:w-72 rounded border-slate-300 text-sm" @keyup.enter="apply" />
+        <select v-model="f.status" class="max-w-full rounded border-slate-300 text-sm" @change="apply">
             <option value="">Tous les statuts</option>
             <option v-for="(label, key) in statuses" :key="key" :value="key">{{ key }} - {{ label }}</option>
         </select>

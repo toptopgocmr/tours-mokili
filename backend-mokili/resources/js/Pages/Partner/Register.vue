@@ -55,10 +55,10 @@ const PROFILES = [
         </div>
     </PhotoHero>
 
-    <div class="mx-auto grid max-w-5xl gap-8 px-4 py-10 lg:grid-cols-[1fr_420px]">
+    <div class="mx-auto grid grid-cols-1 max-w-5xl gap-8 px-4 py-10 lg:grid-cols-[1fr_420px]">
         <div>
             <h2 class="text-xl font-extrabold text-navy-900">Pour qui ?</h2>
-            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <button
                     v-for="p in PROFILES"
                     :key="p[0]"
@@ -101,7 +101,7 @@ const PROFILES = [
             <label class="block text-sm font-semibold text-navy-900">Nom du responsable
                 <input v-model="form.name" type="text" class="mt-1 w-full rounded-lg border-gray-300" required />
             </label>
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label class="block text-sm font-semibold text-navy-900">Telephone
                     <input v-model="form.phone" type="tel" placeholder="+242 06..." class="mt-1 w-full rounded-lg border-gray-300" required />
                     <span v-if="form.errors.phone" class="text-xs text-red-600">{{ form.errors.phone }}</span>
@@ -111,7 +111,7 @@ const PROFILES = [
                     <span v-if="form.errors.email" class="text-xs text-red-600">{{ form.errors.email }}</span>
                 </label>
             </div>
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <label class="block text-sm font-semibold text-navy-900">Mot de passe
                     <input v-model="form.password" type="password" minlength="8" class="mt-1 w-full rounded-lg border-gray-300" required />
                 </label>

@@ -71,13 +71,13 @@ const showReconcile = computed(() => ['BOOKING_PENDING', 'TICKETING_PENDING', 'F
         <button class="font-semibold underline" @click="post('alerte-levee')">Marquer comme traite</button>
     </div>
 
-    <div class="mb-4 grid gap-3 sm:grid-cols-3">
+    <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div class="console-panel"><p class="text-xs text-slate-500">Paiement</p><p class="font-bold" :class="STATE_STYLES[d.payment_state]">{{ STATE_LABELS.payment[d.payment_state] }}</p></div>
         <div class="console-panel"><p class="text-xs text-slate-500">Reservation</p><p class="font-bold" :class="STATE_STYLES[d.booking_state]">{{ STATE_LABELS.booking[d.booking_state] }}</p></div>
         <div class="console-panel"><p class="text-xs text-slate-500">Billet</p><p class="font-bold" :class="STATE_STYLES[d.ticket_state]">{{ STATE_LABELS.ticket[d.ticket_state] }}</p></div>
     </div>
 
-    <div class="grid gap-4 xl:grid-cols-[1fr_380px]">
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_380px]">
         <div class="space-y-4">
             <div class="console-panel">
                 <h2 class="mb-2 font-semibold">Itineraire</h2>
@@ -114,8 +114,8 @@ const showReconcile = computed(() => ['BOOKING_PENDING', 'TICKETING_PENDING', 'F
                     <p v-if="a.attachments?.length" class="mt-1 space-x-3 text-xs">
                         <a v-for="(f, i) in a.attachments" :key="i" :href="`/admin/vols/apres-vente/${a.id}/piece/${i}`" class="text-[#0972D3] hover:underline">Piece {{ i + 1 }}</a>
                     </p>
-                    <div class="mt-3 grid gap-2 sm:grid-cols-3">
-                        <select v-model="afterSaleForms[a.id].status" class="rounded border-slate-300 text-sm">
+                    <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        <select v-model="afterSaleForms[a.id].status" class="max-w-full rounded border-slate-300 text-sm">
                             <option v-for="(label, key) in afterSaleStatuses" :key="key" :value="key">{{ label }}</option>
                         </select>
                         <input v-model="afterSaleForms[a.id].supplier_fee" type="number" min="0" placeholder="Frais compagnie" class="rounded border-slate-300 text-sm" />

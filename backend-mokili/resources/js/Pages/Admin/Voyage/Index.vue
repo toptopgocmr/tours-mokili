@@ -23,12 +23,12 @@ const remove = (offer) => {
 <template>
     <Head title="Offres Voyage" />
 
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-xl font-bold text-slate-900">Offres Voyage</h1>
         <Link href="/admin/voyage/creer" class="btn-console-primary">+ Nouvelle offre</Link>
     </div>
 
-    <input v-model="search" type="text" placeholder="Rechercher..." class="mb-4 w-64 rounded border-slate-300 text-sm" @keyup.enter="filter" />
+    <input v-model="search" type="text" placeholder="Rechercher..." class="mb-4 w-full sm:w-64 rounded border-slate-300 text-sm" @keyup.enter="filter" />
 
     <div class="console-table-wrap">
         <table class="console-table">

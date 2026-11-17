@@ -47,7 +47,7 @@ const copy = async (text) => {
         </p>
     </div>
 
-    <div class="grid gap-5 lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div v-for="g in gateways" :key="g.key" class="console-panel">
             <div class="flex items-start justify-between">
                 <div>

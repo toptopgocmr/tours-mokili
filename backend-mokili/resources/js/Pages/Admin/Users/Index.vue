@@ -27,7 +27,7 @@ const roleBadgeClass = (r) => ({
 <template>
     <Head title="Agents & Partenaires" />
 
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-slate-900">Agents & Partenaires</h1>
             <p class="text-sm text-slate-500">Gerer les comptes clients, agents, partenaires et administrateurs.</p>
@@ -35,8 +35,8 @@ const roleBadgeClass = (r) => ({
         <Link href="/admin/utilisateurs/creer" class="btn-console-primary">+ Nouveau compte</Link>
     </div>
 
-    <div class="mb-4 flex gap-2">
-        <select v-model="role" class="rounded border-slate-300 text-sm" @change="filter">
+    <div class="mb-4 flex flex-wrap gap-2">
+        <select v-model="role" class="max-w-full rounded border-slate-300 text-sm" @change="filter">
             <option value="">Tous les roles</option>
             <option value="client">Client</option>
             <option value="partner">Partenaire</option>

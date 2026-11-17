@@ -114,7 +114,7 @@ const toggleAmenity = (k) => { const i = form.amenities.indexOf(k); i >= 0 ? for
         <p class="text-sm text-slate-500">{{ isFlight ? 'Offre affichee dans « Offres vols du moment » ; les clients reservent via la billetterie.' : 'Depart visible dans la recherche Trains, bus et canots et dans le Programme des departs.' }}</p>
     </div>
 
-    <form class="grid max-w-5xl gap-5 lg:grid-cols-[1fr_320px]" @submit.prevent="submit">
+    <form class="grid grid-cols-1 max-w-5xl gap-5 lg:grid-cols-[1fr_320px]" @submit.prevent="submit">
         <div class="space-y-5">
             <!-- Moyen -->
             <section v-if="!isFlight" class="console-panel">
@@ -134,7 +134,7 @@ const toggleAmenity = (k) => { const i = form.amenities.indexOf(k); i >= 0 ? for
             </section>
 
             <!-- Trajet -->
-            <section class="console-panel grid gap-4 sm:grid-cols-2">
+            <section class="console-panel grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <h2 class="font-semibold text-slate-900 sm:col-span-2">{{ isFlight ? 'Destination' : 'Trajet' }}</h2>
                 <label class="text-sm font-medium text-slate-700">Ville de depart
                     <input v-model="form.origin_city" type="text" :placeholder="isFlight ? 'Brazzaville' : ph[0]" class="mt-1 w-full rounded border-slate-300" required />
@@ -170,7 +170,7 @@ const toggleAmenity = (k) => { const i = form.amenities.indexOf(k); i >= 0 ? for
             </section>
 
             <!-- Horaires -->
-            <section class="console-panel grid gap-4 sm:grid-cols-2">
+            <section class="console-panel grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <h2 class="font-semibold text-slate-900 sm:col-span-2">{{ isFlight ? 'Dates (optionnel)' : 'Horaires' }}</h2>
                 <label class="text-sm font-medium text-slate-700">{{ isFlight ? 'Date de depart' : 'Depart' }}
                     <input v-model="form.departure_at" type="datetime-local" class="mt-1 w-full rounded border-slate-300" :required="!isFlight" />

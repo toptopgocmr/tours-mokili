@@ -13,7 +13,7 @@ const money = (v, c) => (v == null ? 'Sur place' : `${Math.round(v).toLocaleStri
 
 <template>
     <Head title="Mes parcs" />
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-slate-900">Parcs d'attractions & loisirs</h1>
             <p class="text-sm text-slate-500">Parcs aquatiques, zoos, aires de jeux, iles de loisirs... billets vendus dans Tourisme &gt; Parcs.</p>

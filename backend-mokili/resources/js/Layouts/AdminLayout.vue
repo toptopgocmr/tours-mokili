@@ -1,6 +1,6 @@
 <script setup>
-import { Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import LogoMark from '@/Components/LogoMark.vue';
 import {
     HomeIcon,
@@ -18,6 +18,8 @@ import {
     BuildingStorefrontIcon,
     TicketIcon,
     TableCellsIcon,
+    Bars3Icon,
+    XMarkIcon,
 } from '@heroicons/vue/24/outline';
 import SplashScreen from '@/Components/SplashScreen.vue';
 
@@ -25,6 +27,10 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const flash = computed(() => page.props.flash ?? {});
 const currentUrl = computed(() => page.url);
+
+// Menu telephone : le menu lateral s'ouvre par-dessus la page.
+const menuOpen = ref(false);
+router.on('navigate', () => (menuOpen.value = false));
 
 const links = [
     { href: '/admin', label: 'Tableau de bord', icon: HomeIcon },
@@ -59,6 +65,9 @@ const breadcrumb = computed(() => {
         <!-- Top bar -->
         <header class="flex h-14 items-center justify-between bg-[#0F1B2A] px-4 text-white">
             <div class="flex items-center gap-3">
+                <button type="button" class="-ml-1 rounded p-1.5 hover:bg-white/10 md:hidden" aria-label="Menu" @click="menuOpen = true">
+                    <Bars3Icon class="h-6 w-6" />
+                </button>
                 <Link href="/admin" class="flex items-center gap-2 font-bold">
                     <LogoMark variant="light" size="h-7" />
                     <span class="hidden sm:inline">MOKILI TOUR <span class="font-normal text-white/50">| Back-office</span></span>
@@ -70,8 +79,8 @@ const breadcrumb = computed(() => {
                 <span>Rechercher (reservations, offres, utilisateurs...)</span>
             </div>
 
-            <div class="flex items-center gap-4 text-sm">
-                <BellIcon class="h-5 w-5 text-white/70" />
+            <div class="flex items-center gap-3 text-sm sm:gap-4">
+                <BellIcon class="hidden h-5 w-5 text-white/70 sm:block" />
                 <div class="hidden text-right sm:block">
                     <p class="font-medium leading-tight">{{ user?.name }}</p>
                     <p class="text-xs capitalize leading-tight text-white/50">{{ user?.role }}</p>
@@ -83,10 +92,34 @@ const breadcrumb = computed(() => {
                     class="flex items-center gap-1.5 rounded border border-white/20 px-2.5 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
                 >
                     <ArrowRightOnRectangleIcon class="h-4 w-4" />
-                    Deconnexion
+                    <span class="hidden sm:inline">Deconnexion</span>
                 </Link>
             </div>
         </header>
+
+        <!-- Menu telephone -->
+        <div v-if="menuOpen" class="fixed inset-0 z-50 md:hidden">
+            <div class="absolute inset-0 bg-black/40" @click="menuOpen = false" />
+            <aside class="absolute inset-y-0 left-0 flex w-72 max-w-[85%] flex-col bg-white shadow-xl">
+                <div class="flex h-14 items-center justify-between bg-[#0F1B2A] px-4 text-white">
+                    <span class="font-bold">Menu</span>
+                    <button type="button" class="rounded p-1.5 hover:bg-white/10" aria-label="Fermer" @click="menuOpen = false"><XMarkIcon class="h-6 w-6" /></button>
+                </div>
+                <p class="border-b px-4 py-3 text-sm"><b>{{ user?.name }}</b> <span class="capitalize text-slate-500">· {{ user?.role }}</span></p>
+                <nav class="flex-1 space-y-0.5 overflow-y-auto p-3">
+                    <Link
+                        v-for="link in links"
+                        :key="link.href"
+                        :href="link.href"
+                        class="console-nav-link"
+                        :class="{ 'console-nav-link-active': isActive(link.href) }"
+                    >
+                        <component :is="link.icon" class="h-5 w-5" />
+                        {{ link.label }}
+                    </Link>
+                </nav>
+            </aside>
+        </div>
 
         <div class="flex">
             <!-- Sidebar -->
@@ -107,14 +140,14 @@ const breadcrumb = computed(() => {
 
             <!-- Content -->
             <div class="min-w-0 flex-1">
-                <div class="border-b border-slate-200 bg-white px-6 py-2 text-xs text-slate-500">
+                <div class="border-b border-slate-200 bg-white px-4 py-2 text-xs text-slate-500 sm:px-6">
                     Back-office <span class="mx-1.5 text-slate-300">/</span> <span class="font-medium text-slate-700">{{ breadcrumb }}</span>
                 </div>
 
                 <div v-if="flash.success" class="border-b border-green-100 bg-green-50 px-6 py-2 text-sm text-green-700">{{ flash.success }}</div>
                 <div v-if="flash.error" class="border-b border-red-100 bg-red-50 px-6 py-2 text-sm text-red-700">{{ flash.error }}</div>
 
-                <main class="p-6">
+                <main class="p-4 sm:p-6">
                     <slot />
                 </main>
             </div>

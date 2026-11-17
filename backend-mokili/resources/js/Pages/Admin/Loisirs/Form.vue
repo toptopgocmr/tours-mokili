@@ -67,12 +67,12 @@ const submit = () => {
 <template>
     <Head :title="isEdit ? 'Editer un parc' : 'Nouveau parc'" />
 
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-xl font-bold text-slate-900">{{ isEdit ? 'Editer' : 'Nouveau' }} parc / site de loisirs</h1>
         <Link href="/admin/loisirs" class="text-sm text-slate-500 hover:underline">&larr; Retour a la liste</Link>
     </div>
 
-    <form class="console-panel grid max-w-3xl gap-4 sm:grid-cols-2" @submit.prevent="submit">
+    <form class="console-panel grid grid-cols-1 max-w-3xl gap-4 sm:grid-cols-2" @submit.prevent="submit">
         <div class="sm:col-span-2">
             <label class="text-sm font-medium text-slate-700">Photo</label>
             <div class="mt-1 flex items-center gap-4">

@@ -208,9 +208,9 @@ const cardSubtitle = (offer) => {
 
     <template v-else>
     <section class="relative h-[260px] overflow-hidden sm:h-[300px]">
-        <img src="/images/hero.jpg" alt="Voyage" class="h-full w-full object-cover object-[center_20%]" />
+        <img src="/images/hero.jpg" alt="Voyage" class="absolute inset-0 h-full w-full object-cover object-[center_20%]" />
         <div class="absolute inset-0 bg-gradient-to-b from-navy-900/70 via-navy-900/30 to-navy-900/10" />
-        <div class="relative flex h-full max-w-3xl flex-col justify-start px-6 pt-14 text-left sm:px-10 sm:pt-16">
+        <div class="relative flex h-full max-w-3xl flex-col justify-start px-6 pt-10 text-left sm:px-10 sm:pt-16">
             <p class="text-sm font-semibold uppercase tracking-widest text-gold-600">Voyage</p>
             <h1 class="mt-2 text-2xl font-extrabold text-white drop-shadow sm:text-3xl">Ou voulez-vous partir ?</h1>
             <p class="mt-1 max-w-lg text-sm text-white/90 drop-shadow">
@@ -219,7 +219,7 @@ const cardSubtitle = (offer) => {
         </div>
     </section>
 
-    <div class="relative z-10 -mt-10 px-6 sm:-mt-12">
+    <div class="relative z-10 -mt-10 px-4 sm:-mt-12 sm:px-6">
         <div class="mx-auto max-w-4xl rounded-2xl bg-white p-4 shadow-[0_4px_16px_rgba(0,0,0,0.15)] sm:p-5">
             <div class="flex flex-wrap gap-2 border-b border-gray-100 pb-3">
                 <button

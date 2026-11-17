@@ -23,7 +23,7 @@ const statusLabel = (status) => ({
 
 <template>
     <Head title="Mes vehicules" />
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-xl font-bold text-slate-900">Mes vehicules</h1>
         <Link href="/partner/voiture/creer" class="btn-console-primary">+ Ajouter un vehicule</Link>
     </div>

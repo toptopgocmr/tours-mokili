@@ -39,7 +39,7 @@ const input = 'mt-1 w-full rounded border-slate-300 text-sm';
     <Link href="/admin/vols/tarifs" class="text-sm text-slate-500 hover:underline">&larr; Tarifs vols</Link>
     <h1 class="mb-4 mt-1 text-xl font-bold text-slate-900">{{ isEdit ? 'Editer le' : 'Nouveau' }} tarif negocie</h1>
 
-    <form class="console-panel grid max-w-4xl gap-4 sm:grid-cols-4" @submit.prevent="submit">
+    <form class="console-panel grid grid-cols-1 max-w-4xl gap-4 sm:grid-cols-4" @submit.prevent="submit">
         <div class="sm:col-span-2">
             <label class="text-sm font-medium text-slate-700">Fournisseur / consolidateur</label>
             <select v-model="form.flight_supplier_id" :class="input"><option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option></select>

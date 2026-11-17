@@ -52,7 +52,7 @@ const submit = (intent) => {
         <h1 class="text-xl font-bold text-slate-900">{{ isEdit ? 'Editer l\'hébergement' : 'Nouvel hébergement' }}</h1>
     </div>
 
-    <form class="console-panel grid max-w-3xl gap-4 sm:grid-cols-2" @submit.prevent="submit">
+    <form class="console-panel grid grid-cols-1 max-w-3xl gap-4 sm:grid-cols-2" @submit.prevent="submit">
         <div class="sm:col-span-2">
             <label class="text-sm font-medium text-slate-700">Photo</label>
             <div class="mt-1 flex items-center gap-4">

@@ -75,7 +75,7 @@ const refresh = (p) => router.post(`/admin/decaissements/${p.id}/verifier`, {}, 
 <template>
     <Head title="Decaissements" />
 
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-slate-900">Decaissements Mobile Money</h1>
             <p class="text-sm text-slate-500">Remboursements clients, reversements partenaires et paiements fournisseurs via Peex, pawaPay, MaishaPay ou Digitwace.</p>
@@ -99,7 +99,7 @@ const refresh = (p) => router.post(`/admin/decaissements/${p.id}/verifier`, {}, 
     </div>
 
     <!-- Formulaire -->
-    <form v-if="showForm && isAdmin" class="console-panel mt-5 grid max-w-3xl gap-4 sm:grid-cols-2" @submit.prevent="submit">
+    <form v-if="showForm && isAdmin" class="console-panel mt-5 grid grid-cols-1 max-w-3xl gap-4 sm:grid-cols-2" @submit.prevent="submit">
         <div v-if="prefill" class="rounded bg-blue-50 p-3 text-sm text-blue-800 sm:col-span-2">
             Remboursement du paiement #{{ prefill.payment_id }} : le paiement sera marque "rembourse" une fois le decaissement accepte.
         </div>
@@ -153,11 +153,11 @@ const refresh = (p) => router.post(`/admin/decaissements/${p.id}/verifier`, {}, 
     </form>
 
     <div class="mb-4 mt-5 flex gap-2">
-        <select v-model="status" class="rounded border-slate-300 text-sm" @change="filter">
+        <select v-model="status" class="max-w-full rounded border-slate-300 text-sm" @change="filter">
             <option value="">Tous les statuts</option>
             <option v-for="(label, key) in STATUS_LABELS" :key="key" :value="key">{{ label }}</option>
         </select>
-        <select v-model="gatewayFilter" class="rounded border-slate-300 text-sm" @change="filter">
+        <select v-model="gatewayFilter" class="max-w-full rounded border-slate-300 text-sm" @change="filter">
             <option value="">Toutes les passerelles</option>
             <option v-for="g in methods.gateways" :key="g.key" :value="g.key">{{ g.label }}</option>
         </select>

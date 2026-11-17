@@ -151,7 +151,7 @@ const when = (iso) => {
     </div>
 
     <!-- Actions rapides -->
-    <div class="mt-5 grid gap-3 md:grid-cols-3">
+    <div class="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
         <Link v-for="q in quick" :key="q.href + q.label" :href="q.href" class="console-panel group flex items-center gap-3 transition hover:border-[#0972D3] hover:shadow-md">
             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#0F1B2A] text-white"><PlusIcon class="h-5 w-5" /></span>
             <span>
@@ -164,7 +164,7 @@ const when = (iso) => {
     <div class="mt-5 grid gap-5" :class="isTransport && 'lg:grid-cols-[1fr_340px]'">
         <!-- Prochains departs (transporteurs) -->
         <div v-if="isTransport" class="console-panel">
-            <div class="mb-3 flex items-center justify-between">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <h2 class="font-semibold text-slate-900">Prochains departs</h2>
                 <Link href="/partner/transport" class="text-sm font-semibold text-[#0972D3] hover:underline">Tous les trajets →</Link>
             </div>
@@ -202,7 +202,7 @@ const when = (iso) => {
 
     <!-- Modules -->
     <h2 class="mb-3 mt-6 font-semibold text-slate-900">Mes rubriques</h2>
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link v-for="m in sortedModules" :key="m.key" :href="m.href" class="console-panel group transition hover:border-[#0972D3] hover:shadow-md">
             <div :class="['inline-flex h-10 w-10 items-center justify-center rounded-lg', m.bg]">
                 <component :is="m.icon" :class="['h-5 w-5', m.color]" />

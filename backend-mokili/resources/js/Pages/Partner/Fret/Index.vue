@@ -25,7 +25,7 @@ const statusLabel = (status) => ({
 
 <template>
     <Head title="Mes offres de fret" />
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-xl font-bold text-slate-900">Mes offres de fret</h1>
         <Link href="/partner/fret/creer" class="btn-console-primary">+ Ajouter une offre</Link>
     </div>

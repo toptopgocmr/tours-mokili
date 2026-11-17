@@ -63,7 +63,7 @@ const ICONS = { trajets: '🚌', logements: '🏨', vehicules: '🚗', evenement
         </div>
     </div>
 
-    <div v-else class="grid gap-5 lg:grid-cols-[1fr_320px]">
+    <div v-else class="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]">
         <section class="console-panel">
             <!-- Rubriques -->
             <div class="mb-3 flex flex-wrap gap-1.5">

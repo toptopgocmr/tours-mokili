@@ -37,7 +37,7 @@ const when = (iso) => (iso ? new Date(`${iso}:00`).toLocaleString('fr-FR', { day
         <p class="text-sm text-slate-500">Billets, nuitees, locations, prestations et entrees vendus sur vos offres.</p>
     </div>
 
-    <div class="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div class="console-stat"><p class="text-xs uppercase text-slate-500">Ventes du mois</p><p class="mt-1 text-2xl font-bold">{{ money(stats.month_revenue) }}</p></div>
         <div class="console-stat"><p class="text-xs uppercase text-slate-500">Places vendues (mois)</p><p class="mt-1 text-2xl font-bold">{{ stats.month_seats ?? 0 }}</p></div>
         <div class="console-stat"><p class="text-xs uppercase text-slate-500">En attente de paiement</p><p class="mt-1 text-2xl font-bold">{{ stats.awaiting ?? 0 }}</p></div>
