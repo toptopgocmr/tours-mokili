@@ -14,9 +14,11 @@ const props = defineProps({
     filters: { type: Object, default: () => ({}) },
     categories: { type: Object, default: () => ({}) },
     modules: { type: Object, default: () => ({}) },
+    pendingCount: { type: Number, default: 0 },
 });
 
 const MODULE_LABELS = { logement: 'Logement', voyage: 'Voyage', voiture: 'Voiture', divertissement: 'Tourisme', marketplace: 'Marketplace' };
+const pending = !!props.filters.pending && props.filters.pending !== '0';
 
 const search = ref(props.filters.search ?? '');
 const category = ref(props.filters.category ?? '');
@@ -35,7 +37,17 @@ const remove = (b) => {
             <h1 class="text-xl font-bold text-slate-900">Societes partenaires</h1>
             <p class="text-sm text-slate-500">Chaque societe apparait dans la rubrique de son activite : hotels → Logement, compagnies / bus / canots → Voyage, taxis → Voiture, restaurants / bars / night clubs / visites → Tourisme, garages → Voiture, supermarches / e-commerce → Marketplace.</p>
         </div>
-        <Link href="/admin/partenaires/creer" class="btn-console-primary">+ Nouvelle societe</Link>
+        <div class="flex shrink-0 items-center gap-2">
+            <Link
+                :href="pending ? '/admin/partenaires' : '/admin/partenaires?pending=1'"
+                class="rounded border px-3 py-2 text-sm font-semibold"
+                :class="pending ? 'border-slate-800 bg-slate-800 text-white' : 'border-amber-400 bg-amber-50 text-amber-800'"
+            >
+                {{ pending ? 'Toutes les societes' : 'Inscriptions annuaire a valider' }}
+                <span v-if="!pending" class="ml-1 rounded-full bg-amber-500 px-2 text-xs text-white">{{ pendingCount }}</span>
+            </Link>
+            <Link href="/admin/partenaires/creer" class="btn-console-primary">+ Nouvelle societe</Link>
+        </div>
     </div>
 
     <div class="mb-4 flex gap-2">
@@ -49,7 +61,7 @@ const remove = (b) => {
     <div class="console-table-wrap">
         <table class="console-table">
             <thead>
-                <tr><th></th><th>Nom</th><th>Categorie</th><th>Rubrique</th><th>Quartier</th><th>Statut</th><th></th></tr>
+                <tr><th></th><th>Nom</th><th>Categorie</th><th>Rubrique</th><th>Ville / pays</th><th>Statut</th><th></th></tr>
             </thead>
             <tbody>
                 <tr v-for="b in businesses.data" :key="b.id">
@@ -60,9 +72,9 @@ const remove = (b) => {
                         <p v-else-if="!b.image_url" class="text-xs text-amber-600">Pas encore de photo</p>
                     </td>
                     <td>{{ categories[b.category] ?? b.category }}</td>
-                    <td class="font-medium">{{ MODULE_LABELS[modules[b.category]] ?? '-' }}</td>
-                    <td>{{ b.district ?? b.city }}</td>
-                    <td><span :class="b.is_active ? 'console-badge console-badge-success' : 'console-badge console-badge-neutral'">{{ b.is_active ? 'Visible' : 'Masquee' }}</span></td>
+                    <td class="font-medium">{{ MODULE_LABELS[modules[b.category]] ?? 'Annuaire' }}</td>
+                    <td>{{ b.district ?? b.city }}<span v-if="b.country && b.country !== 'CG'" class="text-xs text-slate-500"> · {{ b.country_name }}</span></td>
+                    <td><span :class="b.is_active ? 'console-badge console-badge-success' : 'console-badge console-badge-neutral'">{{ b.is_active ? 'Visible' : (b.submitted_at ? 'A valider' : 'Masquee') }}</span></td>
                     <td class="space-x-3 whitespace-nowrap text-right">
                         <a :href="`/partenaires/${b.slug}`" target="_blank" class="font-semibold text-slate-500 hover:underline">Voir</a>
                         <Link :href="`/admin/partenaires/${b.id}/editer`" class="font-semibold text-[#0972D3] hover:underline">Editer</Link>

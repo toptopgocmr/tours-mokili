@@ -24,6 +24,7 @@ const navLinks = [
     { href: '/#services', label: 'Services' },
     { href: '/voyage', label: 'Offres' },
     { href: '/#apropos', label: 'À propos' },
+    { href: '/annuaire', label: 'Annuaire' },
     { href: '/#contact', label: 'Contact' },
 ];
 </script>

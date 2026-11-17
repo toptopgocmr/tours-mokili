@@ -158,6 +158,12 @@ Route::prefix('loisirs')->name('loisirs.')->group(function () {
     Route::middleware('auth')->post('/{attractionPark:slug}/reserver', [AttractionParkController::class, 'book'])->name('book');
 });
 
+// --- ANNUAIRE des entreprises : recherche par pays, ville, domaine ;
+// inscription gratuite, publiee apres validation (admin > partenaires) ---
+Route::get('/annuaire', [\App\Http\Controllers\Guide\DirectoryController::class, 'index'])->name('annuaire.index');
+Route::get('/annuaire/inscription', [\App\Http\Controllers\Guide\DirectoryController::class, 'create'])->name('annuaire.create');
+Route::post('/annuaire/inscription', [\App\Http\Controllers\Guide\DirectoryController::class, 'store'])->middleware('throttle:5,1')->name('annuaire.store');
+
 // --- Fiche d'une societe partenaire (hotel, compagnie, taxi, restaurant...),
 // listee dans la rubrique de son activite (Logement, Voyage, Voiture...) ---
 Route::get('/partenaires/{business:slug}', [BusinessController::class, 'show'])->name('partners.show');

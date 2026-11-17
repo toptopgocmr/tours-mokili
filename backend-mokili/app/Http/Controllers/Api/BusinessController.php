@@ -19,11 +19,52 @@ class BusinessController extends Controller
             ->when($request->filled('module'), fn ($q) => $q->forModule((string) $request->input('module')))
             ->when($request->filled('category'), fn ($q) => $q->where('category', $request->string('category')))
             ->when($request->filled('city'), fn ($q) => $q->where('city', 'like', '%'.$request->string('city').'%'))
+            ->when($request->filled('country'), fn ($q) => $q->where('country', strtoupper((string) $request->input('country'))))
             ->when($request->filled('q'), fn ($q) => $q->where('name', 'like', '%'.$request->string('q').'%'))
             ->orderByDesc('is_featured')
             ->orderByDesc('stars')
             ->orderBy('name')
             ->paginate(50));
+    }
+
+    /**
+     * ANNUAIRE (app mobile) : GET /api/annuaire?q=&pays=&ville=&domaine=
+     * -> entreprises + listes des domaines, pays et villes pour les filtres.
+     */
+    public function directory(Request $request): JsonResponse
+    {
+        $f = \App\Http\Controllers\Guide\DirectoryController::filters($request);
+        $base = Business::query()->active();
+
+        return response()->json([
+            'businesses' => \App\Http\Controllers\Guide\DirectoryController::search($f)
+                ->orderByDesc('is_featured')->orderBy('name')->paginate(30)->withQueryString(),
+            'filters' => $f,
+            'domains' => \App\Http\Controllers\Guide\DirectoryController::domains(),
+            'countries' => \App\Http\Controllers\Guide\DirectoryController::countryOptions(
+                (clone $base)->selectRaw('country, count(*) as n')->groupBy('country')->pluck('n', 'country')->all()
+            ),
+            'cities' => (clone $base)->when($f['pays'] !== '', fn ($q) => $q->where('country', $f['pays']))
+                ->whereNotNull('city')->distinct()->orderBy('city')->pluck('city'),
+        ]);
+    }
+
+    /** ANNUAIRE (app mobile) : inscription gratuite, publiee apres validation. */
+    public function register(Request $request): JsonResponse
+    {
+        if ($request->filled('fax')) {
+            return response()->json(['message' => 'ok'], 201);
+        }
+        $data = \App\Http\Controllers\Guide\DirectoryController::validated($request);
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('partenaires', 'public');
+        }
+        $business = Business::create($data);
+
+        return response()->json([
+            'message' => 'Merci ! Votre entreprise apparaitra dans l\'annuaire apres verification par MOKILI TOUR.',
+            'id' => $business->id,
+        ], 201);
     }
 
     public function show(Business $business): JsonResponse

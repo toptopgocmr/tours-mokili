@@ -39,7 +39,7 @@ const step = (d) => {
 const mapsUrl = computed(() =>
     b.value.latitude && b.value.longitude
         ? `https://www.google.com/maps?q=${b.value.latitude},${b.value.longitude}`
-        : `https://www.google.com/maps/search/${encodeURIComponent(`${b.value.name} ${b.value.address ?? ''} ${b.value.city} Congo`)}`,
+        : `https://www.google.com/maps/search/${encodeURIComponent(`${b.value.name} ${b.value.address ?? ''} ${b.value.city} ${b.value.country_name ?? 'Congo'}`)}`,
 );
 const MODULE_PAGES = {
     logement: ['/logement', 'Logement'],
@@ -48,7 +48,7 @@ const MODULE_PAGES = {
     divertissement: ['/divertissement', 'Tourisme'],
     marketplace: ['/marketplace', 'Marketplace'],
 };
-const back = computed(() => (isSite.value ? ['/divertissement?tab=visite', 'Sites touristiques'] : b.value.category === 'parking' ? ['/voiture?type=parking', 'Parking, gardiennage & lavage'] : b.value.category === 'garage' ? ['/voiture?type=mecanique', 'Mecanique'] : b.value.category === 'concessionnaire' ? ['/voiture?type=vente', 'Voitures a vendre'] : MODULE_PAGES[b.value.module] ?? ['/', 'Accueil']));
+const back = computed(() => (isSite.value ? ['/divertissement?tab=visite', 'Sites touristiques'] : b.value.category === 'parking' ? ['/voiture?type=parking', 'Parking, gardiennage & lavage'] : b.value.category === 'garage' ? ['/voiture?type=mecanique', 'Mecanique'] : b.value.category === 'concessionnaire' ? ['/voiture?type=vente', 'Voitures a vendre'] : MODULE_PAGES[b.value.module] ?? ['/annuaire', 'Annuaire']));
 const whatsappUrl = computed(() => (b.value.whatsapp ? `https://wa.me/${b.value.whatsapp.replace(/\D/g, '')}` : null));
 const price = computed(() => b.value.price_range || (isSite.value ? 'Gratuit' : null));
 const badge = computed(() => (isGarage.value ? b.value.category_label : (b.value.services ?? []).find((s) => /visite/i.test(s)) ?? b.value.services?.[0] ?? b.value.category_label));

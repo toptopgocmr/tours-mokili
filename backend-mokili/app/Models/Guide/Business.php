@@ -32,6 +32,33 @@ class Business extends Model
         'salle_spectacle' => 'Salles de concert & spectacles',
         'site_touristique' => 'Visites & sites touristiques',
         'ecommerce' => 'Boutiques en ligne',
+        // ANNUAIRE : domaines hors rubriques (visibles seulement dans /annuaire).
+        'banque' => 'Banques',
+        'microfinance' => 'Microfinance & transfert d\'argent',
+        'assurance' => 'Assurances',
+        'telecom' => 'Telecoms & internet',
+        'informatique' => 'Informatique & numerique',
+        'petrole_mines' => 'Petrole, gaz & mines',
+        'energie_eau' => 'Energie & eau',
+        'btp' => 'BTP & construction',
+        'immobilier' => 'Immobilier',
+        'industrie' => 'Industrie & production',
+        'agriculture' => 'Agriculture, elevage & peche',
+        'commerce' => 'Commerce & import-export',
+        'transit_logistique' => 'Transit & logistique',
+        'agence_voyage' => 'Agences de voyage',
+        'sante' => 'Sante : hopitaux, cliniques, pharmacies',
+        'education' => 'Education & formation',
+        'conseil' => 'Conseil, audit & comptabilite',
+        'juridique' => 'Avocats, notaires & huissiers',
+        'medias' => 'Medias, communication & publicite',
+        'evenementiel' => 'Evenementiel & traiteurs',
+        'securite' => 'Securite & gardiennage',
+        'beaute_mode' => 'Beaute, coiffure & mode',
+        'administration' => 'Administrations & services publics',
+        'ambassade' => 'Ambassades & organisations internationales',
+        'ong_association' => 'ONG & associations',
+        'autre' => 'Autres activites',
     ];
 
     /** Rubrique MOKILI TOUR ou apparait chaque type de societe. */
@@ -59,12 +86,13 @@ class Business extends Model
         'name', 'slug', 'category', 'city', 'district', 'address', 'country', 'stars',
         'description', 'services', 'opening_hours', 'price_range', 'phone', 'whatsapp',
         'email', 'website', 'latitude', 'longitude', 'image', 'gallery', 'is_featured', 'is_active', 'preview_image',
+        'submitted_at', 'contact_person',
     ];
 
     // Photo du mode presentation : jamais envoyee au public (voir PreviewController).
     protected $hidden = ['preview_image'];
 
-    protected $appends = ['image_url', 'image_is_illustration', 'gallery_urls', 'category_label', 'module'];
+    protected $appends = ['image_url', 'image_is_illustration', 'gallery_urls', 'category_label', 'module', 'country_name'];
 
     protected function casts(): array
     {
@@ -76,6 +104,7 @@ class Business extends Model
             'longitude' => 'decimal:7',
             'is_featured' => 'boolean',
             'is_active' => 'boolean',
+            'submitted_at' => 'datetime',
         ];
     }
 
@@ -95,6 +124,17 @@ class Business extends Model
     public function scopeForModule($query, string $module)
     {
         return $query->whereIn('category', array_keys(array_filter(self::MODULES, fn ($m) => $m === $module)));
+    }
+
+    /** Inscriptions faites depuis l'annuaire, en attente de validation. */
+    public function scopePendingDirectory($query)
+    {
+        return $query->whereNotNull('submitted_at')->where('is_active', false);
+    }
+
+    public function getCountryNameAttribute(): string
+    {
+        return \App\Support\DirectoryCountries::name($this->country);
     }
 
     public function getModuleAttribute(): ?string

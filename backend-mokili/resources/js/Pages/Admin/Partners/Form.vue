@@ -9,6 +9,7 @@ defineOptions({ layout: AdminLayout });
 const props = defineProps({
     business: { type: Object, default: null },
     categories: { type: Object, default: () => ({}) },
+    countries: { type: Object, default: () => ({}) },
 });
 
 const isEdit = computed(() => !!props.business);
@@ -17,6 +18,8 @@ const b = props.business ?? {};
 const form = useForm({
     name: b.name ?? '',
     category: b.category ?? 'hotel',
+    country: b.country ?? 'CG',
+    contact_person: b.contact_person ?? '',
     city: b.city ?? 'Brazzaville',
     district: b.district ?? '',
     address: b.address ?? '',
@@ -117,6 +120,20 @@ const submit = () => {
                 <option value="">-</option>
                 <option v-for="n in 5" :key="n" :value="n">{{ '★'.repeat(n) }}</option>
             </select>
+        </div>
+        <div v-if="b.submitted_at" class="sm:col-span-2 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+            Inscription faite depuis l'annuaire le {{ new Date(b.submitted_at).toLocaleDateString('fr-FR') }}<span v-if="b.contact_person"> par <b>{{ b.contact_person }}</b></span>.
+            Verifiez les coordonnees, puis cochez « Visible sur le site et l'app » pour la publier.
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Pays</label>
+            <select v-model="form.country" class="mt-1 w-full rounded border-slate-300">
+                <option v-for="(label, code) in countries" :key="code" :value="code">{{ label }}</option>
+            </select>
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">Personne a contacter</label>
+            <input v-model="form.contact_person" type="text" class="mt-1 w-full rounded border-slate-300" />
         </div>
         <div>
             <label class="text-sm font-medium text-slate-700">Ville</label>

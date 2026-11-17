@@ -93,6 +93,9 @@ Route::get('/loisirs/parks/{attractionPark:slug}', [AttractionParkController::cl
 
 // Societes partenaires par rubrique (?module=logement|voyage|voiture|divertissement|marketplace).
 Route::get('/partners', [BusinessController::class, 'index']);
+// ANNUAIRE des entreprises (app mobile).
+Route::get('/annuaire', [BusinessController::class, 'directory']);
+Route::post('/annuaire/inscription', [BusinessController::class, 'register'])->middleware('throttle:5,1');
 Route::get('/partners/{business:slug}', [BusinessController::class, 'show']);
 // Reserver une visite (site touristique) / prendre rendez-vous (garage), sans compte.
 Route::post('/partners/{business:slug}/booking', [BusinessController::class, 'book'])->middleware('throttle:10,1');

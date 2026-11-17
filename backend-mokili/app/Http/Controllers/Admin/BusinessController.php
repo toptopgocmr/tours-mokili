@@ -22,19 +22,22 @@ class BusinessController extends Controller
             'businesses' => Business::query()
                 ->when($request->string('search')->isNotEmpty(), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'))
                 ->when($request->string('category')->isNotEmpty(), fn ($q) => $q->where('category', $request->string('category')))
+                // Inscriptions annuaire a valider (les plus recentes d'abord).
+                ->when($request->boolean('pending'), fn ($q) => $q->pendingDirectory()->orderByDesc('submitted_at'))
                 ->orderBy('category')
                 ->orderBy('name')
                 ->paginate(25)
                 ->withQueryString(),
-            'filters' => $request->only('search', 'category'),
+            'filters' => $request->only('search', 'category', 'pending'),
             'categories' => Business::CATEGORIES,
             'modules' => Business::MODULES,
+            'pendingCount' => Business::query()->pendingDirectory()->count(),
         ]);
     }
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Partners/Form', ['categories' => Business::CATEGORIES]);
+        return Inertia::render('Admin/Partners/Form', ['categories' => Business::CATEGORIES, 'countries' => \App\Support\DirectoryCountries::all()]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -49,7 +52,7 @@ class BusinessController extends Controller
 
     public function edit(Business $business): Response
     {
-        return Inertia::render('Admin/Partners/Form', ['business' => $business->makeVisible('preview_image'), 'categories' => Business::CATEGORIES]);
+        return Inertia::render('Admin/Partners/Form', ['business' => $business->makeVisible('preview_image'), 'categories' => Business::CATEGORIES, 'countries' => \App\Support\DirectoryCountries::all()]);
     }
 
     public function update(Request $request, Business $business): RedirectResponse
@@ -102,6 +105,8 @@ class BusinessController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'category' => ['required', Rule::in(array_keys(Business::CATEGORIES))],
+            'country' => ['nullable', Rule::in(array_keys(\App\Support\DirectoryCountries::all()))],
+            'contact_person' => ['nullable', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:120'],
             'district' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
@@ -126,7 +131,7 @@ class BusinessController extends Controller
         ]);
 
         unset($data['image'], $data['image_link'], $data['remove_image']);
-        $data['country'] = 'CG';
+        $data['country'] = $data['country'] ?? 'CG';
 
         return $data;
     }
