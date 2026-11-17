@@ -101,6 +101,7 @@ Route::get('/partners/{business:slug}', [BusinessController::class, 'show']);
 // Reserver une visite (site touristique) / prendre rendez-vous (garage), sans compte.
 Route::post('/partners/{business:slug}/booking', [BusinessController::class, 'book'])->middleware('throttle:10,1');
 
+Route::get('/marketplace/options', [ProductController::class, 'options']);
 Route::get('/marketplace/products', [ProductController::class, 'index']);
 Route::get('/marketplace/products/{product:slug}', [ProductController::class, 'show']);
 
@@ -128,6 +129,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/voiture/vehicles/{vehicle:slug}/book', [VehicleController::class, 'book']);
     Route::post('/divertissement/events/{event:slug}/book', [EventController::class, 'book']);
     Route::post('/marketplace/products/{product:slug}/book', [ProductController::class, 'book']);
+    // Petites annonces depuis l'app : mes annonces, deposer, modifier, vendu, supprimer.
+    Route::get('/marketplace/mine', [ProductController::class, 'mine']);
+    Route::post('/marketplace/annonces', [ProductController::class, 'store'])->middleware('throttle:10,1');
+    Route::post('/marketplace/annonces/{product}', [ProductController::class, 'update'])->middleware('throttle:20,1');
+    Route::post('/marketplace/annonces/{product}/vendu', [ProductController::class, 'markSold']);
+    Route::delete('/marketplace/annonces/{product}', [ProductController::class, 'destroy']);
     Route::post('/loisirs/parks/{attractionPark:slug}/book', [AttractionParkController::class, 'book']);
     Route::post('/fret/offers/{offer:slug}/book', [FreightOfferController::class, 'book']);
 

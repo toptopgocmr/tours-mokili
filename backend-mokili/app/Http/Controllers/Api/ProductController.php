@@ -8,6 +8,8 @@ use App\Http\Requests\StoreBookingRequest;
 use App\Models\Marketplace\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\Marketplace\ProductController as WebProductController;
 
 /**
  * JSON API for the Flutter app - MARKETPLACE module (style Amazon:
@@ -34,10 +36,110 @@ class ProductController extends Controller
             ->when($request->string('condition')->isNotEmpty(), fn ($q) => $q->where('condition', $request->string('condition')))
             ->when($request->filled('price_min'), fn ($q) => $q->where('price', '>=', $request->float('price_min')))
             ->when($request->filled('price_max'), fn ($q) => $q->where('price', '<=', $request->float('price_max')))
-            ->orderByDesc('created_at')
-            ->paginate(12);
+            ->tap(fn ($q) => match ($request->input('sort')) {
+                'prix_asc' => $q->orderBy('price'),
+                'prix_desc' => $q->orderByDesc('price'),
+                default => $q->orderByDesc('created_at'),
+            })
+            ->paginate(12)
+            ->withQueryString();
 
         return response()->json($products);
+    }
+
+    /** Listes pour les filtres et le formulaire de l'app (categories, etats, types). */
+    public function options(): JsonResponse
+    {
+        return response()->json([
+            'categories' => config('catalogue.marketplace.categories'),
+            'conditions' => config('catalogue.marketplace.conditions'),
+            'listing_types' => config('catalogue.marketplace.listing_types'),
+            'max_photos' => WebProductController::MAX_PHOTOS,
+        ]);
+    }
+
+    /** "Mes annonces" (app) : toutes les annonces du vendeur, avec leur statut. */
+    public function mine(Request $request): JsonResponse
+    {
+        return response()->json($request->user()->products()->latest()->paginate(30));
+    }
+
+    /** Deposer une annonce depuis l'app (memes regles que le site). */
+    public function store(Request $request): JsonResponse
+    {
+        $web = app(WebProductController::class);
+        $data = $web->validated($request);
+        $photos = $web->storePhotos($request);
+        $staff = in_array($request->user()->role, ['admin', 'agent'], true);
+
+        $product = $request->user()->products()->create($data + [
+            'image' => $photos[0] ?? null,
+            'gallery' => $photos ?: null,
+            'currency' => 'XAF',
+            'country' => 'CG',
+            'stock' => 1,
+            'is_active' => true,
+            'status' => $staff ? 'published' : 'pending',
+        ]);
+
+        return response()->json([
+            'message' => $product->status === 'published'
+                ? 'Annonce publiee.'
+                : 'Annonce envoyee : elle sera visible apres validation par notre equipe (generalement sous 24 h).',
+            'product' => $product->fresh(),
+        ], 201);
+    }
+
+    /** Modifier une annonce (photos ajoutees / retirees), repasse en validation. */
+    public function update(Request $request, Product $product): JsonResponse
+    {
+        abort_unless($product->seller_id === $request->user()->id, 403);
+        $web = app(WebProductController::class);
+        $data = $web->validated($request);
+
+        $gallery = collect($product->gallery ?? ($product->image ? [$product->image] : []))
+            ->reject(fn ($p) => in_array($p, (array) $request->input('remove_photos', []), true))
+            ->values();
+        foreach (array_diff($product->gallery ?? [], $gallery->all()) as $removed) {
+            if (! str_starts_with($removed, 'http')) {
+                Storage::disk('public')->delete($removed);
+            }
+        }
+        $gallery = $gallery->merge($web->storePhotos($request, WebProductController::MAX_PHOTOS - $gallery->count()))->values()->all();
+        $staff = in_array($request->user()->role, ['admin', 'agent'], true);
+
+        $product->update($data + [
+            'image' => $gallery[0] ?? null,
+            'gallery' => $gallery ?: null,
+            'status' => $staff ? 'published' : 'pending',
+            'rejection_reason' => null,
+        ]);
+
+        return response()->json(['message' => 'Annonce modifiee : elle repasse en validation.', 'product' => $product->fresh()]);
+    }
+
+    public function markSold(Request $request, Product $product): JsonResponse
+    {
+        abort_unless($product->seller_id === $request->user()->id, 403);
+        $product->update(['sold_at' => $product->sold_at ? null : now()]);
+
+        return response()->json([
+            'message' => $product->sold_at ? 'Annonce marquee comme vendue.' : 'Annonce remise en ligne.',
+            'product' => $product->fresh(),
+        ]);
+    }
+
+    public function destroy(Request $request, Product $product): JsonResponse
+    {
+        abort_unless($product->seller_id === $request->user()->id, 403);
+        foreach ($product->gallery ?? array_filter([$product->image]) as $path) {
+            if (! str_starts_with($path, 'http')) {
+                Storage::disk('public')->delete($path);
+            }
+        }
+        $product->delete();
+
+        return response()->json(['message' => 'Annonce supprimee.']);
     }
 
     public function show(Product $product): JsonResponse

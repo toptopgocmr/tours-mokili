@@ -153,7 +153,7 @@ class ProductController extends Controller
         return redirect()->route('marketplace.mine')->with('success', 'Annonce supprimee.');
     }
 
-    protected function validated(Request $request): array
+    public function validated(Request $request): array
     {
         return \Illuminate\Support\Arr::except($request->validate([
             'listing_type' => ['required', 'in:'.implode(',', array_keys(config('catalogue.marketplace.listing_types')))],
@@ -177,7 +177,7 @@ class ProductController extends Controller
         ]), ['photos', 'remove_photos']);
     }
 
-    protected function storePhotos(Request $request, int $limit = self::MAX_PHOTOS): array
+    public function storePhotos(Request $request, int $limit = self::MAX_PHOTOS): array
     {
         return collect($request->file('photos', []))
             ->take(max(0, $limit))
