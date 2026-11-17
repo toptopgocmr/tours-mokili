@@ -59,20 +59,14 @@ const props = defineProps({
     </svg>
 
     <!-- Voiture : berline vue de profil (vitres, roues, phare). -->
-    <svg v-else-if="slug === 'voiture'" :class="props.class" viewBox="0 0 24 24">
-        <g fill="currentColor">
-            <path d="M1.5 15.2v-2.4c0-.7.4-1.3 1.1-1.5l3.4-1 2.6-3.1c.5-.6 1.2-.9 2-.9h5.3c.8 0 1.5.3 2 .9l2.5 3 1.9.5c.9.2 1.5 1 1.5 1.9v2.6c0 .6-.4 1-1 1h-1.2a2.7 2.7 0 0 0-5.3 0H8.7a2.7 2.7 0 0 0-5.3 0H2.5c-.6 0-1-.4-1-1z" />
-            <circle cx="6" cy="16.6" r="2.2" />
-            <circle cx="17.4" cy="16.6" r="2.2" />
-        </g>
-        <g :fill="accent">
-            <path d="M7.4 10.4 9.3 8.1c.3-.3.6-.5 1-.5h1.6v2.8z" />
-            <path d="M13.2 7.6h2.4c.4 0 .8.2 1 .5l1.8 2.3h-5.2z" />
-            <circle cx="6" cy="16.6" r="0.9" />
-            <circle cx="17.4" cy="16.6" r="0.9" />
-            <rect x="20.2" y="12" width="1.2" height="0.8" rx="0.3" />
-        </g>
-    </svg>
+    <!-- Voiture : photo du Jetour T2 (image fournie par MOKILI TOUR) -->
+    <img
+        v-else-if="slug === 'voiture'"
+        src="/images/services/voiture-jetour-t2.png"
+        alt=""
+        aria-hidden="true"
+        :class="[props.class, 'scale-150 object-contain']"
+    />
 
     <!-- Tourisme (slug "divertissement") : trois grandes roues de manege
          (une grande au centre, deux petites de chaque cote) sur un socle. -->

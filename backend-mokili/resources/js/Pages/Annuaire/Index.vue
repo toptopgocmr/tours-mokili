@@ -116,56 +116,85 @@ const mapUrl = (b) =>
             <button v-if="hasFilters" type="button" class="text-sm font-semibold text-navy-700 hover:underline" @click="reset">Effacer les filtres</button>
         </div>
 
-        <!-- Liste des entreprises -->
-        <div v-if="businesses.data.length" class="mt-4 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-            <div class="hidden grid-cols-12 gap-4 border-b bg-slate-50 px-5 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 md:grid">
-                <span class="col-span-5">Entreprise</span>
-                <span class="col-span-4">Adresse</span>
-                <span class="col-span-3">Contacts</span>
-            </div>
-            <ul class="divide-y divide-slate-100">
-                <li v-for="b in businesses.data" :key="b.id" class="grid gap-3 px-5 py-4 hover:bg-slate-50/60 md:grid-cols-12 md:gap-4">
-                    <!-- Entreprise -->
-                    <div class="min-w-0 md:col-span-5">
-                        <Link :href="`/partenaires/${b.slug}`" class="font-bold text-navy-900 hover:text-gold-600 hover:underline">{{ b.name }}</Link>
-                        <p class="mt-1">
-                            <span class="inline-block rounded bg-navy-50 px-2 py-0.5 text-xs font-semibold text-navy-800">{{ b.category_label }}</span>
-                        </p>
-                        <p v-if="b.description" class="mt-1.5 line-clamp-2 text-sm text-slate-600">{{ b.description }}</p>
-                        <div v-if="b.services?.length" class="mt-2">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Ce qu'elle propose</p>
-                            <div class="mt-1 flex flex-wrap gap-1">
-                                <span v-for="sv in b.services" :key="sv" class="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700">{{ sv }}</span>
+        <!-- Tableau des entreprises (ordinateur / tablette) -->
+        <div v-if="businesses.data.length" class="mt-4 hidden overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-black/5 md:block">
+            <table class="w-full min-w-[900px] text-left text-sm">
+                <thead class="bg-navy-900 text-xs uppercase tracking-wide text-white">
+                    <tr>
+                        <th class="w-[34%] px-4 py-3 font-semibold">Entreprise</th>
+                        <th class="w-[16%] px-4 py-3 font-semibold">Telephone</th>
+                        <th class="w-[20%] px-4 py-3 font-semibold">E-mail</th>
+                        <th class="w-[30%] px-4 py-3 font-semibold">Adresse</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    <tr v-for="b in businesses.data" :key="b.id" class="align-top odd:bg-white even:bg-slate-50/60 hover:bg-gold-50/40">
+                        <td class="px-4 py-3">
+                            <Link :href="`/partenaires/${b.slug}`" class="font-bold text-navy-900 hover:text-gold-600 hover:underline">{{ b.name }}</Link>
+                            <p class="mt-1"><span class="inline-block rounded bg-navy-50 px-2 py-0.5 text-xs font-semibold text-navy-800">{{ b.category_label }}</span></p>
+                            <div v-if="b.services?.length" class="mt-1.5 flex flex-wrap gap-1">
+                                <span v-for="sv in b.services" :key="sv" class="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-700">{{ sv }}</span>
                             </div>
-                        </div>
-                    </div>
+                            <a v-if="b.website" :href="b.website" target="_blank" rel="noopener" class="mt-1.5 block truncate text-xs text-navy-700 hover:underline">🌐 {{ site(b.website) }}</a>
+                        </td>
+                        <td class="px-4 py-3">
+                            <template v-if="b.phone || b.whatsapp">
+                                <a v-if="b.phone" :href="tel(b.phone)" class="block whitespace-nowrap font-semibold text-navy-800 hover:underline">{{ b.phone }}</a>
+                                <a v-if="b.whatsapp" :href="wa(b.whatsapp)" target="_blank" rel="noopener" class="mt-0.5 block whitespace-nowrap text-xs font-semibold text-green-700 hover:underline">WhatsApp {{ b.whatsapp }}</a>
+                            </template>
+                            <span v-else class="text-slate-400">—</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <a v-if="b.email" :href="`mailto:${b.email}`" class="break-all text-navy-800 hover:underline">{{ b.email }}</a>
+                            <span v-else class="text-slate-400">—</span>
+                        </td>
+                        <td class="px-4 py-3 text-slate-700">
+                            <p v-if="b.address">{{ b.address }}</p>
+                            <p class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                                <span :class="flag(b.country)" class="!h-3 !w-4 shrink-0 rounded-sm ring-1 ring-black/10" />
+                                {{ b.city }}<template v-if="b.district">, {{ b.district }}</template> · {{ b.country_name }}
+                            </p>
+                            <a :href="mapUrl(b)" target="_blank" rel="noopener" class="mt-1 inline-block text-xs font-semibold text-navy-700 hover:underline">Localiser sur la carte →</a>
+                            <Link
+                                v-if="!b.phone && !b.email && !b.whatsapp"
+                                :href="`/annuaire/inscription?nom=${encodeURIComponent(b.name)}&domaine=${b.category}&ville=${encodeURIComponent(b.city ?? '')}&pays=${b.country ?? 'CG'}`"
+                                class="mt-1 block text-xs font-semibold text-gold-700 hover:underline"
+                            >Vous etes cette entreprise ? Ajoutez vos coordonnees →</Link>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-                    <!-- Adresse -->
-                    <div class="min-w-0 text-sm text-slate-700 md:col-span-4">
-                        <p class="flex items-center gap-2">
-                            <span :class="flag(b.country)" class="!h-3.5 !w-5 shrink-0 rounded-sm ring-1 ring-black/10" />
-                            <span class="font-medium">{{ b.city }}<template v-if="b.district">, {{ b.district }}</template> · {{ b.country_name }}</span>
-                        </p>
-                        <p v-if="b.address" class="mt-1 text-slate-600">{{ b.address }}</p>
-                        <p v-if="b.opening_hours" class="mt-1 text-xs text-slate-500">Horaires : {{ b.opening_hours }}</p>
-                        <a :href="mapUrl(b)" target="_blank" rel="noopener" class="mt-1 inline-block text-xs font-semibold text-navy-700 hover:underline">Localiser sur la carte →</a>
-                    </div>
-
-                    <!-- Contacts -->
-                    <div class="min-w-0 space-y-1 text-sm md:col-span-3">
-                        <p v-if="b.phone"><span class="text-slate-500">Tél. </span><a :href="tel(b.phone)" class="font-semibold text-navy-800 hover:underline">{{ b.phone }}</a></p>
-                        <p v-if="b.whatsapp"><span class="text-slate-500">WhatsApp </span><a :href="wa(b.whatsapp)" target="_blank" rel="noopener" class="font-semibold text-green-700 hover:underline">{{ b.whatsapp }}</a></p>
-                        <p v-if="b.email" class="truncate"><span class="text-slate-500">E-mail </span><a :href="`mailto:${b.email}`" class="text-navy-800 hover:underline">{{ b.email }}</a></p>
-                        <p v-if="b.website" class="truncate"><span class="text-slate-500">Site </span><a :href="b.website" target="_blank" rel="noopener" class="text-navy-800 hover:underline">{{ site(b.website) }}</a></p>
-                        <template v-if="!b.phone && !b.email && !b.whatsapp && !b.website">
-                            <p class="text-xs italic text-slate-500">Coordonnees en cours de mise a jour.</p>
-                            <Link :href="`/annuaire/inscription?nom=${encodeURIComponent(b.name)}&domaine=${b.category}&ville=${encodeURIComponent(b.city ?? '')}&pays=${b.country ?? 'CG'}`" class="mt-1 inline-block text-xs font-semibold text-gold-700 hover:underline">
-                                Vous etes cette entreprise ? Ajoutez vos coordonnees →
-                            </Link>
-                        </template>
-                    </div>
-                </li>
-            </ul>
+        <!-- Telephone : une carte par entreprise avec les memes rubriques -->
+        <div v-if="businesses.data.length" class="mt-4 space-y-3 md:hidden">
+            <article v-for="b in businesses.data" :key="b.id" class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+                <Link :href="`/partenaires/${b.slug}`" class="font-bold text-navy-900">{{ b.name }}</Link>
+                <p class="mt-1"><span class="inline-block rounded bg-navy-50 px-2 py-0.5 text-xs font-semibold text-navy-800">{{ b.category_label }}</span></p>
+                <div v-if="b.services?.length" class="mt-1.5 flex flex-wrap gap-1">
+                    <span v-for="sv in b.services" :key="sv" class="rounded-full border border-slate-200 px-2 py-0.5 text-[11px] text-slate-700">{{ sv }}</span>
+                </div>
+                <dl class="mt-3 grid grid-cols-[84px_1fr] gap-x-2 gap-y-1.5 text-sm">
+                    <dt class="text-xs font-semibold uppercase text-slate-500">Telephone</dt>
+                    <dd class="min-w-0">
+                        <a v-if="b.phone" :href="tel(b.phone)" class="font-semibold text-navy-800">{{ b.phone }}</a>
+                        <span v-else class="text-slate-400">—</span>
+                        <a v-if="b.whatsapp" :href="wa(b.whatsapp)" target="_blank" rel="noopener" class="ml-2 text-xs font-semibold text-green-700">WhatsApp</a>
+                    </dd>
+                    <dt class="text-xs font-semibold uppercase text-slate-500">E-mail</dt>
+                    <dd class="min-w-0 break-all"><a v-if="b.email" :href="`mailto:${b.email}`" class="text-navy-800">{{ b.email }}</a><span v-else class="text-slate-400">—</span></dd>
+                    <dt class="text-xs font-semibold uppercase text-slate-500">Adresse</dt>
+                    <dd class="min-w-0 text-slate-700">
+                        <span v-if="b.address">{{ b.address }}, </span>{{ b.city }} · {{ b.country_name }}
+                        <a :href="mapUrl(b)" target="_blank" rel="noopener" class="block text-xs font-semibold text-navy-700">Localiser sur la carte →</a>
+                    </dd>
+                </dl>
+                <Link
+                    v-if="!b.phone && !b.email && !b.whatsapp"
+                    :href="`/annuaire/inscription?nom=${encodeURIComponent(b.name)}&domaine=${b.category}&ville=${encodeURIComponent(b.city ?? '')}&pays=${b.country ?? 'CG'}`"
+                    class="mt-2 block text-xs font-semibold text-gold-700"
+                >Vous etes cette entreprise ? Ajoutez vos coordonnees →</Link>
+            </article>
         </div>
 
         <div v-else class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
