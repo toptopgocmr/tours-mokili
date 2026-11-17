@@ -28,7 +28,7 @@ class Vehicle extends Model
     public function getGalleryUrlsAttribute(): array
     {
         return collect([$this->image, ...($this->gallery ?? [])])->filter()->unique()->map(
-            fn ($p) => str_starts_with($p, 'http') ? $p : Storage::disk('public')->url($p)
+            fn ($p) => str_starts_with($p, 'http') ? $p : (str_starts_with($p, '/') ? url($p) : Storage::disk('public')->url($p))
         )->values()->all();
     }
 
@@ -119,9 +119,10 @@ class Vehicle extends Model
 
         // Demo listings store a full external photo URL directly; real
         // partner uploads store a Storage-disk-relative path.
+        // Chemin /images/... : photo livree avec le site (public/images).
         return str_starts_with($this->image, 'http')
             ? $this->image
-            : Storage::disk('public')->url($this->image);
+            : (str_starts_with($this->image, '/') ? url($this->image) : Storage::disk('public')->url($this->image));
     }
 
     /** true : la photo affichee illustre la marque, ce n'est pas le vehicule vendu. */

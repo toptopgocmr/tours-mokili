@@ -10,6 +10,14 @@ class VehiclePhotos
 {
     public static function for(?string $brand, ?string $model = null): ?string
     {
+        $url = self::find($brand, $model);
+
+        // Photo fournie par MOKILI TOUR (public/images/vehicules/...) : adresse complete pour l'app.
+        return $url && str_starts_with($url, '/') ? url($url) : $url;
+    }
+
+    private static function find(?string $brand, ?string $model): ?string
+    {
         if (! $brand) {
             return null;
         }

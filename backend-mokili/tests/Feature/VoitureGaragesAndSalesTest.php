@@ -47,7 +47,7 @@ class VoitureGaragesAndSalesTest extends TestCase
     {
         $v = Vehicle::create(['title' => 'Jetour T2 2025', 'offer_type' => 'vente', 'brand' => 'Jetour', 'model' => 'T2 i-DM', 'sale_price' => 20000000,
             'currency' => 'XAF', 'city' => 'Brazzaville', 'country' => 'CG', 'is_active' => true, 'status' => 'published']);
-        $this->assertStringContainsString('Jetour_Traveller', $v->image_url);
+        $this->assertStringContainsString('jetour-t2.jpg', $v->image_url);
         $this->assertTrue($v->image_is_illustration);
 
         Business::create(['name' => 'Toyota Dealer', 'category' => 'concessionnaire', 'city' => 'Brazzaville', 'services' => ['Toyota'], 'is_active' => true]);

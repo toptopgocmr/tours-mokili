@@ -132,6 +132,12 @@ const mapUrl = (b) =>
                             <span class="inline-block rounded bg-navy-50 px-2 py-0.5 text-xs font-semibold text-navy-800">{{ b.category_label }}</span>
                         </p>
                         <p v-if="b.description" class="mt-1.5 line-clamp-2 text-sm text-slate-600">{{ b.description }}</p>
+                        <div v-if="b.services?.length" class="mt-2">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Ce qu'elle propose</p>
+                            <div class="mt-1 flex flex-wrap gap-1">
+                                <span v-for="sv in b.services" :key="sv" class="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700">{{ sv }}</span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Adresse -->

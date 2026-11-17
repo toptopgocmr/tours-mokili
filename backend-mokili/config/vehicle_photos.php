@@ -104,7 +104,8 @@ return [
     ],
     'Jetour' => [
         '_' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/Jetour_Traveller_001.jpg/960px-Jetour_Traveller_001.jpg',
-        'T2' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/Jetour_Traveller_001.jpg/960px-Jetour_Traveller_001.jpg',
+        // Photo officielle fournie par MOKILI TOUR (public/images/vehicules/).
+        'T2' => '/images/vehicules/jetour-t2.jpg',
         'X70' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/Jetour_X70_006.jpg/960px-Jetour_X70_006.jpg',
         'Dashing' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1f/Jetour_Dashing_photo1.jpg/960px-Jetour_Dashing_photo1.jpg',
     ],
