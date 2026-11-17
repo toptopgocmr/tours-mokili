@@ -4,6 +4,7 @@ import MainLayout from '@/Layouts/MainLayout.vue';
 import PartnersSection from '@/Components/PartnersSection.vue';
 import ProductCard from '@/Components/ProductCard.vue';
 import Paginator from '@/Components/Paginator.vue';
+import MarketplaceIcon from '@/Components/MarketplaceIcon.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive } from 'vue';
 
@@ -20,7 +21,6 @@ const f = reactive({
     listing_type: props.filters.listing_type ?? '', condition: props.filters.condition ?? '',
     price_min: props.filters.price_min ?? '', price_max: props.filters.price_max ?? '', sort: props.filters.sort ?? '',
 });
-const ICONS = { vehicules: '🚗', immobilier: '🏠', telephones: '📱', electronique: '💻', maison: '🛋️', mode: '👗', enfants: '🧸', loisirs: '⚽', materiaux: '🧱', agriculture: '🌽', emploi: '💼', autres: '📦' };
 
 const apply = () => {
     const query = Object.fromEntries(Object.entries(f).filter(([, v]) => v !== '' && v !== null));
@@ -66,11 +66,17 @@ const reset = () => {
                 v-for="(label, key) in cat.categories"
                 :key="key"
                 type="button"
-                class="flex shrink-0 flex-col items-center gap-1 rounded-2xl border px-3 py-2 text-xs font-semibold transition"
-                :class="f.category === key ? 'border-pink-700 bg-pink-50 text-pink-700' : 'border-gray-200 text-navy-700 hover:border-pink-300'"
+                class="group flex min-w-[96px] shrink-0 flex-col items-center gap-1.5 rounded-2xl border px-3 py-2.5 text-xs font-semibold transition"
+                :class="f.category === key ? 'border-pink-600 bg-pink-50 text-pink-700 shadow-sm' : 'border-gray-200 bg-white text-navy-700 hover:border-pink-300 hover:shadow-sm'"
                 @click="setCategory(key)"
             >
-                <span class="text-xl">{{ ICONS[key] }}</span>{{ label }}
+                <span
+                    class="flex h-9 w-9 items-center justify-center rounded-xl transition"
+                    :class="f.category === key ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-600 group-hover:bg-pink-100'"
+                >
+                    <MarketplaceIcon :category="key" class="h-5 w-5" />
+                </span>
+                {{ label }}
             </button>
         </div>
 
