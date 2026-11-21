@@ -129,10 +129,11 @@ const navLinks = [
 
         <footer class="mt-16 bg-navy-900 py-10 text-navy-50">
             <div class="mx-auto max-w-7xl px-6">
-                <div class="grid gap-8 md:grid-cols-4">
+                <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
                     <div>
                         <LogoMark variant="light" />
-                        <p class="mt-3 text-sm text-navy-50/70">Le monde a portee de main.</p>
+                        <p class="mt-3 text-sm text-navy-50/70">Le monde à portée de main.</p>
+                        <p class="mt-2 max-w-xs text-xs leading-relaxed text-navy-50/60">Voyage, hébergement, véhicules, tourisme, marketplace et fret réunis sur une seule plateforme.</p>
                         <p class="mt-4 text-xs text-navy-50/50">Une filiale de Bilenium Conciergerie</p>
                     </div>
                     <div>
@@ -147,28 +148,47 @@ const navLinks = [
                         </ul>
                     </div>
                     <div>
-                        <p class="mb-2 font-semibold text-gold-600">Support</p>
-                        <ul class="space-y-1 text-sm text-navy-50/80">
-                            <li>Assistance 24/7</li>
-                            <li>Paiement securise par Mobile Money</li>
+                        <p class="mb-3 font-semibold text-gold-600">Aide &amp; contact</p>
+                        <ul class="space-y-2.5 text-sm text-navy-50/80">
+                            <li>
+                                <a href="mailto:contact@mokilitour.com" class="flex items-center gap-2 hover:text-white">
+                                    <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-gold-500" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" /></svg>
+                                    contact@mokilitour.com
+                                </a>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-gold-500" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h4v1h-7v2h6c1.66 0 3-1.34 3-3V10c0-4.97-4.03-9-9-9z" /></svg>
+                                Assistance 24/7
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-gold-500" fill="currentColor"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" /></svg>
+                                Paiement sécurisé par Mobile Money
+                            </li>
+                            <li><Link href="/#contact" class="hover:text-white">Nous contacter →</Link></li>
                         </ul>
                     </div>
                     <div>
-                        <p class="mb-2 font-semibold text-gold-600">Applications</p>
-                        <p class="text-sm text-navy-50/80">Disponible sur Google Play et l'App Store</p>
+                        <p class="mb-3 font-semibold text-gold-600">Entreprises</p>
+                        <ul class="space-y-2.5 text-sm text-navy-50/80">
+                            <li><Link href="/annuaire" class="hover:text-white">Annuaire des entreprises</Link></li>
+                            <li><Link href="/annuaire/inscription" class="hover:text-white">Inscrire mon entreprise</Link></li>
+                            <li><Link href="/devenir-partenaire" class="hover:text-white">Devenir partenaire</Link></li>
+                        </ul>
+                        <p class="mb-2 mt-6 font-semibold text-gold-600">Application mobile</p>
+                        <p class="text-sm text-navy-50/80">Bientôt sur Google Play et l'App Store.</p>
                     </div>
                 </div>
                 <div class="mt-8 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-navy-50/50 sm:flex-row">
-                    <p>&copy; {{ new Date().getFullYear() }} MOKILI TOUR. Tous droits reserves.</p>
+                    <p>&copy; {{ new Date().getFullYear() }} MOKILI TOUR. Tous droits réservés.</p>
                     <p class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-                        <span class="text-navy-50/30">Acces professionnel :</span>
+                        <span class="text-navy-50/30">Accès professionnel :</span>
                         <Link href="/partner/login" class="hover:text-gold-600">Espace partenaire</Link>
                         <Link href="/devenir-partenaire" class="font-semibold text-gold-500 hover:text-gold-400">Devenir partenaire</Link>
                         <Link href="/admin/login" class="hover:text-gold-600">Administration</Link>
                     </p>
                 </div>
                 <p class="mt-4 text-center text-xs text-navy-50/40">
-                    MOKILI TOUR a ete concu avec 💔 par Basile Marius NGASSAKI
+                    MOKILI TOUR a été conçu avec <span class="text-red-500">♥</span> par Basile Marius NGASSAKI
                 </p>
             </div>
         </footer>
