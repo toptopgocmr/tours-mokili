@@ -113,4 +113,22 @@ class DirectoryTest extends TestCase
         $this->getJson('/api/partners?module=logement')->assertOk()->assertJsonCount(1, 'data');
         $this->assertNull(Business::where('category', 'assurance')->first()->module);
     }
+
+    public function test_every_company_has_a_photo(): void
+    {
+        $air = $this->make(['name' => 'Air France', 'category' => 'compagnie_aerienne']);
+        $hotel = $this->make(['name' => 'Hotel Test', 'category' => 'hotel']);
+        $bank = $this->make(['name' => 'Banque Test', 'category' => 'banque']);
+        $own = $this->make(['name' => 'Avec photo', 'category' => 'hotel', 'image' => 'https://example.com/officielle.jpg']);
+
+        $this->assertStringContainsString('Air_France', $air->image_url);
+        $this->assertTrue($air->image_is_illustration);
+        $this->assertNotNull($hotel->image_url);
+        $this->assertNotNull($bank->image_url);
+        $this->assertSame('https://example.com/officielle.jpg', $own->image_url);
+        $this->assertFalse($own->image_is_illustration);
+
+        $this->getJson('/api/annuaire')->assertOk()
+            ->assertJsonPath('businesses.data.0.image_is_illustration', true);
+    }
 }

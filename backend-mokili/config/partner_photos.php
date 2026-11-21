@@ -8,6 +8,8 @@
 */
 
 $w = 'https://thumb.wikimedia.org/wikipedia/commons/thumb/';
+// Fichier Commons par son nom (redirection vers une vignette 640 px).
+$f = fn (string $file) => 'https://commons.wikimedia.org/wiki/Special:FilePath/'.rawurlencode($file).'?width=640';
 
 return [
     // Concessionnaires : photo officielle d'un vehicule de la marque distribuee
@@ -53,7 +55,49 @@ return [
             'https://upload.wikimedia.org/wikipedia/commons/8/8f/Brazzaville_NN.jpg',
             'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Concert_de_cloture_du_FEMUA15_%C3%A0_Bouak%C3%A9_53.jpg/960px-Concert_de_cloture_du_FEMUA15_%C3%A0_Bouak%C3%A9_53.jpg',
         ],
+        // Annuaire : hotels, transport, commerce (illustrations par domaine).
+        'hotel' => [
+            $f('Hotel_Room_with_queen_size_bed.jpg'),
+            $f('Bed_in_hotel_room_3.jpg'),
+            $f('Hotel_room_interior_at_hotel_Radisson_Blu_Oulu.jpg'),
+            $f('UMass_Hotel_bed.JPG'),
+        ],
+        'compagnie_aerienne' => [$f('Aeroport_maya-maya.jpg')],
+        'transport_routier' => [
+            $f('Transport_terrestre_interurbain_par_bus_au_Cameroun_12.jpg'),
+            $f('Transport_terrestre_interurbain_par_bus_au_Cameroun_10.jpg'),
+        ],
+        'taxi_vtc' => [$f('Le_pont_du_Djoué.jpg'), $f('Taxi_de_Dolisie.jpg')],
+        'canot_rapide' => [$f('Pirogue_sur_le_fleuve_Congo.jpg')],
+        'transport_ferroviaire' => [$f('P100813_1736_un_train_du_chemin_de_fer_congo_ocean.jpg')],
+        'supermarche' => [
+            $f('Interior_of_Supermarket_in_Japan_01.jpg'),
+            $f('SAS_Supermarket_-_interior-_4.jpg'),
+        ],
+        'ecommerce' => [
+            $f('SAS_Supermarket_-_interior-_4.jpg'),
+            $f('Interior_of_Supermarket_in_Japan_01.jpg'),
+        ],
     ],
+
+    // Photo propre a une societe, reperee par un mot de son nom (avion de la
+    // compagnie aux couleurs de la marque, etc.). Prioritaire sur la categorie.
+    'name_keywords' => [
+        'ethiopian' => $f('Boeing_787-8_Ethiopian_Airlines.jpg'),
+        'air france' => $f('Boeing_777_F-GSPF_Air_France.jpg'),
+        'rwandair' => $f('Airbus_A330-243_RwandAir.jpg'),
+        'royal air maroc' => $f('Boeing_737-800_Royal_Air_Maroc_(RAM)_CN-RGF_-_MSN_36826_3773_(10276084206).jpg'),
+        'asky' => $f('ETAOK-DGAA.jpg'),
+        'taag' => $f('D2-TEF_Boeing_777_TAAG_Angola_Airlines_(8145090445).jpg'),
+        'ecair' => $f('ECAir_Boeing_737-700_at_Zurich_Airport.jpg'),
+        'cfco' => $f('P100813_1736_un_train_du_chemin_de_fer_congo_ocean.jpg'),
+    ],
+
+    // Dernier recours (domaines de l'annuaire sans photo dediee) : la ville.
+    'fallback_cities' => [
+        'Pointe-Noire' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/38/Pointe-Noire_%28C%C3%B4te_sauvage_PN%29_05.jpg/960px-Pointe-Noire_%28C%C3%B4te_sauvage_PN%29_05.jpg',
+    ],
+    'fallback' => $f('Les_lieux_de_Brazzaville_03.jpg'),
 
     // Sites touristiques sans photo : selon un mot du nom, sinon la ville.
     'site_keywords' => [

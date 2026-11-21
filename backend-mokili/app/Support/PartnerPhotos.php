@@ -36,22 +36,31 @@ class PartnerPhotos
             return $pool ? $pool[((int) $b->id) % count($pool)] : null;
         }
 
+        $name = mb_strtolower((string) $b->name);
+        foreach ($cfg['name_keywords'] ?? [] as $word => $url) {
+            if (str_contains($name, $word)) {
+                return $url;
+            }
+        }
+
         $pool = $cfg['categories'][$b->category] ?? [];
         if ($pool) {
             return $pool[((int) $b->id) % count($pool)];
         }
 
         if ($b->category === 'site_touristique') {
-            $name = mb_strtolower((string) $b->name);
             foreach ($cfg['site_keywords'] ?? [] as $word => $url) {
                 if (str_contains($name, $word)) {
                     return $url;
                 }
             }
 
-            return $cfg['site_cities'][$b->city] ?? null;
+            if (isset($cfg['site_cities'][$b->city])) {
+                return $cfg['site_cities'][$b->city];
+            }
         }
 
-        return null;
+        // Annuaire : toute societe a une photo (illustration de sa ville).
+        return $cfg['fallback_cities'][$b->city] ?? ($cfg['fallback'] ?? null);
     }
 }

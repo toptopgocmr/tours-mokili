@@ -4,6 +4,7 @@
 // telephone, e-mail, site web, carte, WhatsApp et lien vers la fiche.
 import MainLayout from '@/Layouts/MainLayout.vue';
 import PhotoHero from '@/Components/PhotoHero.vue';
+import CompanyPhoto from '@/Components/CompanyPhoto.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, reactive } from 'vue';
 import 'flag-icons/css/flag-icons.min.css';
@@ -130,12 +131,17 @@ const mapUrl = (b) =>
                 <tbody class="divide-y divide-slate-100">
                     <tr v-for="b in businesses.data" :key="b.id" class="align-top odd:bg-white even:bg-slate-50/60 hover:bg-gold-50/40">
                         <td class="px-4 py-3">
+                          <div class="flex gap-3">
+                            <Link :href="`/partenaires/${b.slug}`" class="shrink-0"><CompanyPhoto :business="b" size="h-16 w-24" /></Link>
+                            <div class="min-w-0">
                             <Link :href="`/partenaires/${b.slug}`" class="font-bold text-navy-900 hover:text-gold-600 hover:underline">{{ b.name }}</Link>
                             <p class="mt-1"><span class="inline-block rounded bg-navy-50 px-2 py-0.5 text-xs font-semibold text-navy-800">{{ b.category_label }}</span></p>
                             <div v-if="b.services?.length" class="mt-1.5 flex flex-wrap gap-1">
                                 <span v-for="sv in b.services" :key="sv" class="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-700">{{ sv }}</span>
                             </div>
                             <a v-if="b.website" :href="b.website" target="_blank" rel="noopener" class="mt-1.5 block truncate text-xs text-navy-700 hover:underline">🌐 {{ site(b.website) }}</a>
+                            </div>
+                          </div>
                         </td>
                         <td class="px-4 py-3">
                             <template v-if="b.phone || b.whatsapp">
@@ -169,8 +175,13 @@ const mapUrl = (b) =>
         <!-- Telephone : une carte par entreprise avec les memes rubriques -->
         <div v-if="businesses.data.length" class="mt-4 space-y-3 md:hidden">
             <article v-for="b in businesses.data" :key="b.id" class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
-                <Link :href="`/partenaires/${b.slug}`" class="font-bold text-navy-900">{{ b.name }}</Link>
-                <p class="mt-1"><span class="inline-block rounded bg-navy-50 px-2 py-0.5 text-xs font-semibold text-navy-800">{{ b.category_label }}</span></p>
+                <div class="flex gap-3">
+                    <Link :href="`/partenaires/${b.slug}`" class="shrink-0"><CompanyPhoto :business="b" size="h-16 w-20" /></Link>
+                    <div class="min-w-0">
+                        <Link :href="`/partenaires/${b.slug}`" class="font-bold text-navy-900">{{ b.name }}</Link>
+                        <p class="mt-1"><span class="inline-block rounded bg-navy-50 px-2 py-0.5 text-xs font-semibold text-navy-800">{{ b.category_label }}</span></p>
+                    </div>
+                </div>
                 <div v-if="b.services?.length" class="mt-1.5 flex flex-wrap gap-1">
                     <span v-for="sv in b.services" :key="sv" class="rounded-full border border-slate-200 px-2 py-0.5 text-[11px] text-slate-700">{{ sv }}</span>
                 </div>
