@@ -225,13 +225,13 @@ return [
         ],
         'modes' => [
             'mer' => 'Maritime',
-            'air' => 'Aerien',
+            'air' => 'Aérien',
             'route' => 'Routier',
         ],
         'package_types' => [
             'documents' => 'Documents',
             'marchandise' => 'Marchandise',
-            'vehicule' => 'Vehicule',
+            'vehicule' => 'Véhicule',
             'conteneur' => 'Conteneur',
             'autre' => 'Autres',
         ],
