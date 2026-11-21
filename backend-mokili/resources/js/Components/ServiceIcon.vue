@@ -58,23 +58,12 @@ const props = defineProps({
         </g>
     </svg>
 
-    <!-- Voiture : berline vue de profil (vitres, roues, phare). -->
-    <!-- Voiture : SUV carre facon Jetour T2 (meme style plat que les autres icones) -->
+    <!-- Voiture : icone Material "directions_car" (meme famille que l'avion et le chariot). -->
     <svg v-else-if="slug === 'voiture'" :class="props.class" viewBox="0 0 24 24">
-        <g fill="currentColor">
-            <rect x="7" y="4.7" width="10.4" height="0.9" rx="0.45" />
-            <path d="M1.6 15.6v-3.3c0-.6.4-1.1 1-1.3l1.9-.6 1.6-3.6c.2-.5.7-.8 1.2-.8h10.2c.5 0 .9.3 1.1.7l1.8 3.7 1.4.4c.6.2 1 .7 1 1.3v3.5c0 .5-.4.9-.9.9h-1.3a2.7 2.7 0 0 0-5.3 0H8.9a2.7 2.7 0 0 0-5.3 0H2.5c-.5 0-.9-.4-.9-.9z" />
-            <circle cx="6.25" cy="16.6" r="2.25" />
-            <circle cx="17.75" cy="16.6" r="2.25" />
-        </g>
-        <g :fill="accent">
-            <path d="M5.4 10.6 6.8 7.6c.1-.2.3-.3.5-.3h3.4v3.3z" />
-            <path d="M11.9 7.3h4.3c.2 0 .4.1.5.3l1.5 3h-6.3z" />
-            <rect x="20.6" y="11.9" width="1.3" height="0.9" rx="0.3" />
-            <rect x="2.1" y="12.4" width="1" height="1.6" rx="0.3" />
-            <circle cx="6.25" cy="16.6" r="0.95" />
-            <circle cx="17.75" cy="16.6" r="0.95" />
-        </g>
+        <path
+            fill="currentColor"
+            d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"
+        />
     </svg>
 
     <!-- Tourisme (slug "divertissement") : trois grandes roues de manege
